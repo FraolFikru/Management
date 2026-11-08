@@ -1,0 +1,7031 @@
+{
+ "module": "finance",
+ "exportedAt": "2026-11-08T19:27:15.701Z",
+ "i18n": {
+  "cogs.RAW_INGREDIENTS": {
+   "en": "Raw ingredients & food stock",
+   "am": "ጥሬ እቃዎች እና የምግብ ክምችት",
+   "om": "Meeshaalee dheedhii fi kuusaa nyaataa"
+  },
+  "cogs.BEVERAGE_BAR": {
+   "en": "Beverage & bar inventory",
+   "am": "የመጠጥ እና የባር ክምችት",
+   "om": "Kuusaa dhugaatii fi baarii"
+  },
+  "cogs.PACKAGING_DISPOSABLES": {
+   "en": "Packaging & takeout disposables",
+   "am": "ማሸጊያ እና የሚጣሉ እቃዎች",
+   "om": "Qabiyyee fi meeshaalee darbataman"
+  },
+  "cogs.KITCHEN_CONSUMABLES": {
+   "en": "Kitchen consumables",
+   "am": "የወጥ ቤት ፍጆታዎች",
+   "om": "Fayyadamoota kushinaa"
+  },
+  "cogs.CLEANING_SANITATION": {
+   "en": "Cleaning & sanitation",
+   "am": "ጽዳት እና ንጽህና",
+   "om": "Qulqullina fi fayyaa"
+  },
+  "opex.PAYROLL": {
+   "en": "Salaries & employer pension",
+   "am": "ደመወዝ እና የአሰሪ ጡረታ",
+   "om": "Mindaa fi soorama hojjechiisaa"
+  },
+  "opex.RENT": {
+   "en": "Rent",
+   "am": "ኪራይ",
+   "om": "Kiraa"
+  },
+  "opex.UTILITIES": {
+   "en": "Utilities (power, water, gas, internet)",
+   "am": "መገልገያዎች (መብራት፣ ውሃ፣ ጋዝ፣ ኢንተርኔት)",
+   "om": "Tajaajila (ibsaa, bishaan, gaazii, interneetii)"
+  },
+  "opex.MARKETING": {
+   "en": "Marketing",
+   "am": "ማስታወቂያ",
+   "om": "Beeksisa"
+  },
+  "opex.REPAIRS": {
+   "en": "Repairs & maintenance",
+   "am": "ጥገና",
+   "om": "Suphaa fi kunuunsa"
+  },
+  "opex.FEES": {
+   "en": "Bank & wallet fees",
+   "am": "የባንክ እና የዋሌት ክፍያዎች",
+   "om": "Kaffaltii baankii fi waalleetii"
+  },
+  "opex.OTHER_OPEX": {
+   "en": "Other operating costs",
+   "am": "ሌሎች የስራ ወጪዎች",
+   "om": "Baasii hojii biroo"
+  },
+  "pay.CASH": {
+   "en": "Cash",
+   "am": "ጥሬ ገንዘብ",
+   "om": "Callaa"
+  },
+  "pay.TELEBIRR": {
+   "en": "Telebirr",
+   "am": "ቴሌብር",
+   "om": "Telebirr"
+  },
+  "pay.CBE_BIRR": {
+   "en": "CBE Birr",
+   "am": "ሲቢኢ ብር",
+   "om": "CBE Birr"
+  },
+  "acct.CASH": {
+   "en": "Cash on hand (safe)",
+   "am": "በእጅ ያለ ጥሬ ገንዘብ (ካዝና)",
+   "om": "Callaa harka jiru (saanduqa)"
+  },
+  "acct.BANK": {
+   "en": "CBE bank account",
+   "am": "የንግድ ባንክ ሂሳብ",
+   "om": "Herrega Baankii Daldalaa"
+  },
+  "acct.TELEBIRR": {
+   "en": "Telebirr merchant wallet",
+   "am": "የቴሌብር ነጋዴ ዋሌት",
+   "om": "Waalleetii daldalaa Telebirr"
+  },
+  "acct.CBE_BIRR": {
+   "en": "CBE Birr wallet",
+   "am": "የሲቢኢ ብር ዋሌት",
+   "om": "Waalleetii CBE Birr"
+  },
+  "user.EMP-002": {
+   "en": "Finance admin",
+   "am": "የፋይናንስ አስተዳዳሪ",
+   "om": "Bulchaa faayinaansii"
+  },
+  "user.EMP-001": {
+   "en": "Branch Manager",
+   "am": "የቅርንጫፍ ሥራ አስኪያጅ",
+   "om": "Hoji Gaggeessaa Damee"
+  },
+  "user.EMP-020": {
+   "en": "Accountant",
+   "am": "የሂሳብ ባለሙያ",
+   "om": "Ogeessa herregaa"
+  }
+ },
+ "ACCOUNTS": {
+  "CASH": {
+   "en": "Cash on hand (safe)",
+   "am": "በእጅ ያለ ጥሬ ገንዘብ (ካዝና)",
+   "om": "Callaa harka jiru (saanduqa)"
+  },
+  "BANK": {
+   "en": "CBE bank account",
+   "am": "የንግድ ባንክ ሂሳብ",
+   "om": "Herrega Baankii Daldalaa"
+  },
+  "TELEBIRR": {
+   "en": "Telebirr merchant wallet",
+   "am": "የቴሌብር ነጋዴ ዋሌት",
+   "om": "Waalleetii daldalaa Telebirr"
+  },
+  "CBE_BIRR": {
+   "en": "CBE Birr wallet",
+   "am": "የሲቢኢ ብር ዋሌት",
+   "om": "Waalleetii CBE Birr"
+  }
+ },
+ "ACCOUNT_IDS": [
+  "CASH",
+  "BANK",
+  "TELEBIRR",
+  "CBE_BIRR"
+ ],
+ "COGS": {
+  "RAW_INGREDIENTS": {
+   "en": "Raw ingredients & food stock",
+   "am": "ጥሬ እቃዎች እና የምግብ ክምችት",
+   "om": "Meeshaalee dheedhii fi kuusaa nyaataa"
+  },
+  "BEVERAGE_BAR": {
+   "en": "Beverage & bar inventory",
+   "am": "የመጠጥ እና የባር ክምችት",
+   "om": "Kuusaa dhugaatii fi baarii"
+  },
+  "PACKAGING_DISPOSABLES": {
+   "en": "Packaging & takeout disposables",
+   "am": "ማሸጊያ እና የሚጣሉ እቃዎች",
+   "om": "Qabiyyee fi meeshaalee darbataman"
+  },
+  "KITCHEN_CONSUMABLES": {
+   "en": "Kitchen consumables",
+   "am": "የወጥ ቤት ፍጆታዎች",
+   "om": "Fayyadamoota kushinaa"
+  },
+  "CLEANING_SANITATION": {
+   "en": "Cleaning & sanitation",
+   "am": "ጽዳት እና ንጽህና",
+   "om": "Qulqullina fi fayyaa"
+  }
+ },
+ "COGS_IDS": [
+  "RAW_INGREDIENTS",
+  "BEVERAGE_BAR",
+  "PACKAGING_DISPOSABLES",
+  "KITCHEN_CONSUMABLES",
+  "CLEANING_SANITATION"
+ ],
+ "COLORS": [
+  "#5bd18b",
+  "#8fd3f4",
+  "#c9a0f2",
+  "#f2c48d",
+  "#f0857a",
+  "#9fb4ff",
+  "#4fc6b7"
+ ],
+ "DAILY_FLOAT": 2000,
+ "DUE_SOON_DAYS": 7,
+ "METHODS": {
+  "CASH": {
+   "en": "Cash",
+   "am": "ጥሬ ገንዘብ",
+   "om": "Callaa"
+  },
+  "TELEBIRR": {
+   "en": "Telebirr",
+   "am": "ቴሌብር",
+   "om": "Telebirr"
+  },
+  "CBE_BIRR": {
+   "en": "CBE Birr",
+   "am": "ሲቢኢ ብር",
+   "om": "CBE Birr"
+  }
+ },
+ "METHOD_ACCOUNT": {
+  "CASH": "CASH",
+  "TELEBIRR": "TELEBIRR",
+  "CBE_BIRR": "CBE_BIRR"
+ },
+ "METHOD_COLOR": {
+  "CASH": "#5bd18b",
+  "TELEBIRR": "#8fd3f4",
+  "CBE_BIRR": "#c9a0f2"
+ },
+ "METHOD_IDS": [
+  "CASH",
+  "TELEBIRR",
+  "CBE_BIRR"
+ ],
+ "OPEX": {
+  "PAYROLL": {
+   "en": "Salaries & employer pension",
+   "am": "ደመወዝ እና የአሰሪ ጡረታ",
+   "om": "Mindaa fi soorama hojjechiisaa"
+  },
+  "RENT": {
+   "en": "Rent",
+   "am": "ኪራይ",
+   "om": "Kiraa"
+  },
+  "UTILITIES": {
+   "en": "Utilities (power, water, gas, internet)",
+   "am": "መገልገያዎች (መብራት፣ ውሃ፣ ጋዝ፣ ኢንተርኔት)",
+   "om": "Tajaajila (ibsaa, bishaan, gaazii, interneetii)"
+  },
+  "MARKETING": {
+   "en": "Marketing",
+   "am": "ማስታወቂያ",
+   "om": "Beeksisa"
+  },
+  "REPAIRS": {
+   "en": "Repairs & maintenance",
+   "am": "ጥገና",
+   "om": "Suphaa fi kunuunsa"
+  },
+  "FEES": {
+   "en": "Bank & wallet fees",
+   "am": "የባንክ እና የዋሌት ክፍያዎች",
+   "om": "Kaffaltii baankii fi waalleetii"
+  },
+  "OTHER_OPEX": {
+   "en": "Other operating costs",
+   "am": "ሌሎች የስራ ወጪዎች",
+   "om": "Baasii hojii biroo"
+  }
+ },
+ "OPEX_IDS": [
+  "PAYROLL",
+  "RENT",
+  "UTILITIES",
+  "MARKETING",
+  "REPAIRS",
+  "FEES",
+  "OTHER_OPEX"
+ ],
+ "PROFIT_TAX_RATE": 0.3,
+ "RECON_TOLERANCE": 50,
+ "USERS": [
+  {
+   "id": "EMP-002",
+   "name": "Abebe Kebede",
+   "role": {
+    "en": "Finance admin",
+    "am": "የፋይናንስ አስተዳዳሪ",
+    "om": "Bulchaa faayinaansii"
+   }
+  },
+  {
+   "id": "EMP-001",
+   "name": "Hanna Tesfaye",
+   "role": {
+    "en": "Branch Manager",
+    "am": "የቅርንጫፍ ሥራ አስኪያጅ",
+    "om": "Hoji Gaggeessaa Damee"
+   }
+  },
+  {
+   "id": "EMP-020",
+   "name": "Mahlet Assefa",
+   "role": {
+    "en": "Accountant",
+    "am": "የሂሳብ ባለሙያ",
+    "om": "Ogeessa herregaa"
+   }
+  }
+ ],
+ "VAT_RATE": 0.15,
+ "WHT_RATE": 0.03,
+ "WHT_RATE_NO_TIN": 0.3,
+ "WHT_THRESHOLD": {
+  "GOODS": 20000,
+  "SERVICES": 10000
+ },
+ "OPENING": {
+  "CASH": 20000,
+  "BANK": 650000,
+  "TELEBIRR": 40000,
+  "CBE_BIRR": 30000
+ },
+ "VENDORS": [
+  {
+   "id": "V-01",
+   "name": "Merkato Fresh Produce",
+   "tin": "0041235567",
+   "vatRegistered": false,
+   "supplyKind": "GOODS",
+   "category": "RAW_INGREDIENTS",
+   "termsDays": 7,
+   "phone": "+251 911 400 101"
+  },
+  {
+   "id": "V-02",
+   "name": "Sheger Meat & Poultry PLC",
+   "tin": "0052318890",
+   "vatRegistered": true,
+   "supplyKind": "GOODS",
+   "category": "RAW_INGREDIENTS",
+   "termsDays": 14,
+   "phone": "+251 911 400 202"
+  },
+  {
+   "id": "V-03",
+   "name": "Sululta Dairy Union",
+   "tin": "0063321104",
+   "vatRegistered": true,
+   "supplyKind": "GOODS",
+   "category": "RAW_INGREDIENTS",
+   "termsDays": 14,
+   "phone": "+251 911 400 303"
+  },
+  {
+   "id": "V-04",
+   "name": "Gojjam Teff & Injera Supply",
+   "tin": "0074411209",
+   "vatRegistered": false,
+   "supplyKind": "GOODS",
+   "category": "RAW_INGREDIENTS",
+   "termsDays": 7,
+   "phone": "+251 911 400 404"
+  },
+  {
+   "id": "V-05",
+   "name": "Ethio Beverage Distributors",
+   "tin": "0085521330",
+   "vatRegistered": true,
+   "supplyKind": "GOODS",
+   "category": "BEVERAGE_BAR",
+   "termsDays": 30,
+   "phone": "+251 911 400 505"
+  },
+  {
+   "id": "V-06",
+   "name": "Highland Coffee Roasters",
+   "tin": "0096631441",
+   "vatRegistered": true,
+   "supplyKind": "GOODS",
+   "category": "BEVERAGE_BAR",
+   "termsDays": 21,
+   "phone": "+251 911 400 606"
+  },
+  {
+   "id": "V-07",
+   "name": "Addis Packaging PLC",
+   "tin": "0107741552",
+   "vatRegistered": true,
+   "supplyKind": "GOODS",
+   "category": "PACKAGING_DISPOSABLES",
+   "termsDays": 30,
+   "phone": "+251 911 400 707"
+  },
+  {
+   "id": "V-08",
+   "name": "Bole Kitchen Supply",
+   "tin": "0118851663",
+   "vatRegistered": true,
+   "supplyKind": "GOODS",
+   "category": "KITCHEN_CONSUMABLES",
+   "termsDays": 30,
+   "phone": "+251 911 400 808"
+  },
+  {
+   "id": "V-09",
+   "name": "Sheger Cleaning Supplies",
+   "tin": "0129961774",
+   "vatRegistered": true,
+   "supplyKind": "GOODS",
+   "category": "CLEANING_SANITATION",
+   "termsDays": 30,
+   "phone": "+251 911 400 909"
+  },
+  {
+   "id": "V-10",
+   "name": "Bole Properties (landlord)",
+   "tin": "0131071885",
+   "vatRegistered": true,
+   "supplyKind": "SERVICES",
+   "category": "RENT",
+   "termsDays": 5,
+   "phone": "+251 911 401 010"
+  },
+  {
+   "id": "V-11",
+   "name": "City power & water",
+   "tin": "0142181996",
+   "vatRegistered": true,
+   "supplyKind": "SERVICES",
+   "category": "UTILITIES",
+   "termsDays": 10,
+   "phone": "+251 911 401 111"
+  },
+  {
+   "id": "V-12",
+   "name": "Nile Gas Cylinders",
+   "tin": "0153292107",
+   "vatRegistered": true,
+   "supplyKind": "GOODS",
+   "category": "UTILITIES",
+   "termsDays": 7,
+   "phone": "+251 911 401 212"
+  },
+  {
+   "id": "V-13",
+   "name": "Habesha Print & Ads",
+   "tin": "0164303218",
+   "vatRegistered": true,
+   "supplyKind": "SERVICES",
+   "category": "MARKETING",
+   "termsDays": 30,
+   "phone": "+251 911 401 313"
+  },
+  {
+   "id": "V-14",
+   "name": "Fix-It Kitchen Repairs",
+   "tin": "",
+   "vatRegistered": false,
+   "supplyKind": "SERVICES",
+   "category": "REPAIRS",
+   "termsDays": 7,
+   "phone": "+251 911 401 414"
+  }
+ ],
+ "generated": {
+  "start": "2026-06-01",
+  "sales": [
+   {
+    "date": "2026-06-01",
+    "gross": 61946,
+    "vat": 8079.91,
+    "byMethod": {
+     "CASH": 32983.87,
+     "TELEBIRR": 20312.46,
+     "CBE_BIRR": 8649.67
+    },
+    "food": 41705.04,
+    "beverage": 12161.05
+   },
+   {
+    "date": "2026-06-02",
+    "gross": 65659,
+    "vat": 8564.22,
+    "byMethod": {
+     "CASH": 31348.03,
+     "TELEBIRR": 19746.13,
+     "CBE_BIRR": 14564.84
+    },
+    "food": 44675.48,
+    "beverage": 12419.3
+   },
+   {
+    "date": "2026-06-03",
+    "gross": 70313,
+    "vat": 9171.26,
+    "byMethod": {
+     "CASH": 36954.01,
+     "TELEBIRR": 23985.4,
+     "CBE_BIRR": 9373.59
+    },
+    "food": 46064.91,
+    "beverage": 15076.83
+   },
+   {
+    "date": "2026-06-04",
+    "gross": 57692,
+    "vat": 7525.04,
+    "byMethod": {
+     "CASH": 28346.98,
+     "TELEBIRR": 16914.63,
+     "CBE_BIRR": 12430.39
+    },
+    "food": 38867.44,
+    "beverage": 11299.52
+   },
+   {
+    "date": "2026-06-05",
+    "gross": 71853,
+    "vat": 9372.13,
+    "byMethod": {
+     "CASH": 34657.76,
+     "TELEBIRR": 21571.59,
+     "CBE_BIRR": 15623.65
+    },
+    "food": 49589.47,
+    "beverage": 12891.4
+   },
+   {
+    "date": "2026-06-06",
+    "gross": 73749,
+    "vat": 9619.43,
+    "byMethod": {
+     "CASH": 38074.42,
+     "TELEBIRR": 20642.63,
+     "CBE_BIRR": 15031.95
+    },
+    "food": 48207.27,
+    "beverage": 15922.3
+   },
+   {
+    "date": "2026-06-07",
+    "gross": 58249,
+    "vat": 7597.7,
+    "byMethod": {
+     "CASH": 31003.2,
+     "TELEBIRR": 20198.67,
+     "CBE_BIRR": 7047.13
+    },
+    "food": 39385.97,
+    "beverage": 11265.33
+   },
+   {
+    "date": "2026-06-08",
+    "gross": 57023,
+    "vat": 7437.78,
+    "byMethod": {
+     "CASH": 30808.39,
+     "TELEBIRR": 18234.31,
+     "CBE_BIRR": 7980.3
+    },
+    "food": 37729.75,
+    "beverage": 11855.47
+   },
+   {
+    "date": "2026-06-09",
+    "gross": 59556,
+    "vat": 7768.17,
+    "byMethod": {
+     "CASH": 30219.28,
+     "TELEBIRR": 17709.35,
+     "CBE_BIRR": 11627.37
+    },
+    "food": 38887.35,
+    "beverage": 12900.48
+   },
+   {
+    "date": "2026-06-10",
+    "gross": 56350,
+    "vat": 7350,
+    "byMethod": {
+     "CASH": 28112.32,
+     "TELEBIRR": 15514.75,
+     "CBE_BIRR": 12722.93
+    },
+    "food": 37193.96,
+    "beverage": 11806.04
+   },
+   {
+    "date": "2026-06-11",
+    "gross": 49820,
+    "vat": 6498.26,
+    "byMethod": {
+     "CASH": 23593.52,
+     "TELEBIRR": 16957.11,
+     "CBE_BIRR": 9269.37
+    },
+    "food": 33868.78,
+    "beverage": 9452.96
+   },
+   {
+    "date": "2026-06-12",
+    "gross": 68841,
+    "vat": 8979.26,
+    "byMethod": {
+     "CASH": 35626.12,
+     "TELEBIRR": 22258.76,
+     "CBE_BIRR": 10956.12
+    },
+    "food": 44519.53,
+    "beverage": 15342.21
+   },
+   {
+    "date": "2026-06-13",
+    "gross": 86243,
+    "vat": 11249.09,
+    "byMethod": {
+     "CASH": 45464.48,
+     "TELEBIRR": 23810.01,
+     "CBE_BIRR": 16968.51
+    },
+    "food": 57093.17,
+    "beverage": 17900.74
+   },
+   {
+    "date": "2026-06-14",
+    "gross": 80877,
+    "vat": 10549.17,
+    "byMethod": {
+     "CASH": 39509.79,
+     "TELEBIRR": 22450.86,
+     "CBE_BIRR": 18916.35
+    },
+    "food": 54635.34,
+    "beverage": 15692.49
+   },
+   {
+    "date": "2026-06-15",
+    "gross": 54612,
+    "vat": 7123.3,
+    "byMethod": {
+     "CASH": 26113.06,
+     "TELEBIRR": 17177.83,
+     "CBE_BIRR": 11321.11
+    },
+    "food": 36469.46,
+    "beverage": 11019.24
+   },
+   {
+    "date": "2026-06-16",
+    "gross": 71249,
+    "vat": 9293.35,
+    "byMethod": {
+     "CASH": 35218.75,
+     "TELEBIRR": 21628.78,
+     "CBE_BIRR": 14401.47
+    },
+    "food": 46577.36,
+    "beverage": 15378.29
+   },
+   {
+    "date": "2026-06-17",
+    "gross": 46014,
+    "vat": 6001.83,
+    "byMethod": {
+     "CASH": 23952.22,
+     "TELEBIRR": 14769.01,
+     "CBE_BIRR": 7292.77
+    },
+    "food": 30251.59,
+    "beverage": 9760.58
+   },
+   {
+    "date": "2026-06-18",
+    "gross": 56594,
+    "vat": 7381.83,
+    "byMethod": {
+     "CASH": 30665.27,
+     "TELEBIRR": 17727.57,
+     "CBE_BIRR": 8201.16
+    },
+    "food": 36438.98,
+    "beverage": 12773.19
+   },
+   {
+    "date": "2026-06-19",
+    "gross": 68327,
+    "vat": 8912.22,
+    "byMethod": {
+     "CASH": 37925.43,
+     "TELEBIRR": 20109.07,
+     "CBE_BIRR": 10292.5
+    },
+    "food": 46912.21,
+    "beverage": 12502.57
+   },
+   {
+    "date": "2026-06-20",
+    "gross": 60244,
+    "vat": 7857.91,
+    "byMethod": {
+     "CASH": 31809.13,
+     "TELEBIRR": 20960.92,
+     "CBE_BIRR": 7473.95
+    },
+    "food": 39384.72,
+    "beverage": 13001.37
+   },
+   {
+    "date": "2026-06-21",
+    "gross": 84447,
+    "vat": 11014.83,
+    "byMethod": {
+     "CASH": 43848.59,
+     "TELEBIRR": 29426.69,
+     "CBE_BIRR": 11171.72
+    },
+    "food": 56104.44,
+    "beverage": 17327.73
+   },
+   {
+    "date": "2026-06-22",
+    "gross": 53653,
+    "vat": 6998.22,
+    "byMethod": {
+     "CASH": 28426.9,
+     "TELEBIRR": 15768.3,
+     "CBE_BIRR": 9457.8
+    },
+    "food": 35187.48,
+    "beverage": 11467.3
+   },
+   {
+    "date": "2026-06-23",
+    "gross": 64115,
+    "vat": 8362.83,
+    "byMethod": {
+     "CASH": 30715.53,
+     "TELEBIRR": 18104.12,
+     "CBE_BIRR": 15295.35
+    },
+    "food": 43733.68,
+    "beverage": 12018.49
+   },
+   {
+    "date": "2026-06-24",
+    "gross": 66205,
+    "vat": 8635.43,
+    "byMethod": {
+     "CASH": 34688.36,
+     "TELEBIRR": 22755.21,
+     "CBE_BIRR": 8761.43
+    },
+    "food": 42720.08,
+    "beverage": 14849.49
+   },
+   {
+    "date": "2026-06-25",
+    "gross": 56504,
+    "vat": 7370.09,
+    "byMethod": {
+     "CASH": 30235.79,
+     "TELEBIRR": 15303.74,
+     "CBE_BIRR": 10964.47
+    },
+    "food": 38117.45,
+    "beverage": 11016.46
+   },
+   {
+    "date": "2026-06-26",
+    "gross": 49807,
+    "vat": 6496.57,
+    "byMethod": {
+     "CASH": 24185.18,
+     "TELEBIRR": 15954.35,
+     "CBE_BIRR": 9667.47
+    },
+    "food": 32677.84,
+    "beverage": 10632.59
+   },
+   {
+    "date": "2026-06-27",
+    "gross": 77165,
+    "vat": 10065,
+    "byMethod": {
+     "CASH": 37088.28,
+     "TELEBIRR": 25807.28,
+     "CBE_BIRR": 14269.44
+    },
+    "food": 50672.31,
+    "beverage": 16427.69
+   },
+   {
+    "date": "2026-06-28",
+    "gross": 72712,
+    "vat": 9484.17,
+    "byMethod": {
+     "CASH": 35394.54,
+     "TELEBIRR": 22843.63,
+     "CBE_BIRR": 14473.83
+    },
+    "food": 48491.52,
+    "beverage": 14736.31
+   },
+   {
+    "date": "2026-06-29",
+    "gross": 60251,
+    "vat": 7858.83,
+    "byMethod": {
+     "CASH": 30435.71,
+     "TELEBIRR": 17836.09,
+     "CBE_BIRR": 11979.2
+    },
+    "food": 40419.27,
+    "beverage": 11972.9
+   },
+   {
+    "date": "2026-06-30",
+    "gross": 63772,
+    "vat": 8318.09,
+    "byMethod": {
+     "CASH": 34930.98,
+     "TELEBIRR": 20297.35,
+     "CBE_BIRR": 8543.67
+    },
+    "food": 41902.74,
+    "beverage": 13551.17
+   },
+   {
+    "date": "2026-07-01",
+    "gross": 61380,
+    "vat": 8006.09,
+    "byMethod": {
+     "CASH": 29068.39,
+     "TELEBIRR": 19424.6,
+     "CBE_BIRR": 12887.01
+    },
+    "food": 39537.1,
+    "beverage": 13836.81
+   },
+   {
+    "date": "2026-07-02",
+    "gross": 57864,
+    "vat": 7547.48,
+    "byMethod": {
+     "CASH": 30700.97,
+     "TELEBIRR": 17597.97,
+     "CBE_BIRR": 9565.06
+    },
+    "food": 39510.85,
+    "beverage": 10805.67
+   },
+   {
+    "date": "2026-07-03",
+    "gross": 58202,
+    "vat": 7591.57,
+    "byMethod": {
+     "CASH": 29027.71,
+     "TELEBIRR": 19971.97,
+     "CBE_BIRR": 9202.32
+    },
+    "food": 39878.04,
+    "beverage": 10732.39
+   },
+   {
+    "date": "2026-07-04",
+    "gross": 71198,
+    "vat": 9286.7,
+    "byMethod": {
+     "CASH": 33783.39,
+     "TELEBIRR": 23748.64,
+     "CBE_BIRR": 13665.97
+    },
+    "food": 48464.2,
+    "beverage": 13447.1
+   },
+   {
+    "date": "2026-07-05",
+    "gross": 63888,
+    "vat": 8333.22,
+    "byMethod": {
+     "CASH": 31608.03,
+     "TELEBIRR": 22059.97,
+     "CBE_BIRR": 10220
+    },
+    "food": 41649.84,
+    "beverage": 13904.94
+   },
+   {
+    "date": "2026-07-06",
+    "gross": 50677,
+    "vat": 6610.04,
+    "byMethod": {
+     "CASH": 23436.72,
+     "TELEBIRR": 15990.21,
+     "CBE_BIRR": 11250.07
+    },
+    "food": 34221.52,
+    "beverage": 9845.44
+   },
+   {
+    "date": "2026-07-07",
+    "gross": 65519,
+    "vat": 8545.96,
+    "byMethod": {
+     "CASH": 31892.55,
+     "TELEBIRR": 22142.06,
+     "CBE_BIRR": 11484.39
+    },
+    "food": 43980.57,
+    "beverage": 12992.47
+   },
+   {
+    "date": "2026-07-08",
+    "gross": 69725,
+    "vat": 9094.57,
+    "byMethod": {
+     "CASH": 38270.63,
+     "TELEBIRR": 18932.71,
+     "CBE_BIRR": 12521.66
+    },
+    "food": 46631.58,
+    "beverage": 13998.85
+   },
+   {
+    "date": "2026-07-09",
+    "gross": 59419,
+    "vat": 7750.3,
+    "byMethod": {
+     "CASH": 32023.67,
+     "TELEBIRR": 17713.5,
+     "CBE_BIRR": 9681.83
+    },
+    "food": 39161.18,
+    "beverage": 12507.52
+   },
+   {
+    "date": "2026-07-10",
+    "gross": 51202,
+    "vat": 6678.52,
+    "byMethod": {
+     "CASH": 27006.11,
+     "TELEBIRR": 14444.42,
+     "CBE_BIRR": 9751.47
+    },
+    "food": 33272.76,
+    "beverage": 11250.72
+   },
+   {
+    "date": "2026-07-11",
+    "gross": 71101,
+    "vat": 9274.04,
+    "byMethod": {
+     "CASH": 39157.15,
+     "TELEBIRR": 22973.32,
+     "CBE_BIRR": 8970.53
+    },
+    "food": 47051.12,
+    "beverage": 14775.84
+   },
+   {
+    "date": "2026-07-12",
+    "gross": 61466,
+    "vat": 8017.3,
+    "byMethod": {
+     "CASH": 30535.41,
+     "TELEBIRR": 18499.99,
+     "CBE_BIRR": 12430.6
+    },
+    "food": 41764.09,
+    "beverage": 11684.61
+   },
+   {
+    "date": "2026-07-13",
+    "gross": 68450,
+    "vat": 8928.26,
+    "byMethod": {
+     "CASH": 34435.99,
+     "TELEBIRR": 22854.2,
+     "CBE_BIRR": 11159.81
+    },
+    "food": 44461.22,
+    "beverage": 15060.52
+   },
+   {
+    "date": "2026-07-14",
+    "gross": 60538,
+    "vat": 7896.26,
+    "byMethod": {
+     "CASH": 30668.57,
+     "TELEBIRR": 18165.4,
+     "CBE_BIRR": 11704.03
+    },
+    "food": 39291.97,
+    "beverage": 13349.77
+   },
+   {
+    "date": "2026-07-15",
+    "gross": 47017,
+    "vat": 6132.65,
+    "byMethod": {
+     "CASH": 21813.41,
+     "TELEBIRR": 16188.57,
+     "CBE_BIRR": 9015.02
+    },
+    "food": 30908.95,
+    "beverage": 9975.4
+   },
+   {
+    "date": "2026-07-16",
+    "gross": 57864,
+    "vat": 7547.48,
+    "byMethod": {
+     "CASH": 31815.47,
+     "TELEBIRR": 18835.64,
+     "CBE_BIRR": 7212.89
+    },
+    "food": 38641.51,
+    "beverage": 11675.01
+   },
+   {
+    "date": "2026-07-17",
+    "gross": 68928,
+    "vat": 8990.61,
+    "byMethod": {
+     "CASH": 32801.72,
+     "TELEBIRR": 21120.67,
+     "CBE_BIRR": 15005.61
+    },
+    "food": 46361.87,
+    "beverage": 13575.52
+   },
+   {
+    "date": "2026-07-18",
+    "gross": 83243,
+    "vat": 10857.78,
+    "byMethod": {
+     "CASH": 41087.15,
+     "TELEBIRR": 27972.14,
+     "CBE_BIRR": 14183.71
+    },
+    "food": 57371.13,
+    "beverage": 15014.09
+   },
+   {
+    "date": "2026-07-19",
+    "gross": 63857,
+    "vat": 8329.17,
+    "byMethod": {
+     "CASH": 34155.56,
+     "TELEBIRR": 21609.45,
+     "CBE_BIRR": 8091.99
+    },
+    "food": 42851.56,
+    "beverage": 12676.27
+   },
+   {
+    "date": "2026-07-20",
+    "gross": 52825,
+    "vat": 6890.22,
+    "byMethod": {
+     "CASH": 28303.33,
+     "TELEBIRR": 18291.15,
+     "CBE_BIRR": 6230.52
+    },
+    "food": 36462.54,
+    "beverage": 9472.24
+   },
+   {
+    "date": "2026-07-21",
+    "gross": 49439,
+    "vat": 6448.57,
+    "byMethod": {
+     "CASH": 23348.72,
+     "TELEBIRR": 13488.06,
+     "CBE_BIRR": 12602.22
+    },
+    "food": 34218.42,
+    "beverage": 8772.01
+   },
+   {
+    "date": "2026-07-22",
+    "gross": 50325,
+    "vat": 6564.13,
+    "byMethod": {
+     "CASH": 25973.84,
+     "TELEBIRR": 14096.18,
+     "CBE_BIRR": 10254.98
+    },
+    "food": 32795.03,
+    "beverage": 10965.84
+   },
+   {
+    "date": "2026-07-23",
+    "gross": 65357,
+    "vat": 8524.83,
+    "byMethod": {
+     "CASH": 34175.08,
+     "TELEBIRR": 18396.95,
+     "CBE_BIRR": 12784.97
+    },
+    "food": 44562.57,
+    "beverage": 12269.6
+   },
+   {
+    "date": "2026-07-24",
+    "gross": 64980,
+    "vat": 8475.65,
+    "byMethod": {
+     "CASH": 30599.56,
+     "TELEBIRR": 20258.15,
+     "CBE_BIRR": 14122.29
+    },
+    "food": 44106.1,
+    "beverage": 12398.25
+   },
+   {
+    "date": "2026-07-25",
+    "gross": 72597,
+    "vat": 9469.17,
+    "byMethod": {
+     "CASH": 40630.94,
+     "TELEBIRR": 25343.9,
+     "CBE_BIRR": 6622.16
+    },
+    "food": 48509.5,
+    "beverage": 14618.33
+   },
+   {
+    "date": "2026-07-26",
+    "gross": 68478,
+    "vat": 8931.91,
+    "byMethod": {
+     "CASH": 34603.34,
+     "TELEBIRR": 20950.5,
+     "CBE_BIRR": 12924.16
+    },
+    "food": 45190.01,
+    "beverage": 14356.08
+   },
+   {
+    "date": "2026-07-27",
+    "gross": 64111,
+    "vat": 8362.3,
+    "byMethod": {
+     "CASH": 32426.53,
+     "TELEBIRR": 21656.77,
+     "CBE_BIRR": 10027.7
+    },
+    "food": 42415.45,
+    "beverage": 13333.25
+   },
+   {
+    "date": "2026-07-28",
+    "gross": 72992,
+    "vat": 9520.7,
+    "byMethod": {
+     "CASH": 38571.9,
+     "TELEBIRR": 20012.45,
+     "CBE_BIRR": 14407.65
+    },
+    "food": 48604.77,
+    "beverage": 14866.53
+   },
+   {
+    "date": "2026-07-29",
+    "gross": 51195,
+    "vat": 6677.61,
+    "byMethod": {
+     "CASH": 28174.82,
+     "TELEBIRR": 16737.13,
+     "CBE_BIRR": 6283.05
+    },
+    "food": 35158,
+    "beverage": 9359.39
+   },
+   {
+    "date": "2026-07-30",
+    "gross": 58332,
+    "vat": 7608.52,
+    "byMethod": {
+     "CASH": 31666.72,
+     "TELEBIRR": 18299.61,
+     "CBE_BIRR": 8365.67
+    },
+    "food": 38594.27,
+    "beverage": 12129.21
+   },
+   {
+    "date": "2026-07-31",
+    "gross": 69150,
+    "vat": 9019.57,
+    "byMethod": {
+     "CASH": 37651.99,
+     "TELEBIRR": 22486.01,
+     "CBE_BIRR": 9012
+    },
+    "food": 46170.82,
+    "beverage": 13959.61
+   },
+   {
+    "date": "2026-08-01",
+    "gross": 64056,
+    "vat": 8355.13,
+    "byMethod": {
+     "CASH": 29683.17,
+     "TELEBIRR": 22204.27,
+     "CBE_BIRR": 12168.56
+    },
+    "food": 42511.06,
+    "beverage": 13189.81
+   },
+   {
+    "date": "2026-08-02",
+    "gross": 82245,
+    "vat": 10727.61,
+    "byMethod": {
+     "CASH": 45565.8,
+     "TELEBIRR": 28168.77,
+     "CBE_BIRR": 8510.43
+    },
+    "food": 54764.84,
+    "beverage": 16752.55
+   },
+   {
+    "date": "2026-08-03",
+    "gross": 49060,
+    "vat": 6399.13,
+    "byMethod": {
+     "CASH": 23321.07,
+     "TELEBIRR": 14679.28,
+     "CBE_BIRR": 11059.65
+    },
+    "food": 34121.49,
+    "beverage": 8539.38
+   },
+   {
+    "date": "2026-08-04",
+    "gross": 49366,
+    "vat": 6439.04,
+    "byMethod": {
+     "CASH": 24002.77,
+     "TELEBIRR": 15835.42,
+     "CBE_BIRR": 9527.81
+    },
+    "food": 33692.41,
+    "beverage": 9234.55
+   },
+   {
+    "date": "2026-08-05",
+    "gross": 49648,
+    "vat": 6475.83,
+    "byMethod": {
+     "CASH": 26925.37,
+     "TELEBIRR": 13513.9,
+     "CBE_BIRR": 9208.73
+    },
+    "food": 32702.06,
+    "beverage": 10470.11
+   },
+   {
+    "date": "2026-08-06",
+    "gross": 48597,
+    "vat": 6338.74,
+    "byMethod": {
+     "CASH": 26041.07,
+     "TELEBIRR": 15811.94,
+     "CBE_BIRR": 6743.99
+    },
+    "food": 31606.95,
+    "beverage": 10651.31
+   },
+   {
+    "date": "2026-08-07",
+    "gross": 63143,
+    "vat": 8236.04,
+    "byMethod": {
+     "CASH": 29661.9,
+     "TELEBIRR": 18424.18,
+     "CBE_BIRR": 15056.92
+    },
+    "food": 43157.12,
+    "beverage": 11749.84
+   },
+   {
+    "date": "2026-08-08",
+    "gross": 82279,
+    "vat": 10732.04,
+    "byMethod": {
+     "CASH": 44920.02,
+     "TELEBIRR": 24570.07,
+     "CBE_BIRR": 12788.91
+    },
+    "food": 56836.69,
+    "beverage": 14710.27
+   },
+   {
+    "date": "2026-08-09",
+    "gross": 73888,
+    "vat": 9637.57,
+    "byMethod": {
+     "CASH": 34032.19,
+     "TELEBIRR": 21137.29,
+     "CBE_BIRR": 18718.52
+    },
+    "food": 48134.95,
+    "beverage": 16115.48
+   },
+   {
+    "date": "2026-08-10",
+    "gross": 66191,
+    "vat": 8633.61,
+    "byMethod": {
+     "CASH": 34808.67,
+     "TELEBIRR": 23153.09,
+     "CBE_BIRR": 8229.24
+    },
+    "food": 44325.62,
+    "beverage": 13231.77
+   },
+   {
+    "date": "2026-08-11",
+    "gross": 49459,
+    "vat": 6451.17,
+    "byMethod": {
+     "CASH": 24837.28,
+     "TELEBIRR": 17013.07,
+     "CBE_BIRR": 7608.65
+    },
+    "food": 33594.97,
+    "beverage": 9412.86
+   },
+   {
+    "date": "2026-08-12",
+    "gross": 56807,
+    "vat": 7409.61,
+    "byMethod": {
+     "CASH": 30649.25,
+     "TELEBIRR": 19312.86,
+     "CBE_BIRR": 6844.89
+    },
+    "food": 37111.79,
+    "beverage": 12285.6
+   },
+   {
+    "date": "2026-08-13",
+    "gross": 46652,
+    "vat": 6085.04,
+    "byMethod": {
+     "CASH": 21771.6,
+     "TELEBIRR": 13605.19,
+     "CBE_BIRR": 11275.21
+    },
+    "food": 30521.31,
+    "beverage": 10045.65
+   },
+   {
+    "date": "2026-08-14",
+    "gross": 53641,
+    "vat": 6996.65,
+    "byMethod": {
+     "CASH": 28106.68,
+     "TELEBIRR": 16075.96,
+     "CBE_BIRR": 9458.36
+    },
+    "food": 36829.57,
+    "beverage": 9814.78
+   },
+   {
+    "date": "2026-08-15",
+    "gross": 87054,
+    "vat": 11354.87,
+    "byMethod": {
+     "CASH": 40609.39,
+     "TELEBIRR": 28041.88,
+     "CBE_BIRR": 18402.73
+    },
+    "food": 57547.82,
+    "beverage": 18151.31
+   },
+   {
+    "date": "2026-08-16",
+    "gross": 75326,
+    "vat": 9825.13,
+    "byMethod": {
+     "CASH": 40116.35,
+     "TELEBIRR": 25325.21,
+     "CBE_BIRR": 9884.44
+    },
+    "food": 51043.06,
+    "beverage": 14457.81
+   },
+   {
+    "date": "2026-08-17",
+    "gross": 55692,
+    "vat": 7264.17,
+    "byMethod": {
+     "CASH": 30280.76,
+     "TELEBIRR": 16830.33,
+     "CBE_BIRR": 8580.91
+    },
+    "food": 38730.78,
+    "beverage": 9697.05
+   },
+   {
+    "date": "2026-08-18",
+    "gross": 49196,
+    "vat": 6416.87,
+    "byMethod": {
+     "CASH": 22891.8,
+     "TELEBIRR": 15339.52,
+     "CBE_BIRR": 10964.68
+    },
+    "food": 33677.34,
+    "beverage": 9101.79
+   },
+   {
+    "date": "2026-08-19",
+    "gross": 64632,
+    "vat": 8430.26,
+    "byMethod": {
+     "CASH": 33767.28,
+     "TELEBIRR": 21858.85,
+     "CBE_BIRR": 9005.87
+    },
+    "food": 44418.04,
+    "beverage": 11783.7
+   },
+   {
+    "date": "2026-08-20",
+    "gross": 68406,
+    "vat": 8922.52,
+    "byMethod": {
+     "CASH": 32516.64,
+     "TELEBIRR": 22573.91,
+     "CBE_BIRR": 13315.45
+    },
+    "food": 46460.43,
+    "beverage": 13023.05
+   },
+   {
+    "date": "2026-08-21",
+    "gross": 56375,
+    "vat": 7353.26,
+    "byMethod": {
+     "CASH": 29371.57,
+     "TELEBIRR": 15434.08,
+     "CBE_BIRR": 11569.35
+    },
+    "food": 38824.92,
+    "beverage": 10196.82
+   },
+   {
+    "date": "2026-08-22",
+    "gross": 73600,
+    "vat": 9600,
+    "byMethod": {
+     "CASH": 37782.86,
+     "TELEBIRR": 24495.1,
+     "CBE_BIRR": 11322.04
+    },
+    "food": 47980.99,
+    "beverage": 16019.01
+   },
+   {
+    "date": "2026-08-23",
+    "gross": 83787,
+    "vat": 10928.74,
+    "byMethod": {
+     "CASH": 43520.33,
+     "TELEBIRR": 25341.79,
+     "CBE_BIRR": 14924.88
+    },
+    "food": 56472.07,
+    "beverage": 16386.19
+   },
+   {
+    "date": "2026-08-24",
+    "gross": 66782,
+    "vat": 8710.7,
+    "byMethod": {
+     "CASH": 33419.36,
+     "TELEBIRR": 19348.52,
+     "CBE_BIRR": 14014.12
+    },
+    "food": 44635.06,
+    "beverage": 13436.24
+   },
+   {
+    "date": "2026-08-25",
+    "gross": 63505,
+    "vat": 8283.26,
+    "byMethod": {
+     "CASH": 33026.83,
+     "TELEBIRR": 18574.41,
+     "CBE_BIRR": 11903.76
+    },
+    "food": 41241.34,
+    "beverage": 13980.4
+   },
+   {
+    "date": "2026-08-26",
+    "gross": 62555,
+    "vat": 8159.35,
+    "byMethod": {
+     "CASH": 32749.37,
+     "TELEBIRR": 21470.84,
+     "CBE_BIRR": 8334.79
+    },
+    "food": 41285.53,
+    "beverage": 13110.12
+   },
+   {
+    "date": "2026-08-27",
+    "gross": 48911,
+    "vat": 6379.7,
+    "byMethod": {
+     "CASH": 22853,
+     "TELEBIRR": 14881.28,
+     "CBE_BIRR": 11176.72
+    },
+    "food": 32304.84,
+    "beverage": 10226.46
+   },
+   {
+    "date": "2026-08-28",
+    "gross": 47362,
+    "vat": 6177.65,
+    "byMethod": {
+     "CASH": 22858.9,
+     "TELEBIRR": 16373.53,
+     "CBE_BIRR": 8129.57
+    },
+    "food": 31181.72,
+    "beverage": 10002.63
+   },
+   {
+    "date": "2026-08-29",
+    "gross": 62594,
+    "vat": 8164.43,
+    "byMethod": {
+     "CASH": 32007.27,
+     "TELEBIRR": 19884.31,
+     "CBE_BIRR": 10702.42
+    },
+    "food": 42669.91,
+    "beverage": 11759.66
+   },
+   {
+    "date": "2026-08-30",
+    "gross": 67247,
+    "vat": 8771.35,
+    "byMethod": {
+     "CASH": 32975,
+     "TELEBIRR": 22570.49,
+     "CBE_BIRR": 11701.51
+    },
+    "food": 43865.53,
+    "beverage": 14610.12
+   },
+   {
+    "date": "2026-08-31",
+    "gross": 68827,
+    "vat": 8977.43,
+    "byMethod": {
+     "CASH": 34474.13,
+     "TELEBIRR": 20480.59,
+     "CBE_BIRR": 13872.28
+    },
+    "food": 47001.18,
+    "beverage": 12848.39
+   },
+   {
+    "date": "2026-09-01",
+    "gross": 51953,
+    "vat": 6776.48,
+    "byMethod": {
+     "CASH": 27420.61,
+     "TELEBIRR": 16179.6,
+     "CBE_BIRR": 8352.79
+    },
+    "food": 35696.27,
+    "beverage": 9480.25
+   },
+   {
+    "date": "2026-09-02",
+    "gross": 58121,
+    "vat": 7581,
+    "byMethod": {
+     "CASH": 31782.76,
+     "TELEBIRR": 18464.03,
+     "CBE_BIRR": 7874.21
+    },
+    "food": 38055.76,
+    "beverage": 12484.24
+   },
+   {
+    "date": "2026-09-03",
+    "gross": 69598,
+    "vat": 9078,
+    "byMethod": {
+     "CASH": 35028.95,
+     "TELEBIRR": 19594.44,
+     "CBE_BIRR": 14974.61
+    },
+    "food": 44860.64,
+    "beverage": 15659.36
+   },
+   {
+    "date": "2026-09-04",
+    "gross": 63915,
+    "vat": 8336.74,
+    "byMethod": {
+     "CASH": 32782.91,
+     "TELEBIRR": 17395.15,
+     "CBE_BIRR": 13736.94
+    },
+    "food": 41823.1,
+    "beverage": 13755.16
+   },
+   {
+    "date": "2026-09-05",
+    "gross": 72194,
+    "vat": 9416.61,
+    "byMethod": {
+     "CASH": 37649.54,
+     "TELEBIRR": 23652.9,
+     "CBE_BIRR": 10891.56
+    },
+    "food": 47774.17,
+    "beverage": 15003.22
+   },
+   {
+    "date": "2026-09-06",
+    "gross": 74555,
+    "vat": 9724.57,
+    "byMethod": {
+     "CASH": 40747.19,
+     "TELEBIRR": 22514.05,
+     "CBE_BIRR": 11293.76
+    },
+    "food": 50529.48,
+    "beverage": 14300.95
+   },
+   {
+    "date": "2026-09-07",
+    "gross": 55435,
+    "vat": 7230.65,
+    "byMethod": {
+     "CASH": 30108.46,
+     "TELEBIRR": 16951.45,
+     "CBE_BIRR": 8375.09
+    },
+    "food": 36956.9,
+    "beverage": 11247.45
+   },
+   {
+    "date": "2026-09-08",
+    "gross": 56101,
+    "vat": 7317.52,
+    "byMethod": {
+     "CASH": 30625.04,
+     "TELEBIRR": 18568.59,
+     "CBE_BIRR": 6907.37
+    },
+    "food": 36941.64,
+    "beverage": 11841.84
+   },
+   {
+    "date": "2026-09-09",
+    "gross": 69723,
+    "vat": 9094.3,
+    "byMethod": {
+     "CASH": 34520.2,
+     "TELEBIRR": 18998.72,
+     "CBE_BIRR": 16204.08
+    },
+    "food": 47650.78,
+    "beverage": 12977.92
+   },
+   {
+    "date": "2026-09-10",
+    "gross": 69506,
+    "vat": 9066,
+    "byMethod": {
+     "CASH": 36681.28,
+     "TELEBIRR": 19057.6,
+     "CBE_BIRR": 13767.12
+    },
+    "food": 46615.35,
+    "beverage": 13824.65
+   },
+   {
+    "date": "2026-09-11",
+    "gross": 63921,
+    "vat": 8337.52,
+    "byMethod": {
+     "CASH": 32427.68,
+     "TELEBIRR": 18569.73,
+     "CBE_BIRR": 12923.59
+    },
+    "food": 44031.1,
+    "beverage": 11552.38
+   },
+   {
+    "date": "2026-09-12",
+    "gross": 64792,
+    "vat": 8451.13,
+    "byMethod": {
+     "CASH": 34031.59,
+     "TELEBIRR": 20380.99,
+     "CBE_BIRR": 10379.42
+    },
+    "food": 42666.06,
+    "beverage": 13674.81
+   },
+   {
+    "date": "2026-09-13",
+    "gross": 74866,
+    "vat": 9765.13,
+    "byMethod": {
+     "CASH": 41483.22,
+     "TELEBIRR": 22838.07,
+     "CBE_BIRR": 10544.71
+    },
+    "food": 48528.93,
+    "beverage": 16571.94
+   },
+   {
+    "date": "2026-09-14",
+    "gross": 53368,
+    "vat": 6961.04,
+    "byMethod": {
+     "CASH": 29432.04,
+     "TELEBIRR": 14643.36,
+     "CBE_BIRR": 9292.6
+    },
+    "food": 36453.97,
+    "beverage": 9952.99
+   },
+   {
+    "date": "2026-09-15",
+    "gross": 47731,
+    "vat": 6225.78,
+    "byMethod": {
+     "CASH": 25776.68,
+     "TELEBIRR": 13040.95,
+     "CBE_BIRR": 8913.37
+    },
+    "food": 30982.26,
+    "beverage": 10522.96
+   },
+   {
+    "date": "2026-09-16",
+    "gross": 66599,
+    "vat": 8686.83,
+    "byMethod": {
+     "CASH": 31444.44,
+     "TELEBIRR": 20658.51,
+     "CBE_BIRR": 14496.05
+    },
+    "food": 45081.42,
+    "beverage": 12830.75
+   },
+   {
+    "date": "2026-09-17",
+    "gross": 50971,
+    "vat": 6648.39,
+    "byMethod": {
+     "CASH": 25788.63,
+     "TELEBIRR": 17034.19,
+     "CBE_BIRR": 8148.18
+    },
+    "food": 33968.16,
+    "beverage": 10354.45
+   },
+   {
+    "date": "2026-09-18",
+    "gross": 55607,
+    "vat": 7253.09,
+    "byMethod": {
+     "CASH": 26321.35,
+     "TELEBIRR": 18737.85,
+     "CBE_BIRR": 10547.8
+    },
+    "food": 37703.64,
+    "beverage": 10650.27
+   },
+   {
+    "date": "2026-09-19",
+    "gross": 86676,
+    "vat": 11305.57,
+    "byMethod": {
+     "CASH": 40226.25,
+     "TELEBIRR": 29155.83,
+     "CBE_BIRR": 17293.92
+    },
+    "food": 57053.71,
+    "beverage": 18316.72
+   },
+   {
+    "date": "2026-09-20",
+    "gross": 74577,
+    "vat": 9727.43,
+    "byMethod": {
+     "CASH": 40669.45,
+     "TELEBIRR": 25314.48,
+     "CBE_BIRR": 8593.07
+    },
+    "food": 49101.32,
+    "beverage": 15748.25
+   },
+   {
+    "date": "2026-09-21",
+    "gross": 71287,
+    "vat": 9298.3,
+    "byMethod": {
+     "CASH": 38559.1,
+     "TELEBIRR": 23892.84,
+     "CBE_BIRR": 8835.06
+    },
+    "food": 47869.08,
+    "beverage": 14119.62
+   },
+   {
+    "date": "2026-09-22",
+    "gross": 50968,
+    "vat": 6648,
+    "byMethod": {
+     "CASH": 24240.19,
+     "TELEBIRR": 14240.43,
+     "CBE_BIRR": 12487.38
+    },
+    "food": 33054.69,
+    "beverage": 11265.31
+   },
+   {
+    "date": "2026-09-23",
+    "gross": 51805,
+    "vat": 6757.17,
+    "byMethod": {
+     "CASH": 25142.72,
+     "TELEBIRR": 16067.45,
+     "CBE_BIRR": 10594.83
+    },
+    "food": 34726.16,
+    "beverage": 10321.67
+   },
+   {
+    "date": "2026-09-24",
+    "gross": 51744,
+    "vat": 6749.22,
+    "byMethod": {
+     "CASH": 25116.3,
+     "TELEBIRR": 16616.09,
+     "CBE_BIRR": 10011.61
+    },
+    "food": 33997.18,
+    "beverage": 10997.6
+   },
+   {
+    "date": "2026-09-25",
+    "gross": 69226,
+    "vat": 9029.48,
+    "byMethod": {
+     "CASH": 35503.67,
+     "TELEBIRR": 21424.12,
+     "CBE_BIRR": 12298.21
+    },
+    "food": 47048.55,
+    "beverage": 13147.97
+   },
+   {
+    "date": "2026-09-26",
+    "gross": 86664,
+    "vat": 11304,
+    "byMethod": {
+     "CASH": 45352.52,
+     "TELEBIRR": 26071.45,
+     "CBE_BIRR": 15240.03
+    },
+    "food": 58567.2,
+    "beverage": 16792.8
+   },
+   {
+    "date": "2026-09-27",
+    "gross": 85178,
+    "vat": 11110.17,
+    "byMethod": {
+     "CASH": 39379.58,
+     "TELEBIRR": 24200.12,
+     "CBE_BIRR": 21598.3
+    },
+    "food": 56285.82,
+    "beverage": 17782.01
+   },
+   {
+    "date": "2026-09-28",
+    "gross": 62108,
+    "vat": 8101.04,
+    "byMethod": {
+     "CASH": 31609.09,
+     "TELEBIRR": 21164.51,
+     "CBE_BIRR": 9334.4
+    },
+    "food": 39985.35,
+    "beverage": 14021.61
+   },
+   {
+    "date": "2026-09-29",
+    "gross": 51152,
+    "vat": 6672,
+    "byMethod": {
+     "CASH": 26578.98,
+     "TELEBIRR": 16888.95,
+     "CBE_BIRR": 7684.07
+    },
+    "food": 33079.05,
+    "beverage": 11400.95
+   },
+   {
+    "date": "2026-09-30",
+    "gross": 50898,
+    "vat": 6638.87,
+    "byMethod": {
+     "CASH": 28176.95,
+     "TELEBIRR": 17381.46,
+     "CBE_BIRR": 5339.59
+    },
+    "food": 34845.59,
+    "beverage": 9413.54
+   },
+   {
+    "date": "2026-10-01",
+    "gross": 61754,
+    "vat": 8054.87,
+    "byMethod": {
+     "CASH": 32143.28,
+     "TELEBIRR": 17401.15,
+     "CBE_BIRR": 12209.57
+    },
+    "food": 39771.72,
+    "beverage": 13927.41
+   },
+   {
+    "date": "2026-10-02",
+    "gross": 46571,
+    "vat": 6074.48,
+    "byMethod": {
+     "CASH": 23588.93,
+     "TELEBIRR": 15727.2,
+     "CBE_BIRR": 7254.87
+    },
+    "food": 30757.81,
+    "beverage": 9738.71
+   },
+   {
+    "date": "2026-10-03",
+    "gross": 62812,
+    "vat": 8192.87,
+    "byMethod": {
+     "CASH": 29713.77,
+     "TELEBIRR": 18435.2,
+     "CBE_BIRR": 14663.03
+    },
+    "food": 41247.86,
+    "beverage": 13371.27
+   },
+   {
+    "date": "2026-10-04",
+    "gross": 78697,
+    "vat": 10264.83,
+    "byMethod": {
+     "CASH": 42803.45,
+     "TELEBIRR": 24266.37,
+     "CBE_BIRR": 11627.18
+    },
+    "food": 54544.19,
+    "beverage": 13887.98
+   },
+   {
+    "date": "2026-10-05",
+    "gross": 54238,
+    "vat": 7074.52,
+    "byMethod": {
+     "CASH": 29464.49,
+     "TELEBIRR": 15621.23,
+     "CBE_BIRR": 9152.28
+    },
+    "food": 36729.9,
+    "beverage": 10433.58
+   },
+   {
+    "date": "2026-10-06",
+    "gross": 61751,
+    "vat": 8054.48,
+    "byMethod": {
+     "CASH": 33576.19,
+     "TELEBIRR": 21223.76,
+     "CBE_BIRR": 6951.05
+    },
+    "food": 42640.98,
+    "beverage": 11055.54
+   },
+   {
+    "date": "2026-10-07",
+    "gross": 48996,
+    "vat": 6390.78,
+    "byMethod": {
+     "CASH": 25398.31,
+     "TELEBIRR": 16391.77,
+     "CBE_BIRR": 7205.92
+    },
+    "food": 34051.24,
+    "beverage": 8553.98
+   },
+   {
+    "date": "2026-10-08",
+    "gross": 53458,
+    "vat": 6972.78,
+    "byMethod": {
+     "CASH": 24873.04,
+     "TELEBIRR": 17258.86,
+     "CBE_BIRR": 11326.1
+    },
+    "food": 35376.78,
+    "beverage": 11108.44
+   },
+   {
+    "date": "2026-10-09",
+    "gross": 58132,
+    "vat": 7582.43,
+    "byMethod": {
+     "CASH": 32270.91,
+     "TELEBIRR": 18141.04,
+     "CBE_BIRR": 7720.05
+    },
+    "food": 39537.19,
+    "beverage": 11012.38
+   },
+   {
+    "date": "2026-10-10",
+    "gross": 66776,
+    "vat": 8709.91,
+    "byMethod": {
+     "CASH": 34288.64,
+     "TELEBIRR": 21015.77,
+     "CBE_BIRR": 11471.59
+    },
+    "food": 46164.3,
+    "beverage": 11901.79
+   },
+   {
+    "date": "2026-10-11",
+    "gross": 68508,
+    "vat": 8935.83,
+    "byMethod": {
+     "CASH": 34478.94,
+     "TELEBIRR": 22793.27,
+     "CBE_BIRR": 11235.79
+    },
+    "food": 46697.26,
+    "beverage": 12874.91
+   },
+   {
+    "date": "2026-10-12",
+    "gross": 54143,
+    "vat": 7062.13,
+    "byMethod": {
+     "CASH": 25351.11,
+     "TELEBIRR": 18542.82,
+     "CBE_BIRR": 10249.07
+    },
+    "food": 36078.71,
+    "beverage": 11002.16
+   },
+   {
+    "date": "2026-10-13",
+    "gross": 50532,
+    "vat": 6591.13,
+    "byMethod": {
+     "CASH": 23343.96,
+     "TELEBIRR": 13892.78,
+     "CBE_BIRR": 13295.26
+    },
+    "food": 32847.91,
+    "beverage": 11092.96
+   },
+   {
+    "date": "2026-10-14",
+    "gross": 67559,
+    "vat": 8812.04,
+    "byMethod": {
+     "CASH": 35649.1,
+     "TELEBIRR": 20832.18,
+     "CBE_BIRR": 11077.72
+    },
+    "food": 45903.95,
+    "beverage": 12843.01
+   },
+   {
+    "date": "2026-10-15",
+    "gross": 56428,
+    "vat": 7360.17,
+    "byMethod": {
+     "CASH": 28711.05,
+     "TELEBIRR": 19583.33,
+     "CBE_BIRR": 8133.62
+    },
+    "food": 38196.44,
+    "beverage": 10871.39
+   },
+   {
+    "date": "2026-10-16",
+    "gross": 54649,
+    "vat": 7128.13,
+    "byMethod": {
+     "CASH": 30483.36,
+     "TELEBIRR": 18280.68,
+     "CBE_BIRR": 5884.96
+    },
+    "food": 37806.58,
+    "beverage": 9714.29
+   },
+   {
+    "date": "2026-10-17",
+    "gross": 61421,
+    "vat": 8011.43,
+    "byMethod": {
+     "CASH": 31611.83,
+     "TELEBIRR": 17198.71,
+     "CBE_BIRR": 12610.46
+    },
+    "food": 40107.58,
+    "beverage": 13301.99
+   },
+   {
+    "date": "2026-10-18",
+    "gross": 83805,
+    "vat": 10931.09,
+    "byMethod": {
+     "CASH": 41509.82,
+     "TELEBIRR": 24643.18,
+     "CBE_BIRR": 17652
+    },
+    "food": 55686.6,
+    "beverage": 17187.31
+   },
+   {
+    "date": "2026-10-19",
+    "gross": 50340,
+    "vat": 6566.09,
+    "byMethod": {
+     "CASH": 24703.56,
+     "TELEBIRR": 16308.59,
+     "CBE_BIRR": 9327.85
+    },
+    "food": 32940.5,
+    "beverage": 10833.41
+   },
+   {
+    "date": "2026-10-20",
+    "gross": 58287,
+    "vat": 7602.65,
+    "byMethod": {
+     "CASH": 26885.55,
+     "TELEBIRR": 18121.34,
+     "CBE_BIRR": 13280.11
+    },
+    "food": 38458.65,
+    "beverage": 12225.7
+   },
+   {
+    "date": "2026-10-21",
+    "gross": 53564,
+    "vat": 6986.61,
+    "byMethod": {
+     "CASH": 28301.72,
+     "TELEBIRR": 18074.64,
+     "CBE_BIRR": 7187.64
+    },
+    "food": 35570.24,
+    "beverage": 11007.15
+   },
+   {
+    "date": "2026-10-22",
+    "gross": 70039,
+    "vat": 9135.52,
+    "byMethod": {
+     "CASH": 34358.53,
+     "TELEBIRR": 23040.38,
+     "CBE_BIRR": 12640.09
+    },
+    "food": 47283.13,
+    "beverage": 13620.35
+   },
+   {
+    "date": "2026-10-23",
+    "gross": 50123,
+    "vat": 6537.78,
+    "byMethod": {
+     "CASH": 26763.89,
+     "TELEBIRR": 14779.15,
+     "CBE_BIRR": 8579.96
+    },
+    "food": 34591.23,
+    "beverage": 8993.99
+   },
+   {
+    "date": "2026-10-24",
+    "gross": 78926,
+    "vat": 10294.7,
+    "byMethod": {
+     "CASH": 38716.95,
+     "TELEBIRR": 26943.55,
+     "CBE_BIRR": 13265.5
+    },
+    "food": 51152.95,
+    "beverage": 17478.35
+   },
+   {
+    "date": "2026-10-25",
+    "gross": 70932,
+    "vat": 9252,
+    "byMethod": {
+     "CASH": 34295.56,
+     "TELEBIRR": 19928.44,
+     "CBE_BIRR": 16708
+    },
+    "food": 46801.61,
+    "beverage": 14878.39
+   },
+   {
+    "date": "2026-10-26",
+    "gross": 54475,
+    "vat": 7105.43,
+    "byMethod": {
+     "CASH": 26928.06,
+     "TELEBIRR": 18204.42,
+     "CBE_BIRR": 9342.52
+    },
+    "food": 35731.7,
+    "beverage": 11637.87
+   },
+   {
+    "date": "2026-10-27",
+    "gross": 69495,
+    "vat": 9064.57,
+    "byMethod": {
+     "CASH": 34682.7,
+     "TELEBIRR": 22401.11,
+     "CBE_BIRR": 12411.19
+    },
+    "food": 47467.58,
+    "beverage": 12962.85
+   },
+   {
+    "date": "2026-10-28",
+    "gross": 61499,
+    "vat": 8021.61,
+    "byMethod": {
+     "CASH": 34154.59,
+     "TELEBIRR": 17886.95,
+     "CBE_BIRR": 9457.46
+    },
+    "food": 40340.57,
+    "beverage": 13136.82
+   },
+   {
+    "date": "2026-10-29",
+    "gross": 47637,
+    "vat": 6213.52,
+    "byMethod": {
+     "CASH": 22189.43,
+     "TELEBIRR": 14183.79,
+     "CBE_BIRR": 11263.78
+    },
+    "food": 31887.87,
+    "beverage": 9535.61
+   },
+   {
+    "date": "2026-10-30",
+    "gross": 54460,
+    "vat": 7103.48,
+    "byMethod": {
+     "CASH": 28094.67,
+     "TELEBIRR": 18056.39,
+     "CBE_BIRR": 8308.94
+    },
+    "food": 35765.55,
+    "beverage": 11590.97
+   },
+   {
+    "date": "2026-10-31",
+    "gross": 63588,
+    "vat": 8294.09,
+    "byMethod": {
+     "CASH": 30405.91,
+     "TELEBIRR": 19373,
+     "CBE_BIRR": 13809.09
+    },
+    "food": 41958.55,
+    "beverage": 13335.36
+   },
+   {
+    "date": "2026-11-01",
+    "gross": 81819,
+    "vat": 10672.04,
+    "byMethod": {
+     "CASH": 40847.58,
+     "TELEBIRR": 26073.51,
+     "CBE_BIRR": 14897.91
+    },
+    "food": 55812.71,
+    "beverage": 15334.25
+   },
+   {
+    "date": "2026-11-02",
+    "gross": 63555,
+    "vat": 8289.78,
+    "byMethod": {
+     "CASH": 30295.43,
+     "TELEBIRR": 20739.16,
+     "CBE_BIRR": 12520.41
+    },
+    "food": 42102.96,
+    "beverage": 13162.26
+   },
+   {
+    "date": "2026-11-03",
+    "gross": 50675,
+    "vat": 6609.78,
+    "byMethod": {
+     "CASH": 23421.42,
+     "TELEBIRR": 16127.8,
+     "CBE_BIRR": 11125.78
+    },
+    "food": 34099.38,
+    "beverage": 9965.84
+   },
+   {
+    "date": "2026-11-04",
+    "gross": 70827,
+    "vat": 9238.3,
+    "byMethod": {
+     "CASH": 37709.77,
+     "TELEBIRR": 21477.24,
+     "CBE_BIRR": 11639.99
+    },
+    "food": 45898.24,
+    "beverage": 15690.46
+   },
+   {
+    "date": "2026-11-05",
+    "gross": 64235,
+    "vat": 8378.48,
+    "byMethod": {
+     "CASH": 35176.59,
+     "TELEBIRR": 17392.25,
+     "CBE_BIRR": 11666.16
+    },
+    "food": 43027.42,
+    "beverage": 12829.1
+   },
+   {
+    "date": "2026-11-06",
+    "gross": 55224,
+    "vat": 7203.13,
+    "byMethod": {
+     "CASH": 25545.33,
+     "TELEBIRR": 15660.54,
+     "CBE_BIRR": 14018.13
+    },
+    "food": 36299.77,
+    "beverage": 11721.1
+   },
+   {
+    "date": "2026-11-07",
+    "gross": 63611,
+    "vat": 8297.09,
+    "byMethod": {
+     "CASH": 31377.09,
+     "TELEBIRR": 21974.3,
+     "CBE_BIRR": 10259.61
+    },
+    "food": 41773.35,
+    "beverage": 13540.56
+   }
+  ],
+  "bills": [
+   {
+    "id": "bill-mw884t8m-1",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3101",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-06-02",
+    "dueDate": "2026-06-09",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 27000,
+    "vat": 0,
+    "total": 27000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-4i",
+      "date": "2026-06-07",
+      "amount": 27000,
+      "withheld": 810,
+      "netPaid": 26190,
+      "method": "TELEBIRR",
+      "reference": "TB82675729",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-06-07T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3102",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-06-03",
+    "dueDate": "2026-06-17",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 36000,
+    "vat": 5400,
+    "total": 41400,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-4j",
+      "date": "2026-06-18",
+      "amount": 41400,
+      "withheld": 1242,
+      "netPaid": 40158,
+      "method": "TELEBIRR",
+      "reference": "TB81536784",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-06-18T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3103",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-06-04",
+    "dueDate": "2026-06-18",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 13000,
+    "vat": 1950,
+    "total": 14950,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-4k",
+      "date": "2026-06-19",
+      "amount": 14950,
+      "withheld": 0,
+      "netPaid": 14950,
+      "method": "CASH",
+      "reference": "RCPT-7988",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-06-19T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-4",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3104",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-06-03",
+    "dueDate": "2026-06-10",
+    "description": "Teff flour and injera",
+    "subtotal": 24000,
+    "vat": 0,
+    "total": 24000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-4l",
+      "date": "2026-06-11",
+      "amount": 24000,
+      "withheld": 720,
+      "netPaid": 23280,
+      "method": "TELEBIRR",
+      "reference": "TB65434640",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-06-11T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-5",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3105",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-06-09",
+    "dueDate": "2026-06-16",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 21000,
+    "vat": 0,
+    "total": 21000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-4m",
+      "date": "2026-06-13",
+      "amount": 21000,
+      "withheld": 630,
+      "netPaid": 20370,
+      "method": "TELEBIRR",
+      "reference": "TB12265696",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-06-13T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-6",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3106",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-06-10",
+    "dueDate": "2026-06-24",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 41000,
+    "vat": 6150,
+    "total": 47150,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-4n",
+      "date": "2026-06-24",
+      "amount": 47150,
+      "withheld": 1414.5,
+      "netPaid": 45735.5,
+      "method": "CBE_BIRR",
+      "reference": "FT23230839",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-06-24T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-7",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3107",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-06-11",
+    "dueDate": "2026-06-25",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 10000,
+    "vat": 1500,
+    "total": 11500,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-4o",
+      "date": "2026-06-23",
+      "amount": 11500,
+      "withheld": 0,
+      "netPaid": 11500,
+      "method": "CASH",
+      "reference": "RCPT-5977",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-06-23T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-8",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3108",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-06-10",
+    "dueDate": "2026-06-17",
+    "description": "Teff flour and injera",
+    "subtotal": 23000,
+    "vat": 0,
+    "total": 23000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-4p",
+      "date": "2026-06-18",
+      "amount": 23000,
+      "withheld": 690,
+      "netPaid": 22310,
+      "method": "TELEBIRR",
+      "reference": "TB90263260",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-06-18T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-9",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3109",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-06-17",
+    "dueDate": "2026-06-24",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 20000,
+    "vat": 0,
+    "total": 20000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-4q",
+      "date": "2026-06-25",
+      "amount": 20000,
+      "withheld": 600,
+      "netPaid": 19400,
+      "method": "TELEBIRR",
+      "reference": "TB57725451",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-06-25T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-a",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3110",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-06-18",
+    "dueDate": "2026-07-02",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 30000,
+    "vat": 4500,
+    "total": 34500,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-4r",
+      "date": "2026-07-03",
+      "amount": 34500,
+      "withheld": 1035,
+      "netPaid": 33465,
+      "method": "TELEBIRR",
+      "reference": "TB99147773",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-03T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-b",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3111",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-06-19",
+    "dueDate": "2026-07-03",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 13000,
+    "vat": 1950,
+    "total": 14950,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-4s",
+      "date": "2026-06-30",
+      "amount": 14950,
+      "withheld": 0,
+      "netPaid": 14950,
+      "method": "CASH",
+      "reference": "RCPT-8599",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-06-30T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-c",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3112",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-06-18",
+    "dueDate": "2026-06-25",
+    "description": "Teff flour and injera",
+    "subtotal": 17000,
+    "vat": 0,
+    "total": 17000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-4t",
+      "date": "2026-06-25",
+      "amount": 17000,
+      "withheld": 0,
+      "netPaid": 17000,
+      "method": "TELEBIRR",
+      "reference": "TB14879642",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-06-25T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-d",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3113",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-06-23",
+    "dueDate": "2026-06-30",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 22000,
+    "vat": 0,
+    "total": 22000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-4u",
+      "date": "2026-06-29",
+      "amount": 22000,
+      "withheld": 660,
+      "netPaid": 21340,
+      "method": "TELEBIRR",
+      "reference": "TB92441400",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-06-29T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-e",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3114",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-06-24",
+    "dueDate": "2026-07-08",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 40000,
+    "vat": 6000,
+    "total": 46000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-4v",
+      "date": "2026-07-06",
+      "amount": 46000,
+      "withheld": 1380,
+      "netPaid": 44620,
+      "method": "CBE_BIRR",
+      "reference": "FT10168753",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-06T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-f",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3115",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-06-25",
+    "dueDate": "2026-07-09",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 10000,
+    "vat": 1500,
+    "total": 11500,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-4w",
+      "date": "2026-07-10",
+      "amount": 11500,
+      "withheld": 0,
+      "netPaid": 11500,
+      "method": "CASH",
+      "reference": "RCPT-3471",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-10T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-g",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3116",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-06-24",
+    "dueDate": "2026-07-01",
+    "description": "Teff flour and injera",
+    "subtotal": 17000,
+    "vat": 0,
+    "total": 17000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-4x",
+      "date": "2026-07-02",
+      "amount": 17000,
+      "withheld": 0,
+      "netPaid": 17000,
+      "method": "TELEBIRR",
+      "reference": "TB96579201",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-02T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-h",
+    "vendorId": "V-05",
+    "billNo": "INV-05-3117",
+    "category": "BEVERAGE_BAR",
+    "issueDate": "2026-06-04",
+    "dueDate": "2026-07-04",
+    "description": "Soft drinks, beer, water",
+    "subtotal": 38000,
+    "vat": 5700,
+    "total": 43700,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-4y",
+      "date": "2026-07-04",
+      "amount": 43700,
+      "withheld": 1311,
+      "netPaid": 42389,
+      "method": "TELEBIRR",
+      "reference": "TB64064667",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-04T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-i",
+    "vendorId": "V-05",
+    "billNo": "INV-05-3118",
+    "category": "BEVERAGE_BAR",
+    "issueDate": "2026-06-18",
+    "dueDate": "2026-07-18",
+    "description": "Soft drinks, beer, water",
+    "subtotal": 36000,
+    "vat": 5400,
+    "total": 41400,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-4z",
+      "date": "2026-07-20",
+      "amount": 41400,
+      "withheld": 1242,
+      "netPaid": 40158,
+      "method": "TELEBIRR",
+      "reference": "TB93814577",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-20T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-j",
+    "vendorId": "V-06",
+    "billNo": "INV-06-3119",
+    "category": "BEVERAGE_BAR",
+    "issueDate": "2026-06-07",
+    "dueDate": "2026-06-28",
+    "description": "Coffee beans, tea",
+    "subtotal": 16000,
+    "vat": 2400,
+    "total": 18400,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-50",
+      "date": "2026-06-28",
+      "amount": 18400,
+      "withheld": 0,
+      "netPaid": 18400,
+      "method": "TELEBIRR",
+      "reference": "TB78921575",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-06-28T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-k",
+    "vendorId": "V-07",
+    "billNo": "INV-07-3120",
+    "category": "PACKAGING_DISPOSABLES",
+    "issueDate": "2026-06-10",
+    "dueDate": "2026-07-10",
+    "description": "Takeout boxes, cups, bags",
+    "subtotal": 34000,
+    "vat": 5100,
+    "total": 39100,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-51",
+      "date": "2026-07-08",
+      "amount": 39100,
+      "withheld": 1173,
+      "netPaid": 37927,
+      "method": "TELEBIRR",
+      "reference": "TB79603563",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-08T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-l",
+    "vendorId": "V-08",
+    "billNo": "INV-08-3121",
+    "category": "KITCHEN_CONSUMABLES",
+    "issueDate": "2026-06-13",
+    "dueDate": "2026-07-13",
+    "description": "Foil, cling film, gloves",
+    "subtotal": 20000,
+    "vat": 3000,
+    "total": 23000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-52",
+      "date": "2026-07-12",
+      "amount": 23000,
+      "withheld": 690,
+      "netPaid": 22310,
+      "method": "TELEBIRR",
+      "reference": "TB11622414",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-12T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-m",
+    "vendorId": "V-09",
+    "billNo": "INV-09-3122",
+    "category": "CLEANING_SANITATION",
+    "issueDate": "2026-06-15",
+    "dueDate": "2026-07-15",
+    "description": "Detergent, sanitizer, trash liners",
+    "subtotal": 14000,
+    "vat": 2100,
+    "total": 16100,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-53",
+      "date": "2026-07-17",
+      "amount": 16100,
+      "withheld": 0,
+      "netPaid": 16100,
+      "method": "TELEBIRR",
+      "reference": "TB20922921",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-17T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-n",
+    "vendorId": "V-10",
+    "billNo": "INV-10-3123",
+    "category": "RENT",
+    "issueDate": "2026-06-01",
+    "dueDate": "2026-06-06",
+    "description": "Monthly rent",
+    "subtotal": 120000,
+    "vat": 18000,
+    "total": 138000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-54",
+      "date": "2026-06-06",
+      "amount": 138000,
+      "withheld": 4140,
+      "netPaid": 133860,
+      "method": "CBE_BIRR",
+      "reference": "FT24580374",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-06-06T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-o",
+    "vendorId": "V-11",
+    "billNo": "INV-11-3124",
+    "category": "UTILITIES",
+    "issueDate": "2026-06-05",
+    "dueDate": "2026-06-15",
+    "description": "Electricity and water",
+    "subtotal": 19000,
+    "vat": 2850,
+    "total": 21850,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-55",
+      "date": "2026-06-12",
+      "amount": 21850,
+      "withheld": 655.5,
+      "netPaid": 21194.5,
+      "method": "TELEBIRR",
+      "reference": "TB35366519",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-06-12T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-p",
+    "vendorId": "V-12",
+    "billNo": "INV-12-3125",
+    "category": "UTILITIES",
+    "issueDate": "2026-06-03",
+    "dueDate": "2026-06-10",
+    "description": "Gas cylinder refills",
+    "subtotal": 12000,
+    "vat": 1800,
+    "total": 13800,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-56",
+      "date": "2026-06-07",
+      "amount": 13800,
+      "withheld": 0,
+      "netPaid": 13800,
+      "method": "CASH",
+      "reference": "RCPT-9258",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-06-07T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-q",
+    "vendorId": "V-12",
+    "billNo": "INV-12-3126",
+    "category": "UTILITIES",
+    "issueDate": "2026-06-17",
+    "dueDate": "2026-06-24",
+    "description": "Gas cylinder refills",
+    "subtotal": 14000,
+    "vat": 2100,
+    "total": 16100,
+    "hasReceipt": false,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-57",
+      "date": "2026-06-22",
+      "amount": 16100,
+      "withheld": 0,
+      "netPaid": 16100,
+      "method": "TELEBIRR",
+      "reference": "TB92878109",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-06-22T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-r",
+    "vendorId": "V-13",
+    "billNo": "INV-13-3127",
+    "category": "MARKETING",
+    "issueDate": "2026-06-11",
+    "dueDate": "2026-07-11",
+    "description": "Flyers and social media ads",
+    "subtotal": 10000,
+    "vat": 1500,
+    "total": 11500,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-58",
+      "date": "2026-07-12",
+      "amount": 11500,
+      "withheld": 345,
+      "netPaid": 11155,
+      "method": "CASH",
+      "reference": "RCPT-4422",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-12T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-s",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3128",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-07-03",
+    "dueDate": "2026-07-10",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 19000,
+    "vat": 0,
+    "total": 19000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-59",
+      "date": "2026-07-10",
+      "amount": 19000,
+      "withheld": 0,
+      "netPaid": 19000,
+      "method": "TELEBIRR",
+      "reference": "TB12468608",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-10T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-t",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3129",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-07-04",
+    "dueDate": "2026-07-18",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 41000,
+    "vat": 6150,
+    "total": 47150,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5a",
+      "date": "2026-07-15",
+      "amount": 47150,
+      "withheld": 1414.5,
+      "netPaid": 45735.5,
+      "method": "CBE_BIRR",
+      "reference": "FT43843390",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-15T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-u",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3130",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-07-05",
+    "dueDate": "2026-07-19",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 11000,
+    "vat": 1650,
+    "total": 12650,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5b",
+      "date": "2026-07-19",
+      "amount": 12650,
+      "withheld": 0,
+      "netPaid": 12650,
+      "method": "CASH",
+      "reference": "RCPT-7994",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-19T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-v",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3131",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-07-04",
+    "dueDate": "2026-07-11",
+    "description": "Teff flour and injera",
+    "subtotal": 21000,
+    "vat": 0,
+    "total": 21000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5c",
+      "date": "2026-07-13",
+      "amount": 21000,
+      "withheld": 630,
+      "netPaid": 20370,
+      "method": "TELEBIRR",
+      "reference": "TB74389774",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-13T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-w",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3132",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-07-08",
+    "dueDate": "2026-07-15",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 27000,
+    "vat": 0,
+    "total": 27000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5d",
+      "date": "2026-07-17",
+      "amount": 27000,
+      "withheld": 810,
+      "netPaid": 26190,
+      "method": "TELEBIRR",
+      "reference": "TB52043323",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-17T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-x",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3133",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-07-09",
+    "dueDate": "2026-07-23",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 30000,
+    "vat": 4500,
+    "total": 34500,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5e",
+      "date": "2026-07-21",
+      "amount": 34500,
+      "withheld": 1035,
+      "netPaid": 33465,
+      "method": "TELEBIRR",
+      "reference": "TB87718084",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-21T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-y",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3134",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-07-10",
+    "dueDate": "2026-07-24",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 10000,
+    "vat": 1500,
+    "total": 11500,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5f",
+      "date": "2026-07-21",
+      "amount": 11500,
+      "withheld": 0,
+      "netPaid": 11500,
+      "method": "CASH",
+      "reference": "RCPT-7809",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-21T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-z",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3135",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-07-09",
+    "dueDate": "2026-07-16",
+    "description": "Teff flour and injera",
+    "subtotal": 23000,
+    "vat": 0,
+    "total": 23000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5g",
+      "date": "2026-07-18",
+      "amount": 23000,
+      "withheld": 690,
+      "netPaid": 22310,
+      "method": "TELEBIRR",
+      "reference": "TB55705438",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-18T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-10",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3136",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-07-15",
+    "dueDate": "2026-07-22",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 28000,
+    "vat": 0,
+    "total": 28000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5h",
+      "date": "2026-07-21",
+      "amount": 28000,
+      "withheld": 840,
+      "netPaid": 27160,
+      "method": "TELEBIRR",
+      "reference": "TB42459800",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-21T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-11",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3137",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-07-16",
+    "dueDate": "2026-07-30",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 28000,
+    "vat": 4200,
+    "total": 32200,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5i",
+      "date": "2026-07-30",
+      "amount": 32200,
+      "withheld": 966,
+      "netPaid": 31234,
+      "method": "TELEBIRR",
+      "reference": "TB57507967",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-30T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-12",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3138",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-07-17",
+    "dueDate": "2026-07-31",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 15000,
+    "vat": 2250,
+    "total": 17250,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5j",
+      "date": "2026-08-01",
+      "amount": 17250,
+      "withheld": 0,
+      "netPaid": 17250,
+      "method": "TELEBIRR",
+      "reference": "TB76030087",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-01T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-13",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3139",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-07-16",
+    "dueDate": "2026-07-23",
+    "description": "Teff flour and injera",
+    "subtotal": 18000,
+    "vat": 0,
+    "total": 18000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5k",
+      "date": "2026-07-24",
+      "amount": 18000,
+      "withheld": 0,
+      "netPaid": 18000,
+      "method": "TELEBIRR",
+      "reference": "TB12453180",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-24T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-14",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3140",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-07-22",
+    "dueDate": "2026-07-29",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 25000,
+    "vat": 0,
+    "total": 25000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5l",
+      "date": "2026-07-30",
+      "amount": 25000,
+      "withheld": 750,
+      "netPaid": 24250,
+      "method": "TELEBIRR",
+      "reference": "TB22350269",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-30T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-15",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3141",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-07-23",
+    "dueDate": "2026-08-06",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 34000,
+    "vat": 5100,
+    "total": 39100,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5m",
+      "date": "2026-08-04",
+      "amount": 39100,
+      "withheld": 1173,
+      "netPaid": 37927,
+      "method": "TELEBIRR",
+      "reference": "TB57628449",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-04T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-16",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3142",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-07-24",
+    "dueDate": "2026-08-07",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 10000,
+    "vat": 1500,
+    "total": 11500,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5n",
+      "date": "2026-08-04",
+      "amount": 11500,
+      "withheld": 0,
+      "netPaid": 11500,
+      "method": "CASH",
+      "reference": "RCPT-4531",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-04T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-17",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3143",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-07-23",
+    "dueDate": "2026-07-30",
+    "description": "Teff flour and injera",
+    "subtotal": 18000,
+    "vat": 0,
+    "total": 18000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5o",
+      "date": "2026-07-31",
+      "amount": 18000,
+      "withheld": 0,
+      "netPaid": 18000,
+      "method": "TELEBIRR",
+      "reference": "TB40473006",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-31T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-18",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3144",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-07-29",
+    "dueDate": "2026-08-05",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 29000,
+    "vat": 0,
+    "total": 29000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5p",
+      "date": "2026-08-05",
+      "amount": 29000,
+      "withheld": 870,
+      "netPaid": 28130,
+      "method": "TELEBIRR",
+      "reference": "TB20883605",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-05T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-19",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3145",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-07-30",
+    "dueDate": "2026-08-13",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 39000,
+    "vat": 5850,
+    "total": 44850,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5q",
+      "date": "2026-08-14",
+      "amount": 44850,
+      "withheld": 1345.5,
+      "netPaid": 43504.5,
+      "method": "TELEBIRR",
+      "reference": "TB33955002",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-14T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1a",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3146",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-07-31",
+    "dueDate": "2026-08-14",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 12000,
+    "vat": 1800,
+    "total": 13800,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5r",
+      "date": "2026-08-16",
+      "amount": 13800,
+      "withheld": 0,
+      "netPaid": 13800,
+      "method": "CASH",
+      "reference": "RCPT-4613",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-16T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1b",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3147",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-07-30",
+    "dueDate": "2026-08-06",
+    "description": "Teff flour and injera",
+    "subtotal": 20000,
+    "vat": 0,
+    "total": 20000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5s",
+      "date": "2026-08-06",
+      "amount": 20000,
+      "withheld": 600,
+      "netPaid": 19400,
+      "method": "TELEBIRR",
+      "reference": "TB42045571",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-06T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1c",
+    "vendorId": "V-05",
+    "billNo": "INV-05-3148",
+    "category": "BEVERAGE_BAR",
+    "issueDate": "2026-07-04",
+    "dueDate": "2026-08-03",
+    "description": "Soft drinks, beer, water",
+    "subtotal": 44000,
+    "vat": 6600,
+    "total": 50600,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5t",
+      "date": "2026-08-03",
+      "amount": 50600,
+      "withheld": 1518,
+      "netPaid": 49082,
+      "method": "CBE_BIRR",
+      "reference": "FT66614829",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-03T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1d",
+    "vendorId": "V-05",
+    "billNo": "INV-05-3149",
+    "category": "BEVERAGE_BAR",
+    "issueDate": "2026-07-18",
+    "dueDate": "2026-08-17",
+    "description": "Soft drinks, beer, water",
+    "subtotal": 40000,
+    "vat": 6000,
+    "total": 46000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5u",
+      "date": "2026-08-16",
+      "amount": 46000,
+      "withheld": 1380,
+      "netPaid": 44620,
+      "method": "CBE_BIRR",
+      "reference": "FT35745150",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-16T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1e",
+    "vendorId": "V-06",
+    "billNo": "INV-06-3150",
+    "category": "BEVERAGE_BAR",
+    "issueDate": "2026-07-07",
+    "dueDate": "2026-07-28",
+    "description": "Coffee beans, tea",
+    "subtotal": 14000,
+    "vat": 2100,
+    "total": 16100,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5v",
+      "date": "2026-07-25",
+      "amount": 16100,
+      "withheld": 0,
+      "netPaid": 16100,
+      "method": "TELEBIRR",
+      "reference": "TB77029346",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-25T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1f",
+    "vendorId": "V-07",
+    "billNo": "INV-07-3151",
+    "category": "PACKAGING_DISPOSABLES",
+    "issueDate": "2026-07-10",
+    "dueDate": "2026-08-09",
+    "description": "Takeout boxes, cups, bags",
+    "subtotal": 25000,
+    "vat": 3750,
+    "total": 28750,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5w",
+      "date": "2026-08-07",
+      "amount": 28750,
+      "withheld": 862.5,
+      "netPaid": 27887.5,
+      "method": "TELEBIRR",
+      "reference": "TB73642762",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-07T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1g",
+    "vendorId": "V-08",
+    "billNo": "INV-08-3152",
+    "category": "KITCHEN_CONSUMABLES",
+    "issueDate": "2026-07-13",
+    "dueDate": "2026-08-12",
+    "description": "Foil, cling film, gloves",
+    "subtotal": 20000,
+    "vat": 3000,
+    "total": 23000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5x",
+      "date": "2026-08-13",
+      "amount": 23000,
+      "withheld": 690,
+      "netPaid": 22310,
+      "method": "TELEBIRR",
+      "reference": "TB41986737",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-13T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1h",
+    "vendorId": "V-09",
+    "billNo": "INV-09-3153",
+    "category": "CLEANING_SANITATION",
+    "issueDate": "2026-07-15",
+    "dueDate": "2026-08-14",
+    "description": "Detergent, sanitizer, trash liners",
+    "subtotal": 16000,
+    "vat": 2400,
+    "total": 18400,
+    "hasReceipt": false,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5y",
+      "date": "2026-08-13",
+      "amount": 18400,
+      "withheld": 0,
+      "netPaid": 18400,
+      "method": "TELEBIRR",
+      "reference": "TB23193360",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-13T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1i",
+    "vendorId": "V-10",
+    "billNo": "INV-10-3154",
+    "category": "RENT",
+    "issueDate": "2026-07-01",
+    "dueDate": "2026-07-06",
+    "description": "Monthly rent",
+    "subtotal": 120000,
+    "vat": 18000,
+    "total": 138000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-5z",
+      "date": "2026-07-08",
+      "amount": 138000,
+      "withheld": 4140,
+      "netPaid": 133860,
+      "method": "CBE_BIRR",
+      "reference": "FT54739329",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-08T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1j",
+    "vendorId": "V-11",
+    "billNo": "INV-11-3155",
+    "category": "UTILITIES",
+    "issueDate": "2026-07-05",
+    "dueDate": "2026-07-15",
+    "description": "Electricity and water",
+    "subtotal": 26000,
+    "vat": 3900,
+    "total": 29900,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-60",
+      "date": "2026-07-14",
+      "amount": 29900,
+      "withheld": 897,
+      "netPaid": 29003,
+      "method": "TELEBIRR",
+      "reference": "TB24438202",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-14T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1k",
+    "vendorId": "V-12",
+    "billNo": "INV-12-3156",
+    "category": "UTILITIES",
+    "issueDate": "2026-07-03",
+    "dueDate": "2026-07-10",
+    "description": "Gas cylinder refills",
+    "subtotal": 13000,
+    "vat": 1950,
+    "total": 14950,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-61",
+      "date": "2026-07-07",
+      "amount": 14950,
+      "withheld": 0,
+      "netPaid": 14950,
+      "method": "CASH",
+      "reference": "RCPT-3489",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-07T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1l",
+    "vendorId": "V-12",
+    "billNo": "INV-12-3157",
+    "category": "UTILITIES",
+    "issueDate": "2026-07-17",
+    "dueDate": "2026-07-24",
+    "description": "Gas cylinder refills",
+    "subtotal": 12000,
+    "vat": 1800,
+    "total": 13800,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-62",
+      "date": "2026-07-24",
+      "amount": 13800,
+      "withheld": 0,
+      "netPaid": 13800,
+      "method": "CASH",
+      "reference": "RCPT-4206",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-24T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1m",
+    "vendorId": "V-14",
+    "billNo": "INV-14-3158",
+    "category": "REPAIRS",
+    "issueDate": "2026-07-24",
+    "dueDate": "2026-07-31",
+    "description": "Fridge and stove repair",
+    "subtotal": 10000,
+    "vat": 0,
+    "total": 10000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-63",
+      "date": "2026-07-30",
+      "amount": 10000,
+      "withheld": 3000,
+      "netPaid": 7000,
+      "method": "CASH",
+      "reference": "RCPT-7856",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-07-30T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1n",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3159",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-08-02",
+    "dueDate": "2026-08-09",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 19000,
+    "vat": 0,
+    "total": 19000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-64",
+      "date": "2026-08-10",
+      "amount": 19000,
+      "withheld": 0,
+      "netPaid": 19000,
+      "method": "TELEBIRR",
+      "reference": "TB29946904",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-10T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1o",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3160",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-08-03",
+    "dueDate": "2026-08-17",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 35000,
+    "vat": 5250,
+    "total": 40250,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-65",
+      "date": "2026-08-18",
+      "amount": 40250,
+      "withheld": 1207.5,
+      "netPaid": 39042.5,
+      "method": "TELEBIRR",
+      "reference": "TB67113775",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-18T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1p",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3161",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-08-04",
+    "dueDate": "2026-08-18",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 11000,
+    "vat": 1650,
+    "total": 12650,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-66",
+      "date": "2026-08-19",
+      "amount": 12650,
+      "withheld": 0,
+      "netPaid": 12650,
+      "method": "CASH",
+      "reference": "RCPT-1492",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-19T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1q",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3162",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-08-03",
+    "dueDate": "2026-08-10",
+    "description": "Teff flour and injera",
+    "subtotal": 17000,
+    "vat": 0,
+    "total": 17000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-67",
+      "date": "2026-08-07",
+      "amount": 17000,
+      "withheld": 0,
+      "netPaid": 17000,
+      "method": "TELEBIRR",
+      "reference": "TB24483998",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-07T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1r",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3163",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-08-08",
+    "dueDate": "2026-08-15",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 26000,
+    "vat": 0,
+    "total": 26000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-68",
+      "date": "2026-08-13",
+      "amount": 26000,
+      "withheld": 780,
+      "netPaid": 25220,
+      "method": "TELEBIRR",
+      "reference": "TB77369705",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-13T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1s",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3164",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-08-09",
+    "dueDate": "2026-08-23",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 37000,
+    "vat": 5550,
+    "total": 42550,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-69",
+      "date": "2026-08-21",
+      "amount": 42550,
+      "withheld": 1276.5,
+      "netPaid": 41273.5,
+      "method": "TELEBIRR",
+      "reference": "TB39917488",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-21T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1t",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3165",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-08-10",
+    "dueDate": "2026-08-24",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 12000,
+    "vat": 1800,
+    "total": 13800,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-6a",
+      "date": "2026-08-24",
+      "amount": 13800,
+      "withheld": 0,
+      "netPaid": 13800,
+      "method": "CASH",
+      "reference": "RCPT-5220",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-24T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1u",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3166",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-08-09",
+    "dueDate": "2026-08-16",
+    "description": "Teff flour and injera",
+    "subtotal": 23000,
+    "vat": 0,
+    "total": 23000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-6b",
+      "date": "2026-08-18",
+      "amount": 23000,
+      "withheld": 690,
+      "netPaid": 22310,
+      "method": "TELEBIRR",
+      "reference": "TB52090524",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-18T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1v",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3167",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-08-16",
+    "dueDate": "2026-08-23",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 30000,
+    "vat": 0,
+    "total": 30000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-6c",
+      "date": "2026-08-22",
+      "amount": 30000,
+      "withheld": 900,
+      "netPaid": 29100,
+      "method": "TELEBIRR",
+      "reference": "TB79775751",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-22T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1w",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3168",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-08-17",
+    "dueDate": "2026-08-31",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 29000,
+    "vat": 4350,
+    "total": 33350,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-6d",
+      "date": "2026-08-29",
+      "amount": 33350,
+      "withheld": 1000.5,
+      "netPaid": 32349.5,
+      "method": "TELEBIRR",
+      "reference": "TB65845272",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-29T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1x",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3169",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-08-18",
+    "dueDate": "2026-09-01",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 13000,
+    "vat": 1950,
+    "total": 14950,
+    "hasReceipt": true,
+    "payments": [],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1y",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3170",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-08-17",
+    "dueDate": "2026-08-24",
+    "description": "Teff flour and injera",
+    "subtotal": 18000,
+    "vat": 0,
+    "total": 18000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-6e",
+      "date": "2026-08-21",
+      "amount": 18000,
+      "withheld": 0,
+      "netPaid": 18000,
+      "method": "TELEBIRR",
+      "reference": "TB58617977",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-21T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-1z",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3171",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-08-24",
+    "dueDate": "2026-08-31",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 18000,
+    "vat": 0,
+    "total": 18000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-6f",
+      "date": "2026-09-01",
+      "amount": 18000,
+      "withheld": 0,
+      "netPaid": 18000,
+      "method": "TELEBIRR",
+      "reference": "TB52990793",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-01T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-20",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3172",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-08-25",
+    "dueDate": "2026-09-08",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 30000,
+    "vat": 4500,
+    "total": 34500,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-6g",
+      "date": "2026-09-06",
+      "amount": 34500,
+      "withheld": 1035,
+      "netPaid": 33465,
+      "method": "TELEBIRR",
+      "reference": "TB47235427",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-06T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-21",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3173",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-08-26",
+    "dueDate": "2026-09-09",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 12000,
+    "vat": 1800,
+    "total": 13800,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-6h",
+      "date": "2026-09-07",
+      "amount": 13800,
+      "withheld": 0,
+      "netPaid": 13800,
+      "method": "CASH",
+      "reference": "RCPT-5024",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-07T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-22",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3174",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-08-25",
+    "dueDate": "2026-09-01",
+    "description": "Teff flour and injera",
+    "subtotal": 23000,
+    "vat": 0,
+    "total": 23000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-6i",
+      "date": "2026-09-03",
+      "amount": 23000,
+      "withheld": 690,
+      "netPaid": 22310,
+      "method": "TELEBIRR",
+      "reference": "TB55739973",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-03T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-23",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3175",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-08-30",
+    "dueDate": "2026-09-06",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 20000,
+    "vat": 0,
+    "total": 20000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-6j",
+      "date": "2026-09-07",
+      "amount": 20000,
+      "withheld": 600,
+      "netPaid": 19400,
+      "method": "TELEBIRR",
+      "reference": "TB16516800",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-07T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-24",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3176",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-08-31",
+    "dueDate": "2026-09-14",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 29000,
+    "vat": 4350,
+    "total": 33350,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-6k",
+      "date": "2026-09-13",
+      "amount": 33350,
+      "withheld": 1000.5,
+      "netPaid": 32349.5,
+      "method": "TELEBIRR",
+      "reference": "TB77481812",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-13T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-25",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3177",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-09-01",
+    "dueDate": "2026-09-15",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 13000,
+    "vat": 1950,
+    "total": 14950,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-6l",
+      "date": "2026-09-16",
+      "amount": 14950,
+      "withheld": 0,
+      "netPaid": 14950,
+      "method": "CASH",
+      "reference": "RCPT-9141",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-16T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-26",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3178",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-08-31",
+    "dueDate": "2026-09-07",
+    "description": "Teff flour and injera",
+    "subtotal": 17000,
+    "vat": 0,
+    "total": 17000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-6m",
+      "date": "2026-09-04",
+      "amount": 17000,
+      "withheld": 0,
+      "netPaid": 17000,
+      "method": "TELEBIRR",
+      "reference": "TB73068625",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-04T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-27",
+    "vendorId": "V-05",
+    "billNo": "INV-05-3179",
+    "category": "BEVERAGE_BAR",
+    "issueDate": "2026-08-04",
+    "dueDate": "2026-09-03",
+    "description": "Soft drinks, beer, water",
+    "subtotal": 38000,
+    "vat": 5700,
+    "total": 43700,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-6n",
+      "date": "2026-09-02",
+      "amount": 43700,
+      "withheld": 1311,
+      "netPaid": 42389,
+      "method": "TELEBIRR",
+      "reference": "TB25960933",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-02T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-28",
+    "vendorId": "V-05",
+    "billNo": "INV-05-3180",
+    "category": "BEVERAGE_BAR",
+    "issueDate": "2026-08-18",
+    "dueDate": "2026-09-17",
+    "description": "Soft drinks, beer, water",
+    "subtotal": 37000,
+    "vat": 5550,
+    "total": 42550,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-6o",
+      "date": "2026-09-19",
+      "amount": 42550,
+      "withheld": 1276.5,
+      "netPaid": 41273.5,
+      "method": "TELEBIRR",
+      "reference": "TB49942669",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-19T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-29",
+    "vendorId": "V-06",
+    "billNo": "INV-06-3181",
+    "category": "BEVERAGE_BAR",
+    "issueDate": "2026-08-07",
+    "dueDate": "2026-08-28",
+    "description": "Coffee beans, tea",
+    "subtotal": 16000,
+    "vat": 2400,
+    "total": 18400,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8m-6p",
+      "date": "2026-08-29",
+      "amount": 18400,
+      "withheld": 0,
+      "netPaid": 18400,
+      "method": "TELEBIRR",
+      "reference": "TB96088667",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-29T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2a",
+    "vendorId": "V-07",
+    "billNo": "INV-07-3182",
+    "category": "PACKAGING_DISPOSABLES",
+    "issueDate": "2026-08-10",
+    "dueDate": "2026-09-09",
+    "description": "Takeout boxes, cups, bags",
+    "subtotal": 32000,
+    "vat": 4800,
+    "total": 36800,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-6q",
+      "date": "2026-09-08",
+      "amount": 36800,
+      "withheld": 1104,
+      "netPaid": 35696,
+      "method": "TELEBIRR",
+      "reference": "TB95863616",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-08T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2b",
+    "vendorId": "V-08",
+    "billNo": "INV-08-3183",
+    "category": "KITCHEN_CONSUMABLES",
+    "issueDate": "2026-08-13",
+    "dueDate": "2026-09-12",
+    "description": "Foil, cling film, gloves",
+    "subtotal": 18000,
+    "vat": 2700,
+    "total": 20700,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-6r",
+      "date": "2026-09-13",
+      "amount": 20700,
+      "withheld": 0,
+      "netPaid": 20700,
+      "method": "TELEBIRR",
+      "reference": "TB86376626",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-13T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2c",
+    "vendorId": "V-09",
+    "billNo": "INV-09-3184",
+    "category": "CLEANING_SANITATION",
+    "issueDate": "2026-08-15",
+    "dueDate": "2026-09-14",
+    "description": "Detergent, sanitizer, trash liners",
+    "subtotal": 15000,
+    "vat": 2250,
+    "total": 17250,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-6s",
+      "date": "2026-09-15",
+      "amount": 17250,
+      "withheld": 0,
+      "netPaid": 17250,
+      "method": "TELEBIRR",
+      "reference": "TB81737766",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-15T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2d",
+    "vendorId": "V-10",
+    "billNo": "INV-10-3185",
+    "category": "RENT",
+    "issueDate": "2026-08-01",
+    "dueDate": "2026-08-06",
+    "description": "Monthly rent",
+    "subtotal": 120000,
+    "vat": 18000,
+    "total": 138000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-6t",
+      "date": "2026-08-04",
+      "amount": 138000,
+      "withheld": 4140,
+      "netPaid": 133860,
+      "method": "CBE_BIRR",
+      "reference": "FT23286080",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-04T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2e",
+    "vendorId": "V-11",
+    "billNo": "INV-11-3186",
+    "category": "UTILITIES",
+    "issueDate": "2026-08-05",
+    "dueDate": "2026-08-15",
+    "description": "Electricity and water",
+    "subtotal": 22000,
+    "vat": 3300,
+    "total": 25300,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-6u",
+      "date": "2026-08-13",
+      "amount": 25300,
+      "withheld": 759,
+      "netPaid": 24541,
+      "method": "TELEBIRR",
+      "reference": "TB44424206",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-13T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2f",
+    "vendorId": "V-12",
+    "billNo": "INV-12-3187",
+    "category": "UTILITIES",
+    "issueDate": "2026-08-03",
+    "dueDate": "2026-08-10",
+    "description": "Gas cylinder refills",
+    "subtotal": 13000,
+    "vat": 1950,
+    "total": 14950,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-6v",
+      "date": "2026-08-09",
+      "amount": 14950,
+      "withheld": 0,
+      "netPaid": 14950,
+      "method": "CASH",
+      "reference": "RCPT-2858",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-09T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2g",
+    "vendorId": "V-12",
+    "billNo": "INV-12-3188",
+    "category": "UTILITIES",
+    "issueDate": "2026-08-17",
+    "dueDate": "2026-08-24",
+    "description": "Gas cylinder refills",
+    "subtotal": 13000,
+    "vat": 1950,
+    "total": 14950,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-6w",
+      "date": "2026-08-24",
+      "amount": 14950,
+      "withheld": 0,
+      "netPaid": 14950,
+      "method": "CASH",
+      "reference": "RCPT-7936",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-24T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2h",
+    "vendorId": "V-13",
+    "billNo": "INV-13-3189",
+    "category": "MARKETING",
+    "issueDate": "2026-08-11",
+    "dueDate": "2026-09-10",
+    "description": "Flyers and social media ads",
+    "subtotal": 12000,
+    "vat": 1800,
+    "total": 13800,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-6x",
+      "date": "2026-09-10",
+      "amount": 13800,
+      "withheld": 414,
+      "netPaid": 13386,
+      "method": "CASH",
+      "reference": "RCPT-9140",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-10T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2i",
+    "vendorId": "V-14",
+    "billNo": "INV-14-3190",
+    "category": "REPAIRS",
+    "issueDate": "2026-08-06",
+    "dueDate": "2026-08-13",
+    "description": "Fridge and stove repair",
+    "subtotal": 10000,
+    "vat": 0,
+    "total": 10000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-6y",
+      "date": "2026-08-14",
+      "amount": 10000,
+      "withheld": 3000,
+      "netPaid": 7000,
+      "method": "CASH",
+      "reference": "RCPT-4280",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-08-14T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2j",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3191",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-09-03",
+    "dueDate": "2026-09-10",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 24000,
+    "vat": 0,
+    "total": 24000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-6z",
+      "date": "2026-09-09",
+      "amount": 24000,
+      "withheld": 720,
+      "netPaid": 23280,
+      "method": "TELEBIRR",
+      "reference": "TB25340130",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-09T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2k",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3192",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-09-04",
+    "dueDate": "2026-09-18",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 40000,
+    "vat": 6000,
+    "total": 46000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-70",
+      "date": "2026-09-16",
+      "amount": 46000,
+      "withheld": 1380,
+      "netPaid": 44620,
+      "method": "CBE_BIRR",
+      "reference": "FT58245323",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-16T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2l",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3193",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-09-05",
+    "dueDate": "2026-09-19",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 14000,
+    "vat": 2100,
+    "total": 16100,
+    "hasReceipt": true,
+    "payments": [],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2m",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3194",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-09-04",
+    "dueDate": "2026-09-11",
+    "description": "Teff flour and injera",
+    "subtotal": 21000,
+    "vat": 0,
+    "total": 21000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-71",
+      "date": "2026-09-11",
+      "amount": 21000,
+      "withheld": 630,
+      "netPaid": 20370,
+      "method": "TELEBIRR",
+      "reference": "TB15125541",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-11T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2n",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3195",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-09-09",
+    "dueDate": "2026-09-16",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 23000,
+    "vat": 0,
+    "total": 23000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-72",
+      "date": "2026-09-16",
+      "amount": 23000,
+      "withheld": 690,
+      "netPaid": 22310,
+      "method": "TELEBIRR",
+      "reference": "TB57638843",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-16T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2o",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3196",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-09-10",
+    "dueDate": "2026-09-24",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 28000,
+    "vat": 4200,
+    "total": 32200,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-73",
+      "date": "2026-09-22",
+      "amount": 32200,
+      "withheld": 966,
+      "netPaid": 31234,
+      "method": "TELEBIRR",
+      "reference": "TB79590337",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-22T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2p",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3197",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-09-11",
+    "dueDate": "2026-09-25",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 11000,
+    "vat": 1650,
+    "total": 12650,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-74",
+      "date": "2026-09-23",
+      "amount": 12650,
+      "withheld": 0,
+      "netPaid": 12650,
+      "method": "CASH",
+      "reference": "RCPT-9681",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-23T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2q",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3198",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-09-10",
+    "dueDate": "2026-09-17",
+    "description": "Teff flour and injera",
+    "subtotal": 22000,
+    "vat": 0,
+    "total": 22000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-75",
+      "date": "2026-09-16",
+      "amount": 22000,
+      "withheld": 660,
+      "netPaid": 21340,
+      "method": "TELEBIRR",
+      "reference": "TB28434375",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-16T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2r",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3199",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-09-15",
+    "dueDate": "2026-09-22",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 21000,
+    "vat": 0,
+    "total": 21000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-76",
+      "date": "2026-09-19",
+      "amount": 21000,
+      "withheld": 630,
+      "netPaid": 20370,
+      "method": "TELEBIRR",
+      "reference": "TB73841022",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-19T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2s",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3200",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-09-16",
+    "dueDate": "2026-09-30",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 37000,
+    "vat": 5550,
+    "total": 42550,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-77",
+      "date": "2026-09-29",
+      "amount": 42550,
+      "withheld": 1276.5,
+      "netPaid": 41273.5,
+      "method": "TELEBIRR",
+      "reference": "TB75838617",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-29T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2t",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3201",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-09-17",
+    "dueDate": "2026-10-01",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 10000,
+    "vat": 1500,
+    "total": 11500,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-78",
+      "date": "2026-10-01",
+      "amount": 5750,
+      "withheld": 0,
+      "netPaid": 5750,
+      "method": "CASH",
+      "reference": "RCPT-1778",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-01T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2u",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3202",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-09-16",
+    "dueDate": "2026-09-23",
+    "description": "Teff flour and injera",
+    "subtotal": 23000,
+    "vat": 0,
+    "total": 23000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-79",
+      "date": "2026-09-21",
+      "amount": 23000,
+      "withheld": 690,
+      "netPaid": 22310,
+      "method": "TELEBIRR",
+      "reference": "TB10008515",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-21T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2v",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3203",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-09-23",
+    "dueDate": "2026-09-30",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 20000,
+    "vat": 0,
+    "total": 20000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7a",
+      "date": "2026-09-30",
+      "amount": 20000,
+      "withheld": 600,
+      "netPaid": 19400,
+      "method": "TELEBIRR",
+      "reference": "TB68161420",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-30T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2w",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3204",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-09-24",
+    "dueDate": "2026-10-08",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 37000,
+    "vat": 5550,
+    "total": 42550,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7b",
+      "date": "2026-10-08",
+      "amount": 42550,
+      "withheld": 1276.5,
+      "netPaid": 41273.5,
+      "method": "TELEBIRR",
+      "reference": "TB18325895",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-08T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2x",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3205",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-09-25",
+    "dueDate": "2026-10-09",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 14000,
+    "vat": 2100,
+    "total": 16100,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7c",
+      "date": "2026-10-07",
+      "amount": 16100,
+      "withheld": 0,
+      "netPaid": 16100,
+      "method": "TELEBIRR",
+      "reference": "TB65347010",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-07T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2y",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3206",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-09-24",
+    "dueDate": "2026-10-01",
+    "description": "Teff flour and injera",
+    "subtotal": 18000,
+    "vat": 0,
+    "total": 18000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7d",
+      "date": "2026-09-29",
+      "amount": 18000,
+      "withheld": 0,
+      "netPaid": 18000,
+      "method": "TELEBIRR",
+      "reference": "TB21490242",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-29T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-2z",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3207",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-09-30",
+    "dueDate": "2026-10-07",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 30000,
+    "vat": 0,
+    "total": 30000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7e",
+      "date": "2026-10-07",
+      "amount": 30000,
+      "withheld": 900,
+      "netPaid": 29100,
+      "method": "TELEBIRR",
+      "reference": "TB72200083",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-07T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-30",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3208",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-01",
+    "dueDate": "2026-10-15",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 31000,
+    "vat": 4650,
+    "total": 35650,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7f",
+      "date": "2026-10-15",
+      "amount": 35650,
+      "withheld": 1069.5,
+      "netPaid": 34580.5,
+      "method": "TELEBIRR",
+      "reference": "TB46471986",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-15T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-31",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3209",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-02",
+    "dueDate": "2026-10-16",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 9000,
+    "vat": 1350,
+    "total": 10350,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7g",
+      "date": "2026-10-17",
+      "amount": 10350,
+      "withheld": 0,
+      "netPaid": 10350,
+      "method": "CASH",
+      "reference": "RCPT-7743",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-17T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-32",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3210",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-01",
+    "dueDate": "2026-10-08",
+    "description": "Teff flour and injera",
+    "subtotal": 22000,
+    "vat": 0,
+    "total": 22000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7h",
+      "date": "2026-10-08",
+      "amount": 22000,
+      "withheld": 660,
+      "netPaid": 21340,
+      "method": "TELEBIRR",
+      "reference": "TB29872450",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-08T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-33",
+    "vendorId": "V-05",
+    "billNo": "INV-05-3211",
+    "category": "BEVERAGE_BAR",
+    "issueDate": "2026-09-04",
+    "dueDate": "2026-10-04",
+    "description": "Soft drinks, beer, water",
+    "subtotal": 41000,
+    "vat": 6150,
+    "total": 47150,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7i",
+      "date": "2026-10-02",
+      "amount": 47150,
+      "withheld": 1414.5,
+      "netPaid": 45735.5,
+      "method": "CBE_BIRR",
+      "reference": "FT47292983",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-02T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-34",
+    "vendorId": "V-05",
+    "billNo": "INV-05-3212",
+    "category": "BEVERAGE_BAR",
+    "issueDate": "2026-09-18",
+    "dueDate": "2026-10-18",
+    "description": "Soft drinks, beer, water",
+    "subtotal": 36000,
+    "vat": 5400,
+    "total": 41400,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7j",
+      "date": "2026-10-15",
+      "amount": 41400,
+      "withheld": 1242,
+      "netPaid": 40158,
+      "method": "TELEBIRR",
+      "reference": "TB40848488",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-15T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-35",
+    "vendorId": "V-06",
+    "billNo": "INV-06-3213",
+    "category": "BEVERAGE_BAR",
+    "issueDate": "2026-09-07",
+    "dueDate": "2026-09-28",
+    "description": "Coffee beans, tea",
+    "subtotal": 16000,
+    "vat": 2400,
+    "total": 18400,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7k",
+      "date": "2026-09-26",
+      "amount": 18400,
+      "withheld": 0,
+      "netPaid": 18400,
+      "method": "TELEBIRR",
+      "reference": "TB19060585",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-26T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-36",
+    "vendorId": "V-07",
+    "billNo": "INV-07-3214",
+    "category": "PACKAGING_DISPOSABLES",
+    "issueDate": "2026-09-10",
+    "dueDate": "2026-10-10",
+    "description": "Takeout boxes, cups, bags",
+    "subtotal": 26000,
+    "vat": 3900,
+    "total": 29900,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7l",
+      "date": "2026-10-08",
+      "amount": 29900,
+      "withheld": 897,
+      "netPaid": 29003,
+      "method": "TELEBIRR",
+      "reference": "TB88830125",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-08T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-37",
+    "vendorId": "V-08",
+    "billNo": "INV-08-3215",
+    "category": "KITCHEN_CONSUMABLES",
+    "issueDate": "2026-09-13",
+    "dueDate": "2026-10-13",
+    "description": "Foil, cling film, gloves",
+    "subtotal": 21000,
+    "vat": 3150,
+    "total": 24150,
+    "hasReceipt": true,
+    "payments": [],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-38",
+    "vendorId": "V-09",
+    "billNo": "INV-09-3216",
+    "category": "CLEANING_SANITATION",
+    "issueDate": "2026-09-15",
+    "dueDate": "2026-10-15",
+    "description": "Detergent, sanitizer, trash liners",
+    "subtotal": 15000,
+    "vat": 2250,
+    "total": 17250,
+    "hasReceipt": false,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7m",
+      "date": "2026-10-12",
+      "amount": 17250,
+      "withheld": 0,
+      "netPaid": 17250,
+      "method": "TELEBIRR",
+      "reference": "TB43369358",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-12T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-39",
+    "vendorId": "V-10",
+    "billNo": "INV-10-3217",
+    "category": "RENT",
+    "issueDate": "2026-09-01",
+    "dueDate": "2026-09-06",
+    "description": "Monthly rent",
+    "subtotal": 120000,
+    "vat": 18000,
+    "total": 138000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7n",
+      "date": "2026-09-04",
+      "amount": 138000,
+      "withheld": 4140,
+      "netPaid": 133860,
+      "method": "CBE_BIRR",
+      "reference": "FT86555102",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-04T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3a",
+    "vendorId": "V-11",
+    "billNo": "INV-11-3218",
+    "category": "UTILITIES",
+    "issueDate": "2026-09-05",
+    "dueDate": "2026-09-15",
+    "description": "Electricity and water",
+    "subtotal": 22000,
+    "vat": 3300,
+    "total": 25300,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7o",
+      "date": "2026-09-13",
+      "amount": 25300,
+      "withheld": 759,
+      "netPaid": 24541,
+      "method": "TELEBIRR",
+      "reference": "TB72020734",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-13T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3b",
+    "vendorId": "V-12",
+    "billNo": "INV-12-3219",
+    "category": "UTILITIES",
+    "issueDate": "2026-09-03",
+    "dueDate": "2026-09-10",
+    "description": "Gas cylinder refills",
+    "subtotal": 12000,
+    "vat": 1800,
+    "total": 13800,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7p",
+      "date": "2026-09-11",
+      "amount": 13800,
+      "withheld": 0,
+      "netPaid": 13800,
+      "method": "CASH",
+      "reference": "RCPT-7865",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-11T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3c",
+    "vendorId": "V-12",
+    "billNo": "INV-12-3220",
+    "category": "UTILITIES",
+    "issueDate": "2026-09-17",
+    "dueDate": "2026-09-24",
+    "description": "Gas cylinder refills",
+    "subtotal": 13000,
+    "vat": 1950,
+    "total": 14950,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7q",
+      "date": "2026-09-26",
+      "amount": 14950,
+      "withheld": 0,
+      "netPaid": 14950,
+      "method": "CASH",
+      "reference": "RCPT-6178",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-09-26T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3d",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3221",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-01",
+    "dueDate": "2026-10-08",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 21000,
+    "vat": 0,
+    "total": 21000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7r",
+      "date": "2026-10-09",
+      "amount": 21000,
+      "withheld": 630,
+      "netPaid": 20370,
+      "method": "TELEBIRR",
+      "reference": "TB19015382",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-09T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3e",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3222",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-02",
+    "dueDate": "2026-10-16",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 35000,
+    "vat": 5250,
+    "total": 40250,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7s",
+      "date": "2026-10-14",
+      "amount": 40250,
+      "withheld": 1207.5,
+      "netPaid": 39042.5,
+      "method": "TELEBIRR",
+      "reference": "TB46559784",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-14T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3f",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3223",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-03",
+    "dueDate": "2026-10-17",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 14000,
+    "vat": 2100,
+    "total": 16100,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7t",
+      "date": "2026-10-18",
+      "amount": 16100,
+      "withheld": 0,
+      "netPaid": 16100,
+      "method": "TELEBIRR",
+      "reference": "TB35064335",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-18T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3g",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3224",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-02",
+    "dueDate": "2026-10-09",
+    "description": "Teff flour and injera",
+    "subtotal": 24000,
+    "vat": 0,
+    "total": 24000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7u",
+      "date": "2026-10-09",
+      "amount": 24000,
+      "withheld": 720,
+      "netPaid": 23280,
+      "method": "TELEBIRR",
+      "reference": "TB24903851",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-09T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3h",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3225",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-09",
+    "dueDate": "2026-10-16",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 20000,
+    "vat": 0,
+    "total": 20000,
+    "hasReceipt": true,
+    "payments": [],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3i",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3226",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-10",
+    "dueDate": "2026-10-24",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 38000,
+    "vat": 5700,
+    "total": 43700,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7v",
+      "date": "2026-10-22",
+      "amount": 43700,
+      "withheld": 1311,
+      "netPaid": 42389,
+      "method": "TELEBIRR",
+      "reference": "TB31181303",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-22T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3j",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3227",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-11",
+    "dueDate": "2026-10-25",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 13000,
+    "vat": 1950,
+    "total": 14950,
+    "hasReceipt": true,
+    "payments": [],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3k",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3228",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-10",
+    "dueDate": "2026-10-17",
+    "description": "Teff flour and injera",
+    "subtotal": 21000,
+    "vat": 0,
+    "total": 21000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7w",
+      "date": "2026-10-16",
+      "amount": 21000,
+      "withheld": 630,
+      "netPaid": 20370,
+      "method": "TELEBIRR",
+      "reference": "TB23951111",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-16T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3l",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3229",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-16",
+    "dueDate": "2026-10-23",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 22000,
+    "vat": 0,
+    "total": 22000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7x",
+      "date": "2026-10-24",
+      "amount": 22000,
+      "withheld": 660,
+      "netPaid": 21340,
+      "method": "TELEBIRR",
+      "reference": "TB39758606",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-24T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3m",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3230",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-17",
+    "dueDate": "2026-10-31",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 33000,
+    "vat": 4950,
+    "total": 37950,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7y",
+      "date": "2026-10-28",
+      "amount": 37950,
+      "withheld": 1138.5,
+      "netPaid": 36811.5,
+      "method": "TELEBIRR",
+      "reference": "TB62303892",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-28T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3n",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3231",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-18",
+    "dueDate": "2026-11-01",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 14000,
+    "vat": 2100,
+    "total": 16100,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-7z",
+      "date": "2026-11-02",
+      "amount": 8050,
+      "withheld": 0,
+      "netPaid": 8050,
+      "method": "TELEBIRR",
+      "reference": "TB23505408",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-11-02T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3o",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3232",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-17",
+    "dueDate": "2026-10-24",
+    "description": "Teff flour and injera",
+    "subtotal": 23000,
+    "vat": 0,
+    "total": 23000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-80",
+      "date": "2026-10-22",
+      "amount": 23000,
+      "withheld": 690,
+      "netPaid": 22310,
+      "method": "TELEBIRR",
+      "reference": "TB12588963",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-22T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3p",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3233",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-22",
+    "dueDate": "2026-10-29",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 19000,
+    "vat": 0,
+    "total": 19000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-81",
+      "date": "2026-10-30",
+      "amount": 19000,
+      "withheld": 0,
+      "netPaid": 19000,
+      "method": "TELEBIRR",
+      "reference": "TB78185118",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-30T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3q",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3234",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-23",
+    "dueDate": "2026-11-06",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 40000,
+    "vat": 6000,
+    "total": 46000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-82",
+      "date": "2026-11-06",
+      "amount": 46000,
+      "withheld": 1380,
+      "netPaid": 44620,
+      "method": "CBE_BIRR",
+      "reference": "FT88778041",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-11-06T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3r",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3235",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-24",
+    "dueDate": "2026-11-07",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 11000,
+    "vat": 1650,
+    "total": 12650,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-83",
+      "date": "2026-11-07",
+      "amount": 12650,
+      "withheld": 0,
+      "netPaid": 12650,
+      "method": "CASH",
+      "reference": "RCPT-2877",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-11-07T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3s",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3236",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-23",
+    "dueDate": "2026-10-30",
+    "description": "Teff flour and injera",
+    "subtotal": 22000,
+    "vat": 0,
+    "total": 22000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-84",
+      "date": "2026-10-31",
+      "amount": 11000,
+      "withheld": 330,
+      "netPaid": 10670,
+      "method": "TELEBIRR",
+      "reference": "TB62615461",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-31T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3t",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3237",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-30",
+    "dueDate": "2026-11-06",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 18000,
+    "vat": 0,
+    "total": 18000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-85",
+      "date": "2026-11-07",
+      "amount": 18000,
+      "withheld": 0,
+      "netPaid": 18000,
+      "method": "TELEBIRR",
+      "reference": "TB26644019",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-11-07T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3u",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3238",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-31",
+    "dueDate": "2026-11-14",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 33000,
+    "vat": 4950,
+    "total": 37950,
+    "hasReceipt": true,
+    "payments": [],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3v",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3239",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-11-01",
+    "dueDate": "2026-11-15",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 11000,
+    "vat": 1650,
+    "total": 12650,
+    "hasReceipt": true,
+    "payments": [],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3w",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3240",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-10-31",
+    "dueDate": "2026-11-07",
+    "description": "Teff flour and injera",
+    "subtotal": 24000,
+    "vat": 0,
+    "total": 24000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-86",
+      "date": "2026-11-04",
+      "amount": 24000,
+      "withheld": 720,
+      "netPaid": 23280,
+      "method": "TELEBIRR",
+      "reference": "TB35012546",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-11-04T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3x",
+    "vendorId": "V-05",
+    "billNo": "INV-05-3241",
+    "category": "BEVERAGE_BAR",
+    "issueDate": "2026-10-04",
+    "dueDate": "2026-11-03",
+    "description": "Soft drinks, beer, water",
+    "subtotal": 49000,
+    "vat": 7350,
+    "total": 56350,
+    "hasReceipt": true,
+    "payments": [],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3y",
+    "vendorId": "V-05",
+    "billNo": "INV-05-3242",
+    "category": "BEVERAGE_BAR",
+    "issueDate": "2026-10-18",
+    "dueDate": "2026-11-17",
+    "description": "Soft drinks, beer, water",
+    "subtotal": 46000,
+    "vat": 6900,
+    "total": 52900,
+    "hasReceipt": true,
+    "payments": [],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-3z",
+    "vendorId": "V-06",
+    "billNo": "INV-06-3243",
+    "category": "BEVERAGE_BAR",
+    "issueDate": "2026-10-07",
+    "dueDate": "2026-10-28",
+    "description": "Coffee beans, tea",
+    "subtotal": 15000,
+    "vat": 2250,
+    "total": 17250,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-87",
+      "date": "2026-10-27",
+      "amount": 17250,
+      "withheld": 0,
+      "netPaid": 17250,
+      "method": "TELEBIRR",
+      "reference": "TB84492839",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-27T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-40",
+    "vendorId": "V-07",
+    "billNo": "INV-07-3244",
+    "category": "PACKAGING_DISPOSABLES",
+    "issueDate": "2026-10-10",
+    "dueDate": "2026-11-09",
+    "description": "Takeout boxes, cups, bags",
+    "subtotal": 26000,
+    "vat": 3900,
+    "total": 29900,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-88",
+      "date": "2026-11-07",
+      "amount": 29900,
+      "withheld": 897,
+      "netPaid": 29003,
+      "method": "TELEBIRR",
+      "reference": "TB29858024",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-11-07T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-41",
+    "vendorId": "V-08",
+    "billNo": "INV-08-3245",
+    "category": "KITCHEN_CONSUMABLES",
+    "issueDate": "2026-10-13",
+    "dueDate": "2026-11-12",
+    "description": "Foil, cling film, gloves",
+    "subtotal": 19000,
+    "vat": 2850,
+    "total": 21850,
+    "hasReceipt": true,
+    "payments": [],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-42",
+    "vendorId": "V-09",
+    "billNo": "INV-09-3246",
+    "category": "CLEANING_SANITATION",
+    "issueDate": "2026-10-15",
+    "dueDate": "2026-11-14",
+    "description": "Detergent, sanitizer, trash liners",
+    "subtotal": 12000,
+    "vat": 1800,
+    "total": 13800,
+    "hasReceipt": true,
+    "payments": [],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-43",
+    "vendorId": "V-10",
+    "billNo": "INV-10-3247",
+    "category": "RENT",
+    "issueDate": "2026-10-01",
+    "dueDate": "2026-10-06",
+    "description": "Monthly rent",
+    "subtotal": 120000,
+    "vat": 18000,
+    "total": 138000,
+    "hasReceipt": true,
+    "payments": [],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-44",
+    "vendorId": "V-11",
+    "billNo": "INV-11-3248",
+    "category": "UTILITIES",
+    "issueDate": "2026-10-05",
+    "dueDate": "2026-10-15",
+    "description": "Electricity and water",
+    "subtotal": 21000,
+    "vat": 3150,
+    "total": 24150,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-89",
+      "date": "2026-10-14",
+      "amount": 12075,
+      "withheld": 362.25,
+      "netPaid": 11712.75,
+      "method": "TELEBIRR",
+      "reference": "TB64804112",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-14T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-45",
+    "vendorId": "V-12",
+    "billNo": "INV-12-3249",
+    "category": "UTILITIES",
+    "issueDate": "2026-10-03",
+    "dueDate": "2026-10-10",
+    "description": "Gas cylinder refills",
+    "subtotal": 12000,
+    "vat": 1800,
+    "total": 13800,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-8a",
+      "date": "2026-10-08",
+      "amount": 13800,
+      "withheld": 0,
+      "netPaid": 13800,
+      "method": "CASH",
+      "reference": "RCPT-6180",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-08T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-46",
+    "vendorId": "V-12",
+    "billNo": "INV-12-3250",
+    "category": "UTILITIES",
+    "issueDate": "2026-10-17",
+    "dueDate": "2026-10-24",
+    "description": "Gas cylinder refills",
+    "subtotal": 12000,
+    "vat": 1800,
+    "total": 13800,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-8b",
+      "date": "2026-10-23",
+      "amount": 13800,
+      "withheld": 0,
+      "netPaid": 13800,
+      "method": "CASH",
+      "reference": "RCPT-5883",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-23T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-47",
+    "vendorId": "V-13",
+    "billNo": "INV-13-3251",
+    "category": "MARKETING",
+    "issueDate": "2026-10-11",
+    "dueDate": "2026-11-10",
+    "description": "Flyers and social media ads",
+    "subtotal": 10000,
+    "vat": 1500,
+    "total": 11500,
+    "hasReceipt": true,
+    "payments": [],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-48",
+    "vendorId": "V-14",
+    "billNo": "INV-14-3252",
+    "category": "REPAIRS",
+    "issueDate": "2026-10-14",
+    "dueDate": "2026-10-21",
+    "description": "Fridge and stove repair",
+    "subtotal": 8000,
+    "vat": 0,
+    "total": 8000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-8c",
+      "date": "2026-10-20",
+      "amount": 8000,
+      "withheld": 0,
+      "netPaid": 8000,
+      "method": "CASH",
+      "reference": "RCPT-6877",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-10-20T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-49",
+    "vendorId": "V-01",
+    "billNo": "INV-01-3253",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-11-02",
+    "dueDate": "2026-11-09",
+    "description": "Vegetables, onions, tomatoes, greens",
+    "subtotal": 25000,
+    "vat": 0,
+    "total": 25000,
+    "hasReceipt": true,
+    "payments": [],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-4a",
+    "vendorId": "V-02",
+    "billNo": "INV-02-3254",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-11-03",
+    "dueDate": "2026-11-17",
+    "description": "Beef, lamb, chicken",
+    "subtotal": 39000,
+    "vat": 5850,
+    "total": 44850,
+    "hasReceipt": true,
+    "payments": [],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-4b",
+    "vendorId": "V-03",
+    "billNo": "INV-03-3255",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-11-04",
+    "dueDate": "2026-11-18",
+    "description": "Milk, butter (kibbeh), eggs",
+    "subtotal": 13000,
+    "vat": 1950,
+    "total": 14950,
+    "hasReceipt": false,
+    "payments": [],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-4c",
+    "vendorId": "V-04",
+    "billNo": "INV-04-3256",
+    "category": "RAW_INGREDIENTS",
+    "issueDate": "2026-11-03",
+    "dueDate": "2026-11-10",
+    "description": "Teff flour and injera",
+    "subtotal": 22000,
+    "vat": 0,
+    "total": 22000,
+    "hasReceipt": true,
+    "payments": [],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-4d",
+    "vendorId": "V-05",
+    "billNo": "INV-05-3257",
+    "category": "BEVERAGE_BAR",
+    "issueDate": "2026-11-04",
+    "dueDate": "2026-12-04",
+    "description": "Soft drinks, beer, water",
+    "subtotal": 50000,
+    "vat": 7500,
+    "total": 57500,
+    "hasReceipt": false,
+    "payments": [],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-4e",
+    "vendorId": "V-06",
+    "billNo": "INV-06-3258",
+    "category": "BEVERAGE_BAR",
+    "issueDate": "2026-11-07",
+    "dueDate": "2026-11-28",
+    "description": "Coffee beans, tea",
+    "subtotal": 17000,
+    "vat": 2550,
+    "total": 19550,
+    "hasReceipt": true,
+    "payments": [],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-4f",
+    "vendorId": "V-10",
+    "billNo": "INV-10-3259",
+    "category": "RENT",
+    "issueDate": "2026-11-01",
+    "dueDate": "2026-11-06",
+    "description": "Monthly rent",
+    "subtotal": 120000,
+    "vat": 18000,
+    "total": 138000,
+    "hasReceipt": true,
+    "payments": [
+     {
+      "id": "pay-mw884t8n-8d",
+      "date": "2026-11-06",
+      "amount": 138000,
+      "withheld": 4140,
+      "netPaid": 133860,
+      "method": "CBE_BIRR",
+      "reference": "FT97512947",
+      "paidBy": "EMP-002",
+      "timestamp": "2026-11-06T11:30:00.000Z"
+     }
+    ],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-4g",
+    "vendorId": "V-11",
+    "billNo": "INV-11-3260",
+    "category": "UTILITIES",
+    "issueDate": "2026-11-05",
+    "dueDate": "2026-11-15",
+    "description": "Electricity and water",
+    "subtotal": 22000,
+    "vat": 3300,
+    "total": 25300,
+    "hasReceipt": true,
+    "payments": [],
+    "enteredBy": "EMP-020"
+   },
+   {
+    "id": "bill-mw884t8m-4h",
+    "vendorId": "V-12",
+    "billNo": "INV-12-3261",
+    "category": "UTILITIES",
+    "issueDate": "2026-11-03",
+    "dueDate": "2026-11-10",
+    "description": "Gas cylinder refills",
+    "subtotal": 13000,
+    "vat": 1950,
+    "total": 14950,
+    "hasReceipt": false,
+    "payments": [],
+    "enteredBy": "EMP-020"
+   }
+  ],
+  "payroll": [
+   {
+    "month": "2026-06",
+    "gross": 171000,
+    "employerPension": 17000,
+    "paidOn": "2026-06-30"
+   },
+   {
+    "month": "2026-07",
+    "gross": 170000,
+    "employerPension": 18000,
+    "paidOn": "2026-07-31"
+   },
+   {
+    "month": "2026-08",
+    "gross": 181000,
+    "employerPension": 18000,
+    "paidOn": "2026-08-31"
+   },
+   {
+    "month": "2026-09",
+    "gross": 172000,
+    "employerPension": 18000,
+    "paidOn": "2026-09-30"
+   },
+   {
+    "month": "2026-10",
+    "gross": 169000,
+    "employerPension": 18000,
+    "paidOn": "2026-10-31"
+   }
+  ],
+  "filings": [
+   {
+    "month": "2026-06",
+    "kind": "VAT",
+    "status": "FILED",
+    "filedBy": "EMP-020",
+    "filedAt": "2026-07-28T10:00:00.000Z",
+    "reference": "VAT-202606-615860"
+   },
+   {
+    "month": "2026-06",
+    "kind": "WHT",
+    "status": "FILED",
+    "filedBy": "EMP-020",
+    "filedAt": "2026-07-28T10:00:00.000Z",
+    "reference": "WHT-202606-827810"
+   },
+   {
+    "month": "2026-07",
+    "kind": "VAT",
+    "status": "FILED",
+    "filedBy": "EMP-020",
+    "filedAt": "2026-08-27T10:00:00.000Z",
+    "reference": "VAT-202607-935508"
+   },
+   {
+    "month": "2026-07",
+    "kind": "WHT",
+    "status": "FILED",
+    "filedBy": "EMP-020",
+    "filedAt": "2026-08-29T10:00:00.000Z",
+    "reference": "WHT-202607-829598"
+   },
+   {
+    "month": "2026-08",
+    "kind": "VAT",
+    "status": "FILED",
+    "filedBy": "EMP-020",
+    "filedAt": "2026-09-27T10:00:00.000Z",
+    "reference": "VAT-202608-206790"
+   },
+   {
+    "month": "2026-08",
+    "kind": "WHT",
+    "status": "FILED",
+    "filedBy": "EMP-020",
+    "filedAt": "2026-09-27T10:00:00.000Z",
+    "reference": "WHT-202608-806905"
+   },
+   {
+    "month": "2026-09",
+    "kind": "VAT",
+    "status": "FILED",
+    "filedBy": "EMP-020",
+    "filedAt": "2026-10-28T10:00:00.000Z",
+    "reference": "VAT-202609-767165"
+   },
+   {
+    "month": "2026-09",
+    "kind": "WHT",
+    "status": "FILED",
+    "filedBy": "EMP-020",
+    "filedAt": "2026-10-29T10:00:00.000Z",
+    "reference": "WHT-202609-624053"
+   },
+   {
+    "month": "2026-10",
+    "kind": "VAT",
+    "status": "OPEN"
+   },
+   {
+    "month": "2026-10",
+    "kind": "WHT",
+    "status": "OPEN"
+   }
+  ],
+  "recon": [
+   {
+    "date": "2026-10-09",
+    "cashExpected": 32270.91,
+    "cashCounted": 32270.91,
+    "bankDeposit": 30270.91,
+    "bankConfirmed": true,
+    "telebirrExpected": 18141.04,
+    "telebirrReceived": 18141.04,
+    "cbeBirrExpected": 7720.05,
+    "cbeBirrReceived": 7720.05,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-10T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-10",
+    "cashExpected": 34288.64,
+    "cashCounted": 34288.64,
+    "bankDeposit": 32288.64,
+    "bankConfirmed": true,
+    "telebirrExpected": 21015.77,
+    "telebirrReceived": 21015.77,
+    "cbeBirrExpected": 11471.59,
+    "cbeBirrReceived": 11471.59,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-11T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-11",
+    "cashExpected": 34478.94,
+    "cashCounted": 34478.94,
+    "bankDeposit": 32478.94,
+    "bankConfirmed": true,
+    "telebirrExpected": 22793.27,
+    "telebirrReceived": 22793.27,
+    "cbeBirrExpected": 11235.79,
+    "cbeBirrReceived": 11235.79,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-12T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-12",
+    "cashExpected": 25351.11,
+    "cashCounted": 25351.11,
+    "bankDeposit": 23351.11,
+    "bankConfirmed": true,
+    "telebirrExpected": 18542.82,
+    "telebirrReceived": 18542.82,
+    "cbeBirrExpected": 10249.07,
+    "cbeBirrReceived": 10249.07,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-13T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-13",
+    "cashExpected": 23343.96,
+    "cashCounted": 23023.96,
+    "bankDeposit": 21023.96,
+    "bankConfirmed": true,
+    "telebirrExpected": 13892.78,
+    "telebirrReceived": 13892.78,
+    "cbeBirrExpected": 13295.26,
+    "cbeBirrReceived": 13295.26,
+    "status": "VARIANCE",
+    "note": "Drawer short; cashier informed",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-14T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-14",
+    "cashExpected": 35649.1,
+    "cashCounted": 35649.1,
+    "bankDeposit": 33649.1,
+    "bankConfirmed": true,
+    "telebirrExpected": 20832.18,
+    "telebirrReceived": 20832.18,
+    "cbeBirrExpected": 11077.72,
+    "cbeBirrReceived": 11077.72,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-15T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-15",
+    "cashExpected": 28711.05,
+    "cashCounted": 28181.05,
+    "bankDeposit": 26181.05,
+    "bankConfirmed": true,
+    "telebirrExpected": 19583.33,
+    "telebirrReceived": 19583.33,
+    "cbeBirrExpected": 8133.62,
+    "cbeBirrReceived": 8133.62,
+    "status": "VARIANCE",
+    "note": "Drawer short; cashier informed",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-16T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-16",
+    "cashExpected": 30483.36,
+    "cashCounted": 30483.36,
+    "bankDeposit": 28483.36,
+    "bankConfirmed": true,
+    "telebirrExpected": 18280.68,
+    "telebirrReceived": 18280.68,
+    "cbeBirrExpected": 5884.96,
+    "cbeBirrReceived": 5884.96,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-17T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-17",
+    "cashExpected": 31611.83,
+    "cashCounted": 31611.83,
+    "bankDeposit": 29611.83,
+    "bankConfirmed": true,
+    "telebirrExpected": 17198.71,
+    "telebirrReceived": 17198.71,
+    "cbeBirrExpected": 12610.46,
+    "cbeBirrReceived": 12610.46,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-18T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-18",
+    "cashExpected": 41509.82,
+    "cashCounted": 40918.82,
+    "bankDeposit": 38918.82,
+    "bankConfirmed": true,
+    "telebirrExpected": 24643.18,
+    "telebirrReceived": 24643.18,
+    "cbeBirrExpected": 17652,
+    "cbeBirrReceived": 17652,
+    "status": "VARIANCE",
+    "note": "Drawer short; cashier informed",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-19T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-19",
+    "cashExpected": 24703.56,
+    "cashCounted": 24703.56,
+    "bankDeposit": 22703.56,
+    "bankConfirmed": true,
+    "telebirrExpected": 16308.59,
+    "telebirrReceived": 16308.59,
+    "cbeBirrExpected": 9327.85,
+    "cbeBirrReceived": 9327.85,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-20T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-20",
+    "cashExpected": 26885.55,
+    "cashCounted": 26885.55,
+    "bankDeposit": 24885.55,
+    "bankConfirmed": true,
+    "telebirrExpected": 18121.34,
+    "telebirrReceived": 18121.34,
+    "cbeBirrExpected": 13280.11,
+    "cbeBirrReceived": 13280.11,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-21T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-21",
+    "cashExpected": 28301.72,
+    "cashCounted": 28301.72,
+    "bankDeposit": 26301.72,
+    "bankConfirmed": true,
+    "telebirrExpected": 18074.64,
+    "telebirrReceived": 18074.64,
+    "cbeBirrExpected": 7187.64,
+    "cbeBirrReceived": 7187.64,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-22T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-22",
+    "cashExpected": 34358.53,
+    "cashCounted": 34358.53,
+    "bankDeposit": 32358.53,
+    "bankConfirmed": true,
+    "telebirrExpected": 23040.38,
+    "telebirrReceived": 23040.38,
+    "cbeBirrExpected": 12640.09,
+    "cbeBirrReceived": 12640.09,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-23T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-23",
+    "cashExpected": 26763.89,
+    "cashCounted": 26763.89,
+    "bankDeposit": 24763.89,
+    "bankConfirmed": true,
+    "telebirrExpected": 14779.15,
+    "telebirrReceived": 14779.15,
+    "cbeBirrExpected": 8579.96,
+    "cbeBirrReceived": 8579.96,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-24T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-24",
+    "cashExpected": 38716.95,
+    "cashCounted": 38716.95,
+    "bankDeposit": 36716.95,
+    "bankConfirmed": true,
+    "telebirrExpected": 26943.55,
+    "telebirrReceived": 26943.55,
+    "cbeBirrExpected": 13265.5,
+    "cbeBirrReceived": 13265.5,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-25T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-25",
+    "cashExpected": 34295.56,
+    "cashCounted": 34295.56,
+    "bankDeposit": 32295.56,
+    "bankConfirmed": true,
+    "telebirrExpected": 19928.44,
+    "telebirrReceived": 19928.44,
+    "cbeBirrExpected": 16708,
+    "cbeBirrReceived": 16708,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-26T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-26",
+    "cashExpected": 26928.06,
+    "cashCounted": 26928.06,
+    "bankDeposit": 24928.06,
+    "bankConfirmed": true,
+    "telebirrExpected": 18204.42,
+    "telebirrReceived": 18204.42,
+    "cbeBirrExpected": 9342.52,
+    "cbeBirrReceived": 9342.52,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-27T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-27",
+    "cashExpected": 34682.7,
+    "cashCounted": 34682.7,
+    "bankDeposit": 32682.7,
+    "bankConfirmed": true,
+    "telebirrExpected": 22401.11,
+    "telebirrReceived": 22401.11,
+    "cbeBirrExpected": 12411.19,
+    "cbeBirrReceived": 12411.19,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-28T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-28",
+    "cashExpected": 34154.59,
+    "cashCounted": 34154.59,
+    "bankDeposit": 32154.59,
+    "bankConfirmed": true,
+    "telebirrExpected": 17886.95,
+    "telebirrReceived": 17886.95,
+    "cbeBirrExpected": 9457.46,
+    "cbeBirrReceived": 9457.46,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-29T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-29",
+    "cashExpected": 22189.43,
+    "cashCounted": 22189.43,
+    "bankDeposit": 20189.43,
+    "bankConfirmed": true,
+    "telebirrExpected": 14183.79,
+    "telebirrReceived": 14183.79,
+    "cbeBirrExpected": 11263.78,
+    "cbeBirrReceived": 11263.78,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-30T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-30",
+    "cashExpected": 28094.67,
+    "cashCounted": 28094.67,
+    "bankDeposit": 26094.67,
+    "bankConfirmed": true,
+    "telebirrExpected": 18056.39,
+    "telebirrReceived": 18056.39,
+    "cbeBirrExpected": 8308.94,
+    "cbeBirrReceived": 8308.94,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-10-31T08:40:00.000Z"
+   },
+   {
+    "date": "2026-10-31",
+    "cashExpected": 30405.91,
+    "cashCounted": 30405.91,
+    "bankDeposit": 28405.91,
+    "bankConfirmed": true,
+    "telebirrExpected": 19373,
+    "telebirrReceived": 19373,
+    "cbeBirrExpected": 13809.09,
+    "cbeBirrReceived": 13809.09,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-11-01T08:40:00.000Z"
+   },
+   {
+    "date": "2026-11-01",
+    "cashExpected": 40847.58,
+    "cashCounted": 40847.58,
+    "bankDeposit": 38847.58,
+    "bankConfirmed": true,
+    "telebirrExpected": 26073.51,
+    "telebirrReceived": 26073.51,
+    "cbeBirrExpected": 14897.91,
+    "cbeBirrReceived": 14897.91,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-11-02T08:40:00.000Z"
+   },
+   {
+    "date": "2026-11-02",
+    "cashExpected": 30295.43,
+    "cashCounted": 30295.43,
+    "bankDeposit": 28295.43,
+    "bankConfirmed": true,
+    "telebirrExpected": 20739.16,
+    "telebirrReceived": 20739.16,
+    "cbeBirrExpected": 12520.41,
+    "cbeBirrReceived": 12520.41,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-11-03T08:40:00.000Z"
+   },
+   {
+    "date": "2026-11-03",
+    "cashExpected": 23421.42,
+    "cashCounted": 23421.42,
+    "bankDeposit": 21421.42,
+    "bankConfirmed": true,
+    "telebirrExpected": 16127.8,
+    "telebirrReceived": 16127.8,
+    "cbeBirrExpected": 11125.78,
+    "cbeBirrReceived": 11125.78,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-11-04T08:40:00.000Z"
+   },
+   {
+    "date": "2026-11-04",
+    "cashExpected": 37709.77,
+    "cashCounted": 37709.77,
+    "bankDeposit": 35709.77,
+    "bankConfirmed": true,
+    "telebirrExpected": 21477.24,
+    "telebirrReceived": 21477.24,
+    "cbeBirrExpected": 11639.99,
+    "cbeBirrReceived": 11639.99,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-11-05T08:40:00.000Z"
+   },
+   {
+    "date": "2026-11-05",
+    "cashExpected": 35176.59,
+    "cashCounted": 35176.59,
+    "bankDeposit": 33176.59,
+    "bankConfirmed": true,
+    "telebirrExpected": 17392.25,
+    "telebirrReceived": 17392.25,
+    "cbeBirrExpected": 11666.16,
+    "cbeBirrReceived": 11666.16,
+    "status": "MATCHED",
+    "note": "",
+    "reconciledBy": "EMP-020",
+    "reconciledAt": "2026-11-06T08:40:00.000Z"
+   },
+   {
+    "date": "2026-11-06",
+    "cashExpected": 25545.33,
+    "cashCounted": 0,
+    "bankDeposit": 0,
+    "bankConfirmed": false,
+    "telebirrExpected": 15660.54,
+    "telebirrReceived": 0,
+    "cbeBirrExpected": 14018.13,
+    "cbeBirrReceived": 0,
+    "status": "PENDING",
+    "note": ""
+   },
+   {
+    "date": "2026-11-07",
+    "cashExpected": 31377.09,
+    "cashCounted": 0,
+    "bankDeposit": 0,
+    "bankConfirmed": false,
+    "telebirrExpected": 21974.3,
+    "telebirrReceived": 0,
+    "cbeBirrExpected": 10259.61,
+    "cbeBirrReceived": 0,
+    "status": "PENDING",
+    "note": ""
+   }
+  ]
+ }
+}

@@ -1,0 +1,381 @@
+{
+ "module": "kds",
+ "exportedAt": "2026-11-08T19:27:15.821Z",
+ "i18n": {
+  "station.GRILL": {
+   "en": "Grill",
+   "am": "ጥብስ",
+   "om": "Waaddii"
+  },
+  "station.HOT_KITCHEN": {
+   "en": "Hot Kitchen",
+   "am": "ወጥ ቤት",
+   "om": "Kushinaa Ho'aa"
+  },
+  "station.SALAD": {
+   "en": "Salad",
+   "am": "ሰላጣ",
+   "om": "Salaaxaa"
+  },
+  "station.BAR": {
+   "en": "Bar",
+   "am": "ባር",
+   "om": "Baarii"
+  },
+  "menu.doro-wat": {
+   "en": "Doro Wat",
+   "am": "ዶሮ ወጥ",
+   "om": "Ittoo Lukkuu"
+  },
+  "menu.shiro": {
+   "en": "Shiro Wat",
+   "am": "ሽሮ ወጥ",
+   "om": "Ittoo Shiroo"
+  },
+  "menu.misir": {
+   "en": "Misir Wat",
+   "am": "ምስር ወጥ",
+   "om": "Ittoo Misira"
+  },
+  "menu.beyaynetu": {
+   "en": "Beyaynetu (fasting platter)",
+   "am": "በያይነቱ",
+   "om": "Bayyaynatuu"
+  },
+  "menu.firfir": {
+   "en": "Firfir",
+   "am": "ፍርፍር",
+   "om": "Firfir"
+  },
+  "menu.beef-tibs": {
+   "en": "Beef Tibs",
+   "am": "የበሬ ጥብስ",
+   "om": "Tibsii Sangaa"
+  },
+  "menu.lamb-tibs": {
+   "en": "Lamb Tibs",
+   "am": "የበግ ጥብስ",
+   "om": "Tibsii Hoolaa"
+  },
+  "menu.kitfo": {
+   "en": "Kitfo",
+   "am": "ክትፎ",
+   "om": "Kitfoo"
+  },
+  "menu.timatim": {
+   "en": "Timatim Salad",
+   "am": "ቲማቲም ሰላጣ",
+   "om": "Salaaxaa Timaatimii"
+  },
+  "menu.azifa": {
+   "en": "Azifa (lentil salad)",
+   "am": "አዚፋ",
+   "om": "Aziifaa"
+  },
+  "menu.macchiato": {
+   "en": "Macchiato",
+   "am": "ማኪያቶ",
+   "om": "Makiyaatoo"
+  },
+  "menu.jebena": {
+   "en": "Jebena Buna",
+   "am": "ጀበና ቡና",
+   "om": "Buna Jabanaa"
+  },
+  "menu.juice": {
+   "en": "Fresh Juice",
+   "am": "ጭማቂ",
+   "om": "Cuunfaa Fuduraa"
+  },
+  "menu.tej": {
+   "en": "Tej (glass)",
+   "am": "ጠጅ (ብርጭቆ)",
+   "om": "Daadhii (burcuqqoo)"
+  },
+  "mod.no-onion": {
+   "en": "No onion",
+   "am": "ሽንኩርት የለበትም",
+   "om": "Qullubbii malee"
+  },
+  "mod.extra-berbere": {
+   "en": "Extra berbere",
+   "am": "ተጨማሪ በርበሬ",
+   "om": "Barbaree dabalataa"
+  },
+  "mod.mild": {
+   "en": "Mild, no berbere",
+   "am": "ያለ በርበሬ",
+   "om": "Barbaree malee"
+  },
+  "mod.leb-leb": {
+   "en": "Leb leb (lightly cooked)",
+   "am": "ለብለብ",
+   "om": "Lab lab"
+  },
+  "mod.tere": {
+   "en": "Tere (raw)",
+   "am": "ጥሬ",
+   "om": "Dheedhii"
+  },
+  "mod.well-done": {
+   "en": "Well done",
+   "am": "በደንብ የበሰለ",
+   "om": "Sirriitti bilchaate"
+  },
+  "mod.mitmita": {
+   "en": "With mitmita",
+   "am": "ከሚጥሚጣ ጋር",
+   "om": "Miixmixaa waliin"
+  },
+  "mod.fasting": {
+   "en": "Fasting (no butter)",
+   "am": "የጾም (ቅቤ የሌለው)",
+   "om": "Soomaa (dhadhaa malee)"
+  },
+  "mod.extra-injera": {
+   "en": "Extra injera",
+   "am": "ተጨማሪ እንጀራ",
+   "om": "Biddeena dabalataa"
+  },
+  "mod.no-sugar": {
+   "en": "No sugar",
+   "am": "ያለ ስኳር",
+   "om": "Sukkaara malee"
+  },
+  "mod.no-ice": {
+   "en": "No ice",
+   "am": "ያለ በረዶ",
+   "om": "Cabbii malee"
+  },
+  "mod.allergy": {
+   "en": "Allergy",
+   "am": "አለርጂ",
+   "om": "Alarjii"
+  }
+ },
+ "KDS_OPERATOR": "KDS-BOLE-01",
+ "MENU": [
+  {
+   "id": "doro-wat",
+   "station": "HOT_KITCHEN",
+   "name": {
+    "en": "Doro Wat",
+    "am": "ዶሮ ወጥ",
+    "om": "Ittoo Lukkuu"
+   }
+  },
+  {
+   "id": "shiro",
+   "station": "HOT_KITCHEN",
+   "name": {
+    "en": "Shiro Wat",
+    "am": "ሽሮ ወጥ",
+    "om": "Ittoo Shiroo"
+   }
+  },
+  {
+   "id": "misir",
+   "station": "HOT_KITCHEN",
+   "name": {
+    "en": "Misir Wat",
+    "am": "ምስር ወጥ",
+    "om": "Ittoo Misira"
+   }
+  },
+  {
+   "id": "beyaynetu",
+   "station": "HOT_KITCHEN",
+   "name": {
+    "en": "Beyaynetu (fasting platter)",
+    "am": "በያይነቱ",
+    "om": "Bayyaynatuu"
+   }
+  },
+  {
+   "id": "firfir",
+   "station": "HOT_KITCHEN",
+   "name": {
+    "en": "Firfir",
+    "am": "ፍርፍር",
+    "om": "Firfir"
+   }
+  },
+  {
+   "id": "beef-tibs",
+   "station": "GRILL",
+   "name": {
+    "en": "Beef Tibs",
+    "am": "የበሬ ጥብስ",
+    "om": "Tibsii Sangaa"
+   }
+  },
+  {
+   "id": "lamb-tibs",
+   "station": "GRILL",
+   "name": {
+    "en": "Lamb Tibs",
+    "am": "የበግ ጥብስ",
+    "om": "Tibsii Hoolaa"
+   }
+  },
+  {
+   "id": "kitfo",
+   "station": "GRILL",
+   "name": {
+    "en": "Kitfo",
+    "am": "ክትፎ",
+    "om": "Kitfoo"
+   }
+  },
+  {
+   "id": "timatim",
+   "station": "SALAD",
+   "name": {
+    "en": "Timatim Salad",
+    "am": "ቲማቲም ሰላጣ",
+    "om": "Salaaxaa Timaatimii"
+   }
+  },
+  {
+   "id": "azifa",
+   "station": "SALAD",
+   "name": {
+    "en": "Azifa (lentil salad)",
+    "am": "አዚፋ",
+    "om": "Aziifaa"
+   }
+  },
+  {
+   "id": "macchiato",
+   "station": "BAR",
+   "name": {
+    "en": "Macchiato",
+    "am": "ማኪያቶ",
+    "om": "Makiyaatoo"
+   }
+  },
+  {
+   "id": "jebena",
+   "station": "BAR",
+   "name": {
+    "en": "Jebena Buna",
+    "am": "ጀበና ቡና",
+    "om": "Buna Jabanaa"
+   }
+  },
+  {
+   "id": "juice",
+   "station": "BAR",
+   "name": {
+    "en": "Fresh Juice",
+    "am": "ጭማቂ",
+    "om": "Cuunfaa Fuduraa"
+   }
+  },
+  {
+   "id": "tej",
+   "station": "BAR",
+   "name": {
+    "en": "Tej (glass)",
+    "am": "ጠጅ (ብርጭቆ)",
+    "om": "Daadhii (burcuqqoo)"
+   }
+  }
+ ],
+ "MODIFIERS": {
+  "no-onion": {
+   "en": "No onion",
+   "am": "ሽንኩርት የለበትም",
+   "om": "Qullubbii malee"
+  },
+  "extra-berbere": {
+   "en": "Extra berbere",
+   "am": "ተጨማሪ በርበሬ",
+   "om": "Barbaree dabalataa"
+  },
+  "mild": {
+   "en": "Mild, no berbere",
+   "am": "ያለ በርበሬ",
+   "om": "Barbaree malee"
+  },
+  "leb-leb": {
+   "en": "Leb leb (lightly cooked)",
+   "am": "ለብለብ",
+   "om": "Lab lab"
+  },
+  "tere": {
+   "en": "Tere (raw)",
+   "am": "ጥሬ",
+   "om": "Dheedhii"
+  },
+  "well-done": {
+   "en": "Well done",
+   "am": "በደንብ የበሰለ",
+   "om": "Sirriitti bilchaate"
+  },
+  "mitmita": {
+   "en": "With mitmita",
+   "am": "ከሚጥሚጣ ጋር",
+   "om": "Miixmixaa waliin"
+  },
+  "fasting": {
+   "en": "Fasting (no butter)",
+   "am": "የጾም (ቅቤ የሌለው)",
+   "om": "Soomaa (dhadhaa malee)"
+  },
+  "extra-injera": {
+   "en": "Extra injera",
+   "am": "ተጨማሪ እንጀራ",
+   "om": "Biddeena dabalataa"
+  },
+  "no-sugar": {
+   "en": "No sugar",
+   "am": "ያለ ስኳር",
+   "om": "Sukkaara malee"
+  },
+  "no-ice": {
+   "en": "No ice",
+   "am": "ያለ በረዶ",
+   "om": "Cabbii malee"
+  },
+  "allergy": {
+   "en": "Allergy",
+   "am": "አለርጂ",
+   "om": "Alarjii"
+  }
+ },
+ "NEW_BADGE_MS": 12000,
+ "RECALL_LIMIT": 10,
+ "STAFF": {
+  "EMP-004": {
+   "name": "Meron Girma",
+   "initials": "MG"
+  },
+  "EMP-005": {
+   "name": "Chaltu Bekele",
+   "initials": "CB"
+  },
+  "EMP-006": {
+   "name": "Yonas Tadesse",
+   "initials": "YT"
+  },
+  "EMP-007": {
+   "name": "Selam Hailu",
+   "initials": "SH"
+  },
+  "EMP-008": {
+   "name": "Lensa Tola",
+   "initials": "LT"
+  }
+ },
+ "STATIONS": [
+  "GRILL",
+  "HOT_KITCHEN",
+  "SALAD",
+  "BAR"
+ ],
+ "URGENCY_MINUTES": {
+  "WARN": 10,
+  "LATE": 20
+ }
+}
