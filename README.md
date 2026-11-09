@@ -44,6 +44,8 @@ EIRSHA_SQLITE=eirsha.db EIRSHA_JWT_SECRET=$(openssl rand -hex 32) uvicorn eirsha
 ```
 
 Demo sign-in: any seeded username (for example `hanna.t` or `selam.g`) with password `eirsha-demo`.
+Replace these in the Admin app (Users & roles → Edit → New password) before real use; anyone can also
+change their own with `POST /auth/password`.
 Terminal PINs: `1111`/`2222`/`3333` for the three sales-main accounts, and `1234` for everyone else.
 These are for demos only; `020_demo.sql` must not go to production.
 
@@ -53,7 +55,8 @@ These are for demos only; `020_demo.sql` must not go to production.
 |---|---|---|
 | `apps/cashier` | `VITE_API_URL=https://eirsha-api.onrender.com` | live: sign-in, branch menu, pay (Cash / Telebirr / CBE Birr) → kitchen |
 | `apps/kds` | `VITE_KDS_WS_URL=wss://eirsha-api.onrender.com/ws` · `VITE_KDS_API_URL=https://eirsha-api.onrender.com` | live: orders pushed in real time, Start / Ready / Picked up saved |
-| the other six | — | still on their built-in demo data |
+| `apps/admin` | `VITE_API_URL=https://eirsha-api.onrender.com` | live: sign-in (Admins only), store profile, branches, prices, users & passwords, permissions, receipt, activity log, exports |
+| the other five | — | still on their built-in demo data |
 
 Vite reads these at build time, so redeploy after changing them. Leave them empty to keep the demo mode.
 Checkout order: the cashier creates the order, takes the payment, and only then sends it to the kitchen;

@@ -240,7 +240,7 @@ codes (see §6). Response bodies keep the frontends' existing field names where 
 
 | Frontend | Today (local store) | Endpoint |
 |---|---|---|
-| **all** | sign-in lists in `catalog.ts` | `POST /auth/login` · `POST /auth/pin` (device + staff code + PIN) · `POST /auth/refresh` · `POST /auth/logout` · `GET /auth/me` |
+| **all** | sign-in lists in `catalog.ts` | `POST /auth/login` · `POST /auth/pin` (device + staff code + PIN) · `POST /auth/refresh` · `POST /auth/logout` · `POST /auth/password` (change own) · `GET /auth/me` |
 | **all** | `catalog.ts` lists, `registerText()` | `GET /ref/bootstrap` · `GET /ref/i18n/{en\|am\|om}` |
 | **Sales** | `BASE_INVENTORY`, custom items | `GET /inventory/items?q=` · `POST /inventory/items` |
 | | purchases | `POST /purchases` · `GET /purchases?period=&status=` · `DELETE /purchases/{id}` · `POST /purchases/{id}/restore` |
@@ -255,7 +255,7 @@ codes (see §6). Response bodies keep the frontends' existing field names where 
 | **KDS** | `feed/demo.ts` | `WS /ws?branch=&token=&topics=kds.ticket` · `GET /kds/tickets` · `POST /kds/tickets/{id}/status\|item\|bump\|recall` — identical to `feed/live.ts` |
 | **Finance** | Z-reports, bills, tax, cash | `GET /finance/daily-sales?frm=&to=` · `GET/POST /finance/vendors` · `GET/POST /finance/bills` · `POST /finance/bills/{id}/payments` · `GET /finance/pnl` · `GET /finance/tax` · `POST /finance/tax-filings/{id}/file` · `GET /finance/cash` · `PUT /finance/reconciliations/{branch}/{day}` · `GET /finance/payroll-journal` |
 | **HR** | employees, schedule, attendance, payroll, logs | `GET/POST /hr/employees` · `GET/POST /hr/schedule` · `POST /hr/attendance/clock-in\|clock-out` · `POST /hr/attendance/{id}/breaks` · `GET /hr/attendance?date=` · `POST /hr/payroll/{month}/calculate` · `POST /hr/payroll/runs/{id}/approve\|pay` · `GET/POST /hr/performance-logs` |
-| **Admin** | profile, branches, users, matrix, receipt, prices, audit | `GET/PUT /admin/store-profile` · `GET /admin/branches` · `GET/POST /admin/users` · `GET /admin/permissions` · `PUT /admin/permissions/{role}/{code}?granted=` · `PUT /admin/menu-prices/{item}` · `PUT /admin/receipt/{branch}` · `GET /admin/audit` · `GET /admin/exports/transactions.csv` |
+| **Admin** (`apps/admin`, live) | profile, branches, users, matrix, receipt, prices, audit | `GET /admin/bootstrap` (everything, in the app's own shapes) · `GET/PUT /admin/store-profile` · `GET/POST /admin/branches` · `PUT /admin/branches/{id}` · `GET/POST /admin/users` · `PUT /admin/users/{id}` (edit, (de)activate, set password) · `PUT /admin/receipt` (all branches) · `POST /admin/exports/log` · `GET /admin/permissions` · `PUT /admin/permissions/{role}/{code}?granted=` · `PUT /admin/menu-prices/{item}` · `PUT /admin/receipt/{branch}` · `GET /admin/audit` · `GET /admin/exports/transactions.csv` |
 | **Owner (FFII)** | `data.ts` | `GET /owner/cash-flow?year=` · `GET /owner/balances` · `GET /owner/top-dishes` · `GET /owner/peak-hours` · `GET/PUT /owner/budgets/{month}` |
 
 **Realtime topics** (outbox → WebSocket): `kds.ticket` (KDS wire format), `mgr.review` (Manager queue

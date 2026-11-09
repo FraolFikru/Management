@@ -7,6 +7,20 @@
 type Entry = { am: string; om: string };
 
 export const UI_STRINGS: Record<string, Entry> = {
+  /* live mode (Eirsha Ops backend) */
+  "Sign in to System admin": { am: "ወደ ሲስተም አስተዳደር ይግቡ", om: "Bulchiinsa sirnaatti seeni" },
+  Username: { am: "የተጠቃሚ ስም", om: "Maqaa fayyadamaa" },
+  Password: { am: "የይለፍ ቃል", om: "Jecha icciitii" },
+  "Loading…": { am: "በመጫን ላይ…", om: "Fe'aa jira…" },
+  "Wrong username or password": { am: "የተጠቃሚ ስም ወይም የይለፍ ቃል ተሳስቷል", om: "Maqaan fayyadamaa ykn jechi icciitii dogoggora" },
+  "Cannot reach the server. It may be waking up — try again in a minute.": { am: "አገልጋዩን ማግኘት አልተቻለም። ከአንድ ደቂቃ በኋላ እንደገና ይሞክሩ።", om: "Sarvarii argachuu hin dandeenye. Daqiiqaa tokko booda irra deebi'ii yaali." },
+  "This account can't open System admin.": { am: "ይህ መለያ የሲስተም አስተዳደርን መክፈት አይችልም።", om: "Herregni kun bulchiinsa sirnaa banuu hin danda'u." },
+  "Not saved: {reason}": { am: "አልተቀመጠም፦ {reason}", om: "Hin olkaa'amne: {reason}" },
+  "New password (leave empty to keep the current one)": { am: "አዲስ የይለፍ ቃል (የአሁኑን ለማቆየት ባዶ ይተዉት)", om: "Jecha icciitii haaraa (kan amma jiru tursuuf duwwaa dhiisi)" },
+  "At least 8 characters. Tell the person in private; they can change it after signing in.": { am: "ቢያንስ 8 ፊደላት። ለሰውየው በግል ይንገሩ፤ ከገቡ በኋላ መቀየር ይችላሉ።", om: "Yoo xiqqaate qubee 8. Namichaaf dhuunfaatti himi; erga seenee booda jijjiiruu danda'a." },
+  "At least 8 characters.": { am: "ቢያንስ 8 ፊደላት።", om: "Yoo xiqqaate qubee 8." },
+  "Only Branch Managers, Accountants, Owners and Admins.": { am: "የቅርንጫፍ ሥራ አስኪያጆች፣ የሂሳብ ባለሙያዎች፣ ባለቤቶች እና አስተዳዳሪዎች ብቻ።", om: "Hoji-gaggeessitoota Damee, Herrega-qabdoota, Abbootii Qabeenyaa fi Bulchitoota qofa." },
+
   /* shell & navigation */
   Dashboard: { am: "ዳሽቦርድ", om: "Daashboordii" },
   Sales: { am: "ሽያጭ", om: "Gurgurtaa" },

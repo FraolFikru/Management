@@ -22,6 +22,9 @@ export const ROLES = reg<UserRole>("role", {
   SALES_STAFF: { en: "Sales Staff", am: "የሽያጭ ሰራተኛ", om: "Hojjetaa Gurgurtaa" },
   KITCHEN_STAFF: { en: "Kitchen Staff", am: "የወጥ ቤት ሰራተኛ", om: "Hojjetaa Kushinaa" },
   INVENTORY_CLERK: { en: "Inventory Clerk", am: "የንብረት ጸሐፊ", om: "Barreessaa Kuusaa" },
+  ACCOUNTANT: { en: "Accountant", am: "የሂሳብ ባለሙያ", om: "Herrega-qabaa" },
+  HR_OFFICER: { en: "HR Officer", am: "የሰው ኃይል ባለሙያ", om: "Ogeessa Humna Namaa" },
+  OWNER: { en: "Owner", am: "ባለቤት", om: "Abbaa Qabeenyaa" },
 });
 export const ROLE_IDS = Object.keys(ROLES) as UserRole[];
 export const isRole = (v: unknown): v is UserRole => typeof v === "string" && v in ROLES;
@@ -47,8 +50,10 @@ export const PERMISSIONS: readonly PermissionMeta[] = [
   { key: "canAccessAdmin", label: "System admin", hint: "This settings area", group: "System" },
 ];
 
-/** Reports, expenses, prices and stock overrides: Branch Managers and Admins only. */
+/** Reports, expenses, prices and stock overrides: Branch Managers, office roles and Admins only. */
 export const RESTRICTED: readonly PermissionKey[] = ["canViewReports", "canLogExpenses", "canEditPrices", "canOverrideInventory"];
+/** Roles that may hold RESTRICTED permissions (besides Admin). */
+const TRUSTED: readonly UserRole[] = ["BRANCH_MANAGER", "ACCOUNTANT", "OWNER"];
 /** What Sales Staff may ever have. */
 export const SALES_ALLOWED: readonly PermissionKey[] = ["canMakeSales", "canRequestDispatch"];
 
@@ -57,7 +62,7 @@ export function lockReason(role: UserRole, key: PermissionKey): string | null {
   if (role === "ADMIN") return "Admins always have every permission.";
   if (key === "canAccessAdmin") return "Only Admins can open System admin.";
   if (role === "SALES_STAFF" && !SALES_ALLOWED.includes(key)) return "Sales Staff can only make sales and request dispatch.";
-  if (RESTRICTED.includes(key) && role !== "BRANCH_MANAGER") return "Only Branch Managers and Admins.";
+  if (RESTRICTED.includes(key) && !TRUSTED.includes(role)) return "Only Branch Managers, Accountants, Owners and Admins.";
   return null;
 }
 export const lockedValue = (role: UserRole): boolean => role === "ADMIN";
@@ -73,6 +78,9 @@ export const DEFAULT_PERMISSIONS: RolePermissions[] = [
   { role: "SALES_STAFF", ...all(false), canMakeSales: true, canRequestDispatch: true },
   { role: "KITCHEN_STAFF", ...all(false), canRequestDispatch: true, canLogWaste: true },
   { role: "INVENTORY_CLERK", ...all(false), canApproveDispatch: true, canLogWaste: true, canRequestDispatch: true },
+  { role: "ACCOUNTANT", ...all(false), canViewReports: true },
+  { role: "HR_OFFICER", ...all(false) },
+  { role: "OWNER", ...all(false), canViewReports: true },
 ];
 
 /* ---------- menu (master price book) ---------- */
