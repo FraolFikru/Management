@@ -84,6 +84,13 @@ def pay(oid: str, payments: list[PaymentIn], p: Principal = Depends(require("pos
         return s.pay_order(db, p.actor, oid, [x.model_dump() for x in payments])
 
 
+@router.post("/orders/{oid}/cancel")
+def cancel(oid: str, p: Principal = Depends(require("pos.sell")), db: Db = Depends(get_db)):
+    """Unpaid, unsent order abandoned at checkout."""
+    with db.tx():
+        return s.cancel_open_order(db, p.actor, oid)
+
+
 @router.post("/order-lines/{lid}/void")
 def void(lid: str, body: VoidIn, p: Principal = Depends(require("pos.void")), db: Db = Depends(get_db)):
     with db.tx():
