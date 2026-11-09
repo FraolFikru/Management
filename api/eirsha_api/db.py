@@ -60,7 +60,10 @@ class Db:
         import psycopg  # type: ignore[import-not-found]
         from psycopg.rows import dict_row  # type: ignore[import-not-found]
 
-        conn = psycopg.connect(dsn or os.environ["EIRSHA_DATABASE_URL"], row_factory=dict_row, autocommit=True)
+        dsn = dsn or os.environ["EIRSHA_DATABASE_URL"]
+        if dsn.startswith("postgres://"):              # some hosts hand out the short scheme
+            dsn = "postgresql://" + dsn[len("postgres://"):]
+        conn = psycopg.connect(dsn, row_factory=dict_row, autocommit=True)
         conn.execute("SET search_path = eirsha, public")
         db = cls(conn, "postgres")
         db.org_id = org_id
