@@ -75,7 +75,33 @@ export function renderNav(): void {
 
 /* ---------- sign-in / switch user ---------- */
 
-export function renderSignIn(): string {
+/** Live mode: real account sign-in (username + password). */
+function renderLiveSignIn(message: string, busy: boolean, username: string): string {
+  return `
+    <div class="signin">
+      <div class="signin-card card">
+        <div class="brand"><span class="brand-mark" aria-hidden="true">BA</span><span><strong>Bistro Addis</strong><small>${t("Purchasing & inventory")}</small></span></div>
+        <h1>${t("Sign in")}</h1>
+        <p class="meta">${t("Every purchase, expense and waste report is stamped with the person signed in.")}</p>
+        <form id="liveSignIn" class="form" novalidate>
+          <div class="field"><label for="liveUser">${t("Username")}</label>
+            <input id="liveUser" class="input" autocomplete="username" autocapitalize="none" spellcheck="false" value="${esc(username)}"></div>
+          <div class="field"><label for="livePass">${t("Password")}</label>
+            <input id="livePass" class="input" type="password" autocomplete="current-password" aria-describedby="err-live"></div>
+          <p class="err" id="err-live" role="alert">${esc(message)}</p>
+          <div class="form-actions">
+            <button type="submit" class="btn primary" ${busy ? "disabled" : ""}>${icon("lock")} ${busy ? t("Signing in…") : t("Sign in")}</button>
+          </div>
+        </form>
+        <div class="seg lang small" role="group" aria-label="${t("Language")}">
+          ${LANGUAGES.map((l) => `<button type="button" data-action="lang" data-value="${l.code}" lang="${l.code}" aria-pressed="${getLanguage() === l.code}">${l.name}</button>`).join("")}
+        </div>
+      </div>
+    </div>`;
+}
+
+export function renderSignIn(live?: { message: string; busy: boolean; username: string }): string {
+  if (live) return renderLiveSignIn(live.message, live.busy, live.username);
   const chosen = STAFF.find((s) => s.userId === state.signInFor);
   return `
     <div class="signin">

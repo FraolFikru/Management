@@ -282,4 +282,13 @@ export const UI_STRINGS: Record<string, Entry> = {
   "Hello {name}. Here is what the restaurant bought.": { am: "ሰላም {name}። ሬስቶራንቱ የገዛው ይኸውና።", om: "Akkam {name}. Waan mana nyaataa bitame kunoo." },
   "Every purchase, expense and waste report is stamped with the person signed in.": { am: "እያንዳንዱ ግዢ፣ ወጪ እና የብክነት ሪፖርት በገባው ሰው ስም ይመዘገባል።", om: "Bittaan, baasiin fi gabaasni badiinsaa hundi maqaa nama seeneen galmaa'a." },
   "Costs that are not stock: repairs, fuel, transport, fees. Write the reason in your own words.": { am: "የክምችት ያልሆኑ ወጪዎች፦ ጥገና፣ ነዳጅ፣ ትራንስፖርት፣ ክፍያዎች። ምክንያቱን በራስዎ ቃላት ይጻፉ።", om: "Baasii kuusaa hin taane: suphaa, boba'aa, geejjiba, kaffaltii. Sababa jecha keetiin barreessi." },
+  /* live sign-in (backend) */
+  Username: { am: "የተጠቃሚ ስም", om: "Maqaa fayyadamaa" },
+  Password: { am: "የይለፍ ቃል", om: "Jecha icciitii" },
+  "Signing in…": { am: "በመግባት ላይ…", om: "Seenaa jira…" },
+  "Enter your username and password.": { am: "የተጠቃሚ ስምዎን እና የይለፍ ቃልዎን ያስገቡ።", om: "Maqaa fayyadamaa fi jecha icciitii galchi." },
+  "Wrong username or password.": { am: "የተጠቃሚ ስም ወይም የይለፍ ቃል ትክክል አይደለም።", om: "Maqaan fayyadamaa ykn jechi icciitii dogoggora." },
+  "This account can't open the purchasing app.": { am: "ይህ መለያ የግዢ መተግበሪያውን መክፈት አይችልም።", om: "Herregni kun appii bittaa banuu hin danda'u." },
+  "Cannot reach the server. It may be waking up — try again in a minute.": { am: "ከሰርቨሩ ጋር መገናኘት አልተቻለም። እየተነሳ ሊሆን ይችላል — ከአንድ ደቂቃ በኋላ እንደገና ይሞክሩ።", om: "Sarvarii qaqqabuu hin dandeenye. Ka'aa jiraachuu danda'a — daqiiqaa booda irra deebi'ii yaali." },
+  "Not saved: {reason}": { am: "አልተቀመጠም፦ {reason}", om: "Hin olkaa'amne: {reason}" },
 };

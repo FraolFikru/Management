@@ -13,7 +13,8 @@ import type {
 import { BASE_INVENTORY, CAN_APPROVE_WASTE, CAN_DELETE, STAFF, VIEW_ACCESS } from "./catalog";
 import { generateSeed, newId } from "./seed";
 import { addDays, localDay, today } from "./format";
-import { isLanguage } from "./i18n";
+import { isLanguage, registerText } from "./i18n";
+import { isLive, loadAll, remote, sessionUser, signOut as apiSignOut } from "./api";
 
 /* ---------- preferences & session (persisted per browser) ---------- */
 
@@ -96,7 +97,54 @@ export const db = {
 
 /* ---------- session ---------- */
 
-export const currentUser = (): StaffAccount | null => STAFF.find((s) => s.userId === state.userId) ?? null;
+/** Live mode: the signed-in account, as the Sales app knows it (set after the backend data loads). */
+let liveUser: StaffAccount | null = null;
+
+export const currentUser = (): StaffAccount | null =>
+  isLive ? liveUser : STAFF.find((s) => s.userId === state.userId) ?? null;
+
+/* ---------- backend sync (live mode) ----------
+   Saves stay instant: the screen updates first, then the record is sent.
+   If the backend refuses it, the change is rolled back and onSyncError
+   says why. Undo and delete are sent the same way. */
+
+let syncError: (message: string) => void = () => {};
+export function onSyncError(fn: (message: string) => void): void { syncError = fn; }
+
+function push(task: () => Promise<unknown>, rollback: () => void): Promise<void> {
+  if (!isLive) return Promise.resolve();
+  return task().then(() => undefined, (err: unknown) => {
+    rollback();
+    syncError(err instanceof Error ? err.message : String(err));
+  });
+}
+
+/** Items created on this screen, saved before any purchase that uses them. */
+const itemSaved = new Map<string, Promise<void>>();
+
+/** Replace the demo data with the backend's (after a live sign-in). Throws "no-access" if this account can't use the app. */
+export async function loadFromBackend(): Promise<void> {
+  const b = await loadAll().catch((err: unknown) => {
+    throw (err as { status?: number }).status === 403 ? new Error("no-access") : err;
+  });
+  const u = sessionUser();
+  if (!b.role || !u) throw new Error("no-access");
+  for (const c of b.customInventory) registerText(c.nameKey, { en: c.name, am: c.name, om: c.name });
+  db.purchases = b.purchases;
+  db.waste = b.waste;
+  db.expenses = b.expenses;
+  db.audit = b.audit;
+  db.customInventory = b.customInventory.map(({ name: _n, ...i }) => i);
+  liveUser = { userId: u.id, name: u.name, role: b.role, initials: u.initials ?? u.name.split(" ").map((w) => w[0]).join("").slice(0, 2), pin: "" };
+  state.userId = u.id;
+}
+
+/** Save a stock item the clerk just created (live mode). */
+export function recordItem(item: InventoryItem, name: string): void {
+  itemSaved.set(item.id, push(() => remote.item(item, name), () => {
+    db.customInventory = db.customInventory.filter((i) => i !== item);
+  }));
+}
 
 /** The signed-in user; screens are only rendered when someone is signed in. */
 export function user(): StaffAccount {
@@ -119,6 +167,12 @@ export function signIn(userId: string, pin: string): boolean {
 }
 
 export function signOut(): void {
+  if (isLive) {
+    void apiSignOut();
+    liveUser = null;
+    state.userId = null;
+    return;
+  }
   if (state.userId) log("SIGN_OUT", "SESSION", state.userId, "Signed out", {});
   state.userId = null;
   savePrefs();
@@ -143,26 +197,35 @@ export const stampUser = (): { loggedBy: string; userId: string } => ({ loggedBy
 
 export function recordPurchase(p: PurchaseRecord): void {
   db.purchases.push(p);
-  log("CREATE", "PURCHASE", p.id, `Purchase ${p.itemId}`, { name: p.itemName, amount: p.totalCost, quantity: p.quantity, unit: p.unit });
+  const e = log("CREATE", "PURCHASE", p.id, `Purchase ${p.itemId}`, { name: p.itemName, amount: p.totalCost, quantity: p.quantity, unit: p.unit });
+  const ready = itemSaved.get(p.itemId) ?? Promise.resolve();
+  void ready.then(() => push(() => remote.purchase(p), () => { db.purchases = db.purchases.filter((x) => x !== p); unlog(e); }));
 }
 
 export function recordWaste(w: WasteRecord): void {
   db.waste.push(w);
-  log("CREATE", "WASTE", w.id, `Waste ${w.itemId}`, { name: w.itemName, amount: w.lossValue, quantity: w.quantityLost, unit: w.unit });
+  const e = log("CREATE", "WASTE", w.id, `Waste ${w.itemId}`, { name: w.itemName, amount: w.lossValue, quantity: w.quantityLost, unit: w.unit });
+  void push(() => remote.waste(w), () => { db.waste = db.waste.filter((x) => x !== w); unlog(e); });
 }
 
-export function recordExpense(e: CustomExpenseRecord): void {
-  db.expenses.push(e);
-  log("CREATE", "EXPENSE", e.id, e.reason, { name: e.reason, amount: e.amount });
+export function recordExpense(x: CustomExpenseRecord): void {
+  db.expenses.push(x);
+  const e = log("CREATE", "EXPENSE", x.id, x.reason, { name: x.reason, amount: x.amount });
+  void push(() => remote.expense(x), () => { db.expenses = db.expenses.filter((r) => r !== x); unlog(e); });
 }
+
+const unlog = (e: AuditEntry): void => { db.audit = db.audit.filter((x) => x !== e); };
+const PATH = { PURCHASE: "purchases", WASTE: "waste", EXPENSE: "expenses" } as const;
 
 export function decideWaste(id: string, approve: boolean): WasteRecord | undefined {
   const w = db.waste.find((x) => x.id === id);
   if (!w || !canApproveWaste()) return undefined;
+  const before = { approval: w.approval, approvedBy: w.approvedBy, approvedAt: w.approvedAt };
   w.approval = approve ? "APPROVED" : "REJECTED";
   w.approvedBy = user().name;
   w.approvedAt = new Date().toISOString();
-  log(approve ? "APPROVE" : "REJECT", "WASTE", w.id, `Waste ${w.itemId}`, { name: w.itemName, amount: w.lossValue });
+  const e = log(approve ? "APPROVE" : "REJECT", "WASTE", w.id, `Waste ${w.itemId}`, { name: w.itemName, amount: w.lossValue });
+  void push(() => remote.decideWaste(w.id, approve), () => { Object.assign(w, before); unlog(e); });
   return w;
 }
 
@@ -184,16 +247,31 @@ export function removeRecord(entity: AuditEntity, id: string): AnyRecord | null 
     const row = db.expenses.find((e) => e.id === id);
     if (row) { db.expenses = db.expenses.filter((e) => e !== row); removed = { entity, row }; }
   }
-  if (removed) log("DELETE", entity, id, `Deleted ${entity.toLowerCase()}`, removedDetail(removed));
+  if (removed) {
+    const r = removed;
+    const e = log("DELETE", entity, id, `Deleted ${entity.toLowerCase()}`, removedDetail(r));
+    void push(() => remote.remove(PATH[r.entity], id), () => { putBack(r); unlog(e); });
+  }
   return removed;
 }
 
-export function restoreRecord(r: AnyRecord): void {
+function putBack(r: AnyRecord): void {
   if (r.entity === "PURCHASE") db.purchases.push(r.row);
   else if (r.entity === "WASTE") db.waste.push(r.row);
   else db.expenses.push(r.row);
+}
+
+function takeOut(r: AnyRecord): void {
+  if (r.entity === "PURCHASE") db.purchases = db.purchases.filter((x) => x !== r.row);
+  else if (r.entity === "WASTE") db.waste = db.waste.filter((x) => x !== r.row);
+  else db.expenses = db.expenses.filter((x) => x !== r.row);
+}
+
+export function restoreRecord(r: AnyRecord): void {
+  putBack(r);
   const id = r.row.id;
-  log("RESTORE", r.entity, id, `Restored ${r.entity.toLowerCase()}`, removedDetail(r));
+  const e = log("RESTORE", r.entity, id, `Restored ${r.entity.toLowerCase()}`, removedDetail(r));
+  void push(() => remote.restore(PATH[r.entity], id), () => { takeOut(r); unlog(e); });
 }
 
 function removedDetail(r: AnyRecord): AuditEntry["detail"] {
