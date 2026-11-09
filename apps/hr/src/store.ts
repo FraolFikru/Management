@@ -12,6 +12,9 @@ import type {
 import { LATE_GRACE_MIN, MONTH_HOURS, NORMAL_DAY_HOURS, PENSION_EMPLOYEE, PENSION_EMPLOYER, SHIFTS, incomeTax } from "./catalog";
 import { at, generateSeed, newId, overtimeMultiplier, weekStart, workedHours } from "./seed";
 import { addDays, dayOf, localDay, parseDay, round2, today } from "./format";
+import { BRANCHES } from "./catalog";
+import { registerText } from "./i18n";
+import { isLive, loadAll, remote, sessionUser, signOut as apiSignOut } from "./api";
 
 /* ---------- UI state ---------- */
 
@@ -97,6 +100,69 @@ export const db = {
 
 export const employee = (id: string): EmployeeProfile | undefined => db.employees.find((e) => e.id === id);
 export const user = (): EmployeeProfile => employee(state.userId) ?? db.employees[0];
+
+/* ---------- live mode (backend) ----------
+   The screen updates at once; the change is then sent. If the backend
+   refuses it, the change is rolled back and onSyncError says why.
+   Clock buttons for one shift are sent in order (clock in → break → out). */
+
+let signedInLive = false;
+export const signedIn = (): boolean => !isLive || signedInLive;
+
+let syncError: (message: string) => void = () => {};
+export function onSyncError(fn: (message: string) => void): void { syncError = fn; }
+
+function push<T>(task: () => Promise<T>, rollback: () => void, then?: (r: T) => void): void {
+  if (!isLive) return;
+  task().then((r) => then?.(r), (err: unknown) => {
+    rollback();
+    syncError(err instanceof Error ? err.message : String(err));
+  });
+}
+
+/** One queue per shift, so its clock actions reach the server in the order they were pressed. */
+const queues = new Map<string, Promise<unknown>>();
+function pushInOrder<T>(key: string, task: () => Promise<T>, rollback: () => void, then?: (r: T) => void): void {
+  if (!isLive) return;
+  const prev = queues.get(key) ?? Promise.resolve();
+  const next = prev.catch(() => undefined).then(task).then((r) => then?.(r), (err: unknown) => {
+    rollback();
+    syncError(err instanceof Error ? err.message : String(err));
+  });
+  queues.set(key, next);
+}
+/** Today's planned shifts get a server id only when someone clocks in or is marked absent. */
+const serverId = new Map<string, string>();
+const sid = (a: AttendanceRecord): string => serverId.get(a.id) ?? a.id;
+const shiftKey = (a: AttendanceRecord): string => `${a.employeeId}|${a.shiftDate}|${a.shift}`;
+
+/** Replace the demo data with the real staff data (after a live sign-in). Throws "no-access" if this account can't use the app. */
+export async function loadFromBackend(): Promise<void> {
+  const b = await loadAll().catch((err: unknown) => {
+    throw (err as { status?: number }).status === 403 ? new Error("no-access") : err;
+  });
+  const u = sessionUser();
+  if (!b.role || !u) throw new Error("no-access");
+  BRANCHES.splice(0, BRANCHES.length, ...b.branches.map((x) => {
+    registerText(`branch.${x.id}`, { en: x.name, am: x.name, om: x.name });
+    return { id: x.id, nameKey: `branch.${x.id}` };
+  }));
+  db.employees = b.employees;
+  db.schedule = b.schedule;
+  db.attendance = b.attendance;
+  db.logs = b.logs.sort((x, y) => (x.timestamp < y.timestamp ? 1 : -1));
+  db.payroll = b.payroll;
+  serverId.clear();
+  queues.clear();
+  state.userId = u.id;
+  if (!BRANCHES.some((x) => x.id === state.branch)) state.branch = b.branch || BRANCHES[0]?.id || "";
+  signedInLive = true;
+}
+
+export function signOut(): void {
+  void apiSignOut();
+  signedInLive = false;
+}
 export const nameOf = (id: string): string => employee(id)?.fullName ?? id;
 export const initials = (name: string): string => name.split(/\s+/).map((p) => p[0] ?? "").slice(0, 2).join("").toUpperCase();
 export const branchStaff = (includeInactive = false): EmployeeProfile[] =>
@@ -107,7 +173,18 @@ export const branchStaff = (includeInactive = false): EmployeeProfile[] =>
 export function saveEmployee(data: Omit<EmployeeProfile, "id">, id: string | null): EmployeeProfile {
   if (id) {
     const e = employee(id);
-    if (e) { Object.assign(e, data); return e; }
+    if (e) {
+      const was = { ...e };
+      Object.assign(e, data);
+      push(() => remote.editEmployee(e), () => { Object.assign(e, was); });
+      return e;
+    }
+  }
+  if (isLive) {
+    const e: EmployeeProfile = { ...data, id: newId("usr") };
+    db.employees.push(e);
+    push(() => remote.hire(e), () => { db.employees = db.employees.filter((x) => x !== e); });
+    return e;
   }
   const n = db.employees.length + 1;
   const e: EmployeeProfile = { ...data, id: `EMP-${String(n).padStart(3, "0")}` };
@@ -119,8 +196,16 @@ export function saveEmployee(data: Omit<EmployeeProfile, "id">, id: string | nul
 export function setStatus(id: string, status: EmployeeProfile["status"]): void {
   const e = employee(id);
   if (!e) return;
+  const prev = e.status, shifts = db.schedule;
   e.status = status;
   if (status === "INACTIVE") db.schedule = db.schedule.filter((s) => !(s.employeeId === id && s.date > today()));
+  push(() => remote.setStatus(id, status), () => { e.status = prev; db.schedule = shifts; });
+}
+
+/** Undo of adding someone: in live mode their new account is switched off (it stays on record). */
+export function undoHire(e: EmployeeProfile): void {
+  db.employees = db.employees.filter((x) => x !== e);
+  push(() => remote.setStatus(e.id, "INACTIVE"), () => { db.employees.push(e); });
 }
 
 /* ---------- schedule ---------- */
@@ -133,10 +218,19 @@ export const entryFor = (employeeId: string, date: string): ScheduleEntry | unde
 export function setShift(employeeId: string, date: string, shift: ShiftCode | null): boolean {
   if (date < today()) return false;
   const existing = entryFor(employeeId, date);
+  const before = existing?.shift ?? null;
   if (shift === null) { if (existing) db.schedule = db.schedule.filter((s) => s !== existing); }
   else if (existing) existing.shift = shift;
   else db.schedule.push({ id: newId("sch"), employeeId, date, shift });
   if (date === today()) syncToday(employeeId);
+  const branch = employee(employeeId)?.branchId ?? state.branch;
+  pushInOrder(`plan|${employeeId}|${date}`, () => remote.setShift(employeeId, date, shift, branch), () => {
+    const cur = entryFor(employeeId, date);
+    if (before === null) { if (cur) db.schedule = db.schedule.filter((s) => s !== cur); }
+    else if (cur) cur.shift = before;
+    else db.schedule.push({ id: newId("sch"), employeeId, date, shift: before });
+    if (date === today()) syncToday(employeeId);
+  });
   return true;
 }
 
@@ -202,12 +296,16 @@ export function clockIn(id: string): AttendanceRecord | null {
   a.lateMinutes = late > LATE_GRACE_MIN ? late : 0;
   a.status = "CLOCKED_IN";
   a.loggedBy = state.userId;
+  const was = { ...snapshotOf(a), status: "SCHEDULED" as const, clockIn: "", lateMinutes: 0 };
+  pushInOrder(shiftKey(a), () => remote.clockIn(a.employeeId), () => restoreLocal(was), (r) => { serverId.set(a.id, r.id); });
   return a;
 }
 
 export function toggleBreak(id: string): "start" | "end" | null {
   const a = db.attendance.find((x) => x.id === id);
   if (!a || a.status !== "CLOCKED_IN") return null;
+  const was = snapshotOf(a);
+  pushInOrder(shiftKey(a), () => remote.toggleBreak(sid(a)), () => restoreLocal(was));
   const open = a.breaks.find((b) => !b.end);
   if (open) { open.end = new Date().toISOString(); return "end"; }
   a.breaks.push({ start: new Date().toISOString() });
@@ -217,6 +315,8 @@ export function toggleBreak(id: string): "start" | "end" | null {
 export function clockOut(id: string): AttendanceRecord | null {
   const a = db.attendance.find((x) => x.id === id);
   if (!a || a.status !== "CLOCKED_IN") return null;
+  const was = snapshotOf(a);
+  pushInOrder(shiftKey(a), () => remote.clockOut(a.employeeId), () => restoreLocal(was));
   const nowIso = new Date().toISOString();
   for (const b of a.breaks) if (!b.end) b.end = nowIso;
   a.clockOut = nowIso;
@@ -230,8 +330,10 @@ export function clockOut(id: string): AttendanceRecord | null {
 export function markAbsent(id: string, note: string): AttendanceRecord | null {
   const a = db.attendance.find((x) => x.id === id);
   if (!a || a.status !== "SCHEDULED") return null;
+  const was = snapshotOf(a);
   a.status = "ABSENT";
   a.loggedBy = state.userId;
+  pushInOrder(shiftKey(a), () => remote.absent(a.employeeId, a.shiftDate, a.shift), () => restoreLocal(was), (r) => { serverId.set(a.id, r.id); });
   if (note) addLog({ employeeId: a.employeeId, type: "INCIDENT", severity: "MEDIUM", note: `Absent ${a.shiftDate}: ${note}`, source: "HR" });
   return a;
 }
@@ -239,8 +341,17 @@ export function markAbsent(id: string, note: string): AttendanceRecord | null {
 /** Undo for any attendance button: restore a saved copy. */
 export function restoreAttendance(copy: AttendanceRecord): void {
   const a = db.attendance.find((x) => x.id === copy.id);
+  if (!a) return;
+  const was = snapshotOf(a);
+  restoreLocal(copy);
+  pushInOrder(shiftKey(copy), () => remote.restore(copy), () => restoreLocal(was), () => { if (copy.status === "SCHEDULED") serverId.delete(copy.id); });
+}
+
+function restoreLocal(copy: AttendanceRecord): void {
+  const a = db.attendance.find((x) => x.id === copy.id);
   if (a) Object.assign(a, copy, { breaks: copy.breaks.map((b) => ({ ...b })) });
 }
+const snapshotOf = (a: AttendanceRecord): AttendanceRecord => ({ ...a, breaks: a.breaks.map((b) => ({ ...b })) });
 export const snapshot = (a: AttendanceRecord): AttendanceRecord => ({ ...a, breaks: a.breaks.map((b) => ({ ...b })) });
 
 /* ---------- payroll ---------- */
@@ -283,24 +394,36 @@ export function payslip(e: EmployeeProfile, month: string): Payslip {
   };
 }
 
+/** The month's payroll run: per branch in live mode (a company-wide run covers every branch). */
 export const payrollRun = (month: string) => {
-  let run = db.payroll.find((p) => p.month === month);
-  if (!run) { run = { month, status: "DRAFT" }; db.payroll.push(run); }
+  let run = isLive
+    ? db.payroll.find((p) => p.month === month && p.branchId === state.branch) ?? db.payroll.find((p) => p.month === month && !p.branchId)
+    : db.payroll.find((p) => p.month === month);
+  if (!run) { run = { month, status: "DRAFT", ...(isLive ? { branchId: state.branch } : {}) }; db.payroll.push(run); }
   return run;
 };
 
 export function approvePayroll(month: string): void {
   const run = payrollRun(month);
+  const was = { ...run };
   run.status = "APPROVED";
   run.approvedBy = state.userId;
   run.approvedAt = new Date().toISOString();
+  push(() => remote.approvePayroll(month, run.branchId), () => { resetObj(run, was); });
 }
 
 export function reopenPayroll(month: string): void {
   const run = payrollRun(month);
+  const was = { ...run };
   run.status = "DRAFT";
   delete run.approvedBy;
   delete run.approvedAt;
+  push(() => remote.reopenPayroll(month, run.branchId), () => { resetObj(run, was); });
+}
+
+function resetObj<T extends object>(obj: T, before: T): void {
+  for (const k of Object.keys(obj)) if (!(k in before)) delete (obj as Record<string, unknown>)[k];
+  Object.assign(obj, before);
 }
 
 /* ---------- performance logs ---------- */
@@ -308,9 +431,23 @@ export function reopenPayroll(month: string): void {
 export function addLog(l: Omit<PerformanceLog, "id" | "loggedBy" | "timestamp">): PerformanceLog {
   const rec: PerformanceLog = { ...l, id: newId("log"), loggedBy: state.userId, timestamp: new Date().toISOString() };
   db.logs.unshift(rec);
+  push(() => remote.addLog(rec), () => { db.logs = db.logs.filter((l) => l !== rec); });
   return rec;
 }
-export const removeLog = (id: string): void => { db.logs = db.logs.filter((l) => l.id !== id); };
+export const removeLog = (id: string): void => {
+  const l = db.logs.find((x) => x.id === id);
+  db.logs = db.logs.filter((x) => x.id !== id);
+  if (l) push(() => remote.deleteLog(id), () => { restoreLogLocal(l); });
+};
+/** Undo of a delete: the entry comes back (same id). */
+export function restoreLog(l: PerformanceLog): void {
+  restoreLogLocal(l);
+  push(() => remote.addLog(l), () => { db.logs = db.logs.filter((x) => x !== l); });
+}
+function restoreLogLocal(l: PerformanceLog): void {
+  if (!db.logs.includes(l)) db.logs.push(l);
+  db.logs.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
+}
 
 /** Punctuality over the last 30 days: share of worked shifts that started on time. */
 export function punctuality(employeeId: string): { pct: number; late: number; absent: number; shifts: number } {
