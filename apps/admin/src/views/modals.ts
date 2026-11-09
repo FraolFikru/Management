@@ -6,7 +6,7 @@ import type { Branch, FieldErrors, UserAccount, UserRole } from "../types";
 import { isLive } from "../api";
 import { t, tk } from "../i18n";
 import { money, parseAmount, plain } from "../format";
-import { ROLE_IDS, isRole } from "../catalog";
+import { ROLE_APPS, ROLE_IDS, isRole } from "../catalog";
 import { activeAdmins, branchById, branchName, bulkPrice, db, priceAt, saveBranch, saveUser, setPrice, state, user } from "../store";
 import { $, $$, esc, icon } from "../ui/dom";
 import { clearErrors, errText, invalid, setPressed, showErrors } from "../ui/shared";
@@ -112,7 +112,7 @@ function userForm(id: string | null): string {
       ${input("uUser", "user.username", t("Username"), ud.username, "username", 'autocapitalize="off" placeholder="abebe.k"', true)}
     </div>
     <div class="field"><span class="label" id="roleLbl">${t("Role")}</span>
-      <div class="role-grid" role="group" aria-labelledby="roleLbl">${ROLE_IDS.map((r) => `<button type="button" class="pay-opt" data-action="user-role" data-value="${r}" aria-pressed="${ud.role === r}"><strong>${esc(tk(`role.${r}`))}</strong></button>`).join("")}</div>
+      <div class="role-grid" role="group" aria-labelledby="roleLbl">${ROLE_IDS.map((r) => `<button type="button" class="pay-opt" data-action="user-role" data-value="${r}" aria-pressed="${ud.role === r}"><strong>${esc(tk(`role.${r}`))}</strong><small>${esc(t(ROLE_APPS[r]))}</small></button>`).join("")}</div>
       ${errText(state.errors, "role")}</div>
     <div class="row">
       <div class="field"><label for="uBranch">${t("Branch")}</label><select id="uBranch" class="input" data-bind="user.assignedBranchId">${db.branches.map((b) =>

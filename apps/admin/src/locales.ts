@@ -7,6 +7,16 @@
 type Entry = { am: string; om: string };
 
 export const UI_STRINGS: Record<string, Entry> = {
+  /* apps each role opens */
+  "All apps": { am: "ሁሉም መተግበሪያዎች", om: "Appiliikeeshinii hunda" },
+  "Manager · Cashier · Kitchen display": { am: "ሥራ አስኪያጅ · ገንዘብ ተቀባይ · የኩሽና ማሳያ", om: "Hoji-gaggeessaa · Qarshii fudhataa · Agarsiisa Kushinaa" },
+  Cashier: { am: "ገንዘብ ተቀባይ", om: "Qarshii fudhataa" },
+  "Kitchen display": { am: "የኩሽና ማሳያ", om: "Agarsiisa Kushinaa" },
+  "Purchases & stock": { am: "ግዢ እና ክምችት", om: "Bittaa fi kuusaa" },
+  Finance: { am: "ፋይናንስ", om: "Faayinaansii" },
+  "HR & staff": { am: "የሰው ኃይል እና ሠራተኞች", om: "Humna namaa fi hojjettoota" },
+  "Owner dashboard": { am: "የባለቤት ዳሽቦርድ", om: "Daashboordii abbaa qabeenyaa" },
+
   /* live mode (Eirsha Ops backend) */
   "Sign in to System admin": { am: "ወደ ሲስተም አስተዳደር ይግቡ", om: "Bulchiinsa sirnaatti seeni" },
   Username: { am: "የተጠቃሚ ስም", om: "Maqaa fayyadamaa" },
