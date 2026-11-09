@@ -27,6 +27,18 @@ export const ROLES = reg<UserRole>("role", {
   OWNER: { en: "Owner", am: "ባለቤት", om: "Abbaa Qabeenyaa" },
 });
 export const ROLE_IDS = Object.keys(ROLES) as UserRole[];
+
+/** Which apps each role signs in to (shown under the role in the user form). */
+export const ROLE_APPS: Record<UserRole, string> = {
+  ADMIN: "All apps",
+  BRANCH_MANAGER: "Manager · Cashier · Kitchen display",
+  SALES_STAFF: "Cashier",
+  KITCHEN_STAFF: "Kitchen display",
+  INVENTORY_CLERK: "Purchases & stock",
+  ACCOUNTANT: "Finance",
+  HR_OFFICER: "HR & staff",
+  OWNER: "Owner dashboard",
+};
 export const isRole = (v: unknown): v is UserRole => typeof v === "string" && v in ROLES;
 
 /* ---------- permissions ---------- */
