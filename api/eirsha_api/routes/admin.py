@@ -120,7 +120,7 @@ def bootstrap(days: int = 90, p: Principal = Depends(require("admin.access")), d
                 for b in db.all("SELECT * FROM branch WHERE org_id = ? AND deleted_at IS NULL ORDER BY opened_on IS NULL, opened_on, id", (org,))]
     users = [{"id": u["id"], "fullName": u["full_name"], "username": u["username"] or "", "role": u["role_code"],
               "assignedBranchId": u["home_branch_id"] or "", "isActive": bool(u["is_active"]), "phone": u["phone"] or "",
-              **({"lastLoginAt": str(u["last_login_at"])} if u["last_login_at"] else {})}
+              **({"lastLoginAt": s._iso(u["last_login_at"])} if u["last_login_at"] else {})}
              for u in db.all("SELECT * FROM app_user WHERE org_id = ? AND deleted_at IS NULL ORDER BY id", (org,))]
     flag_code = {r["legacy_flag"]: r["code"] for r in db.all("SELECT code, legacy_flag FROM permission WHERE legacy_flag IS NOT NULL")}
     grants = {(r["role_code"], r["permission_code"]) for r in db.all("SELECT role_code, permission_code FROM role_permission WHERE org_id = ?", (org,))}
@@ -133,7 +133,7 @@ def bootstrap(days: int = 90, p: Principal = Depends(require("admin.access")), d
                "showTinOnReceipt": bool(rc.get("show_tin", True)), "showVatBreakdown": bool(rc.get("show_vat_breakdown", True)),
                "printerName": rc.get("printer_name") or "", "connection": rc.get("connection") or "USB", "printerIp": rc.get("ip_address") or ""}
     names: dict[str, dict] = {}
-    for r in db.all("SELECT key, lang, text FROM i18n_text WHERE key LIKE 'menu.%' AND (org_id IS NULL OR org_id = ?) ORDER BY org_id IS NOT NULL", (org,)):
+    for r in db.all("SELECT key, lang, text FROM i18n_text WHERE key LIKE ? AND (org_id IS NULL OR org_id = ?) ORDER BY org_id IS NOT NULL", ("menu.%", org)):
         names.setdefault(r["key"], {})[r["lang"]] = r["text"]
     overrides: dict[str, dict] = {}
     for r in db.all("SELECT menu_item_id, branch_id, price FROM menu_item_branch_price WHERE org_id = ?", (org,)):
@@ -150,11 +150,11 @@ def bootstrap(days: int = 90, p: Principal = Depends(require("admin.access")), d
         kind = _audit_kind(a["action"])
         if kind and len(audit) < 500:
             vars_ = db.json(a["vars"]) or {}
-            audit.append({"id": str(a["id"]), "at": str(a["occurred_at"]), "userId": a["actor_user_id"] or "", "branchId": a["branch_id"] or "",
+            audit.append({"id": str(a["id"]), "at": s._iso(a["occurred_at"]), "userId": a["actor_user_id"] or "", "branchId": a["branch_id"] or "",
                           "kind": kind, "text": a["summary_template"],
                           "vars": {k: (v if isinstance(v, (int, float)) else str(v)) for k, v in vars_.items() if v is not None and not isinstance(v, (dict, list))}})
     since = (date.today() - timedelta(days=days)).isoformat()
-    tx = [{"id": r["id"], "receiptNo": r["receipt_no"] or r["order_number"], "at": str(r["paid_at"] or r["created_at"]), "branchId": r["branch_id"],
+    tx = [{"id": r["id"], "receiptNo": r["receipt_no"] or r["order_number"], "at": s._iso(r["paid_at"] or r["created_at"]), "branchId": r["branch_id"],
            "cashierId": r["opened_by"], "method": r["method"] or "CASH", "items": int(r["items"] or 0), "subtotal": float(r["total_net"]),
            "vat": float(r["vat_amount"]), "total": float(r["total_gross"])}
           for r in db.all("""SELECT o.*, (SELECT payment_method_code FROM order_payment WHERE order_id = o.id AND status = 'CAPTURED' ORDER BY amount DESC LIMIT 1) AS method,
