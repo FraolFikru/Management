@@ -32,10 +32,17 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Eirsha Ops API", version="1.0.0", lifespan=lifespan)
-# Browsers may call the API from the listed sites, plus any address matching EIRSHA_CORS_REGEX
-# (e.g. every Vercel deployment of this team). Auth is a Bearer token, not cookies.
-app.add_middleware(CORSMiddleware, allow_origins=os.environ.get("EIRSHA_CORS", "http://localhost:5173").split(","),
-                   allow_origin_regex=os.environ.get("EIRSHA_CORS_REGEX") or None,
+# Which websites may call the API from a browser. Auth is a Bearer token, not cookies.
+# Built in, so a hand-edited Render variable can't drop an app: the eight eirsha-* Vercel
+# projects, every deployment of the team's Vercel account (…-f-27f3.vercel.app) and localhost.
+# EIRSHA_CORS (exact addresses) and EIRSHA_CORS_REGEX can add more.
+BUILT_IN_ORIGINS = (r"https://eirsha-(demo|cashier|kds|sales|manager|finance|hr|admin|owner)\.vercel\.app"
+                    r"|https://[a-z0-9-]+-f-27f3\.vercel\.app"
+                    r"|http://(localhost|127\.0\.0\.1):\d+")
+_extra = os.environ.get("EIRSHA_CORS_REGEX", "").strip().lstrip("^").rstrip("$")
+app.add_middleware(CORSMiddleware,
+                   allow_origins=[o.strip() for o in os.environ.get("EIRSHA_CORS", "").split(",") if o.strip()],
+                   allow_origin_regex=f"(?:{BUILT_IN_ORIGINS})" + (f"|(?:{_extra})" if _extra else ""),
                    allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 
