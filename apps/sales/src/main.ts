@@ -8,11 +8,12 @@
 import "./style.css";
 import type { ViewId } from "./types";
 import { isLanguage, setLanguage, t } from "./i18n";
-import { canView, currentUser, savePrefs, signIn, signOut, state } from "./store";
+import { canView, currentUser, loadFromBackend, onSyncError, savePrefs, signIn, signOut, state } from "./store";
+import { isLive, sessionUser, signIn as apiSignIn, signOut as apiSignOut } from "./api";
 import { $ } from "./ui/dom";
 import { wireApp, type ActionMap } from "./ui/app";
 import { VIEW_IDS, renderNav, renderShell, renderSignIn } from "./ui/shell";
-import { clearToast, runUndo } from "./ui/toast";
+import { clearToast, runUndo, toast } from "./ui/toast";
 import { renderDashboard } from "./views/dashboard";
 import { mountPurchases, onPurchaseInput, purchaseActions, renderPurchases, submitPurchase } from "./views/purchases";
 import { mountWaste, onWasteInput, renderWaste, submitWaste, wasteActions } from "./views/waste";
@@ -27,6 +28,39 @@ const VIEWS: Record<ViewId, { title: string; render: () => string; mount?: () =>
   audit: { title: "Audit trail", render: renderAudit },
 };
 
+/* ---------- live mode (backend) ---------- */
+
+const live = { message: "", busy: false, username: "" };
+
+function liveMessage(err: unknown): string {
+  const m = err instanceof Error ? err.message : String(err);
+  if (m === "wrong") return t("Wrong username or password.");
+  if (m === "no-access") return t("This account can't open the purchasing app.");
+  if (m.includes("Failed to fetch") || m.includes("NetworkError") || m.includes("Load failed")) return t("Cannot reach the server. It may be waking up — try again in a minute.");
+  return m;
+}
+
+/** Load the backend's records for the signed-in account, then show the app. */
+async function startLive(): Promise<void> {
+  live.busy = true; render();
+  try {
+    await loadFromBackend();
+    live.message = "";
+    const h = location.hash.slice(1) as ViewId;
+    state.view = VIEW_IDS.includes(h) ? h : "dashboard";
+  } catch (err) {
+    live.message = liveMessage(err);
+    if (sessionUser()) await apiSignOut();
+  }
+  live.busy = false;
+  rebuild();
+}
+
+onSyncError((message) => {
+  toast(t("Not saved: {reason}", { reason: message }));
+  render();
+});
+
 /* ---------- rendering ---------- */
 
 function render(focusSelector?: string): void {
@@ -34,10 +68,10 @@ function render(focusSelector?: string): void {
     const app = $("#app");
     if (app) {
       app.classList.add("signed-out");
-      app.innerHTML = renderSignIn();
+      app.innerHTML = isLive ? renderSignIn(live) : renderSignIn();
     }
     document.title = "Bistro Ledger";
-    $<HTMLElement>(focusSelector ?? (state.signInFor ? "#pin" : ".staff-btn"))?.focus();
+    $<HTMLElement>(focusSelector ?? (isLive ? (live.message ? "#livePass" : "#liveUser") : state.signInFor ? "#pin" : ".staff-btn"))?.focus();
     return;
   }
   $("#app")?.classList.remove("signed-out");
@@ -123,6 +157,15 @@ document.addEventListener("submit", (e) => {
   if (id === "purchaseForm") submitPurchase();
   else if (id === "wasteForm") submitWaste();
   else if (id === "expenseForm") submitExpense();
+  else if (id === "liveSignIn") {
+    if (live.busy) return;
+    const u = $<HTMLInputElement>("#liveUser")?.value ?? "";
+    live.username = u;
+    const p = $<HTMLInputElement>("#livePass")?.value ?? "";
+    if (!u.trim() || !p) { live.message = t("Enter your username and password."); render(); return; }
+    live.busy = true; live.message = ""; render();
+    apiSignIn(u, p).then(startLive, (err) => { live.busy = false; live.message = liveMessage(err); render(); });
+  }
   else if (id === "pinForm") {
     const pin = $<HTMLInputElement>("#pin")?.value ?? "";
     if (state.signInFor && signIn(state.signInFor, pin)) {
@@ -170,4 +213,5 @@ setLanguage(state.lang);
 applyTheme();
 const start = location.hash.slice(1) as ViewId;
 state.view = VIEW_IDS.includes(start) ? start : "dashboard";
-render();
+if (isLive && sessionUser()) void startLive();
+else render();

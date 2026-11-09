@@ -522,7 +522,8 @@ def _vendor(db: Db, actor: Actor, vendor_id: str | None, vendor_name: str | None
 def log_purchase(db: Db, actor: Actor, branch_id: str, item_id: str, quantity: Any, unit_cost: Any, *,
                  vendor_id: str | None = None, vendor_name: str | None = None, payment_method: str | None = "CASH",
                  settlement: str = "PAID_NOW", vat_amount: Any = 0, has_vat_receipt: bool = False, receipt_no: str | None = None,
-                 note: str = "", client_ref: str | None = None, purchased_at: str | None = None) -> dict:
+                 note: str = "", client_ref: str | None = None, purchased_at: str | None = None,
+                 id: str | None = None, unit: str | None = None) -> dict:
     if client_ref:
         prev = db.one("SELECT * FROM purchase WHERE org_id = ? AND client_ref = ?", (actor.org_id, client_ref))
         if prev:
@@ -534,13 +535,18 @@ def log_purchase(db: Db, actor: Actor, branch_id: str, item_id: str, quantity: A
     q, uc = D(quantity), money(unit_cost)
     if q <= 0:
         raise Invalid("quantity must be positive")
+    if id and db.scalar("SELECT 1 FROM purchase WHERE id = ?", (id,)):
+        return db.one("SELECT * FROM purchase WHERE id = ?", (id,))          # a retry of the same save
+    unit_code = unit or it["unit_code"]
+    if not db.scalar("SELECT 1 FROM unit WHERE code = ?", (unit_code,)):
+        raise Invalid("unknown unit", unit=unit_code)
     vid, vname = _vendor(db, actor, vendor_id, vendor_name, it["cost_category_code"])
     at = purchased_at or now_iso()
-    pid = new_id("pur")
+    pid = id or new_id("pur")
     acc = account_for(db, actor.org_id, branch_id, payment_method) if settlement == "PAID_NOW" else None
     row = db.insert("purchase", {
         "id": pid, "org_id": actor.org_id, "branch_id": branch_id, "item_id": item_id, "cost_category_code": it["cost_category_code"],
-        "quantity": q, "unit_code": it["unit_code"], "unit_cost": uc, "total_cost": money(q * uc), "vat_amount": money(vat_amount),
+        "quantity": q, "unit_code": unit_code, "unit_cost": uc, "total_cost": money(q * uc), "vat_amount": money(vat_amount),
         "has_vat_receipt": has_vat_receipt, "receipt_no": receipt_no, "vendor_id": vid, "vendor_name": vname, "settlement": settlement,
         "payment_method_code": payment_method if settlement == "PAID_NOW" else None, "money_account_id": acc, "note": note,
         "logged_by": actor.user_id, "purchased_at": at, "business_date": business_date(at), "client_ref": client_ref})
@@ -551,6 +557,19 @@ def log_purchase(db: Db, actor: Actor, branch_id: str, item_id: str, quantity: A
     audit(db, actor, "SALES", "purchase.create", "purchase", pid, "Purchase {name} {quantity} {unit}",
           {"name": it["name_key"], "quantity": str(q), "unit": it["unit_code"], "amount": str(money(q * uc))}, branch_id=branch_id)
     return db.one("SELECT * FROM purchase WHERE id = ?", (pid,))
+
+
+def in_item_units(db: Db, item_id: str, qty: Decimal, unit_code: str, unit_cost: Decimal) -> tuple[Decimal, Decimal]:
+    """Quantity and unit cost expressed in the item's stock unit (same dimension only; else unchanged)."""
+    item_unit = db.scalar("SELECT unit_code FROM inventory_item WHERE id = ?", (item_id,))
+    if not item_unit or item_unit == unit_code:
+        return qty, unit_cost
+    a = db.one("SELECT dimension, to_base FROM unit WHERE code = ?", (unit_code,))
+    b = db.one("SELECT dimension, to_base FROM unit WHERE code = ?", (item_unit,))
+    if not a or not b or a["dimension"] != b["dimension"] or a["dimension"] == "COUNT":
+        return qty, unit_cost
+    factor = D(a["to_base"]) / D(b["to_base"])              # g → kg: 0.001
+    return (qty * factor).quantize(Decimal("0.001")), (unit_cost / factor).quantize(Decimal("0.0001"))
 
 
 def withholding_for(db: Db, org_id: str, vendor: dict, subtotal: Decimal, on: str) -> Decimal:
@@ -577,7 +596,8 @@ def review_purchase(db: Db, actor: Actor, purchase_id: str, decision: str, reaso
                                                 "flag_reason": reason if decision == "FLAG" else p["flag_reason"]})
     result: dict[str, Any] = {"purchaseId": purchase_id, "status": status, "warnings": []}
     if status == "APPROVED":
-        apply_stock(db, actor, p["branch_id"], p["item_id"], D(p["quantity"]), "PURCHASE", money(p["unit_cost"]), purchase_id=purchase_id)
+        qty, cost = in_item_units(db, p["item_id"], D(p["quantity"]), p["unit_code"], D(p["unit_cost"]))
+        apply_stock(db, actor, p["branch_id"], p["item_id"], qty, "PURCHASE", cost, purchase_id=purchase_id)
         v = _get(db, "vendor", p["vendor_id"], actor.org_id)
         issue = str(p["business_date"])
         due = (date.fromisoformat(issue) + timedelta(days=0 if p["settlement"] == "PAID_NOW" else int(v["payment_terms_days"]))).isoformat()
@@ -643,20 +663,24 @@ def pay_bill(db: Db, actor: Actor, bill_id: str, amount: Any, method: str, paid_
 # ================================================================== waste, dispatch, expenses
 
 def log_waste(db: Db, actor: Actor, branch_id: str, item_id: str, quantity: Any, reason: str, notes: str | None = None,
-              reported_by: str | None = None, client_ref: str | None = None) -> dict:
+              reported_by: str | None = None, client_ref: str | None = None, *, id: str | None = None,
+              unit_cost: Any = None, occurred_at: str | None = None) -> dict:
     r = db.one("SELECT * FROM waste_reason WHERE code = ?", (reason,))
     if not r:
         raise Invalid("unknown waste reason")
     if r["requires_note"] and not (notes or "").strip():
         raise Invalid("this reason needs a note", reason=reason)
+    if id and db.scalar("SELECT 1 FROM waste_report WHERE id = ?", (id,)):
+        return db.one("SELECT * FROM waste_report WHERE id = ?", (id,))
     it = _get(db, "inventory_item", item_id, actor.org_id)
     s = db.one("SELECT avg_unit_cost, last_unit_cost FROM branch_stock WHERE branch_id = ? AND item_id = ?", (branch_id, item_id)) or {}
-    cost = money(s.get("avg_unit_cost") or s.get("last_unit_cost") or it["standard_unit_cost"])
-    wid = new_id("wst")
+    cost = money(unit_cost) if unit_cost is not None else money(s.get("avg_unit_cost") or s.get("last_unit_cost") or it["standard_unit_cost"])
+    wid = id or new_id("wst")
+    at = occurred_at or now_iso()
     db.insert("waste_report", {"id": wid, "org_id": actor.org_id, "branch_id": branch_id, "item_id": item_id, "quantity_lost": D(quantity),
                                "unit_code": it["unit_code"], "unit_cost": cost, "reason_code": reason, "notes": notes,
-                               "reported_by": reported_by or actor.user_id, "logged_by": actor.user_id, "business_date": business_date(),
-                               "client_ref": client_ref})
+                               "reported_by": reported_by or actor.user_id, "logged_by": actor.user_id, "occurred_at": at,
+                               "business_date": business_date(at), "client_ref": client_ref})
     outbox(db, actor.org_id, branch_id, "mgr.review", "created", "waste_report", wid, {"entity": "waste_report", "id": wid})
     audit(db, actor, "SALES", "waste_report.create", "waste_report", wid, "Waste {name}",
           {"name": it["name_key"], "quantity": str(quantity), "unit": it["unit_code"], "amount": str(money(D(quantity) * cost))}, branch_id=branch_id)
@@ -667,8 +691,7 @@ def decide_waste(db: Db, actor: Actor, waste_id: str, approve: bool, reason: str
     w = _get(db, "waste_report", waste_id, actor.org_id)
     if w["approval_status"] != "PENDING":
         raise Conflict("already decided", status=w["approval_status"])
-    if not approve and not reason:
-        raise Invalid("a rejection needs a reason")
+    reason = reason or (None if approve else "Rejected by manager")
     st = "APPROVED" if approve else "REJECTED"
     db.update("waste_report", {"id": waste_id}, {"approval_status": st, "decided_by": actor.user_id, "decided_at": now_iso(),
                                                  "rejection_reason": None if approve else reason})
@@ -726,20 +749,70 @@ def receive_transfer(db: Db, actor: Actor, dispatch_id: str) -> dict:
 
 
 def log_expense(db: Db, actor: Actor, branch_id: str, reason: str, tag: str, amount: Any, method: str, *,
-                petty_cash: bool = False, note: str = "", client_ref: str | None = None, module: str = "SALES") -> dict:
+                petty_cash: bool = False, note: str = "", client_ref: str | None = None, module: str = "SALES",
+                id: str | None = None, spent_at: str | None = None) -> dict:
     cat = db.scalar("SELECT cost_category_code FROM expense_tag WHERE code = ?", (tag,))
     if not cat:
         raise Invalid("unknown expense tag")
+    if id and db.scalar("SELECT 1 FROM expense WHERE id = ?", (id,)):
+        return db.one("SELECT * FROM expense WHERE id = ?", (id,))
     acc = (db.scalar("SELECT id FROM money_account WHERE branch_id = ? AND kind = 'PETTY_CASH'", (branch_id,))
            if petty_cash else account_for(db, actor.org_id, branch_id, method))
-    eid = new_id("exp")
+    eid = id or new_id("exp")
+    at = spent_at or now_iso()
     db.insert("expense", {"id": eid, "org_id": actor.org_id, "branch_id": branch_id, "reason": reason, "tag_code": tag,
                           "cost_category_code": cat, "amount": money(amount), "payment_method_code": method, "money_account_id": acc,
-                          "note": note, "logged_by": actor.user_id, "business_date": business_date(), "client_ref": client_ref,
+                          "note": note, "logged_by": actor.user_id, "spent_at": at, "business_date": business_date(at), "client_ref": client_ref,
                           "review_status": "APPROVED" if actor.role in ("BRANCH_MANAGER", "ADMIN") else "PENDING"})
-    cash_move(db, actor, acc, -money(amount), "EXPENSE", reason, "expense", eid, branch_id=branch_id)
+    cash_move(db, actor, acc, -money(amount), "EXPENSE", reason, "expense", eid, on=business_date(at), branch_id=branch_id)
     audit(db, actor, module, "expense.create", "expense", eid, "Expense {reason}", {"reason": reason, "amount": str(money(amount))}, branch_id=branch_id)
     return db.one("SELECT * FROM expense WHERE id = ?", (eid,))
+
+
+# ---- delete & restore (Sales app: managers delete; staff may undo their own fresh, undecided entry)
+
+UNDO_WINDOW = timedelta(minutes=10)
+_RECORDS = {
+    "purchase": ("purchase", "review_status", "total_cost", "VENDOR", "purchased_at"),
+    "waste_report": ("waste_report", "approval_status", None, None, "occurred_at"),
+    "expense": ("expense", "review_status", "amount", "EXPENSE", "spent_at"),
+}
+
+
+def delete_record(db: Db, actor: Actor, entity: str, record_id: str, can_manage: bool) -> dict:
+    table, status_col, amount_col, cash_kind, _ = _RECORDS[entity]
+    r = _get(db, table, record_id, actor.org_id)
+    if r["deleted_at"]:
+        return r
+    own_fresh = r["logged_by"] == actor.user_id and datetime.now(timezone.utc) - _dt(r["created_at"]) < UNDO_WINDOW
+    if not (can_manage or own_fresh):
+        raise ServiceError("only a manager can delete a saved entry")
+    if entity == "purchase" and r[status_col] == "APPROVED":
+        raise Conflict("this purchase is approved and billed; correct it in Finance instead")
+    if entity == "waste_report" and r[status_col] != "PENDING":
+        raise Conflict("this waste report was already decided")
+    db.update(table, {"id": record_id}, {"deleted_at": now_iso(), "deleted_by": actor.user_id})
+    if amount_col and r.get("money_account_id") and (entity == "expense" or r.get("settlement") == "PAID_NOW"):
+        cash_move(db, actor, r["money_account_id"], money(r[amount_col]), cash_kind, f"Reversed: deleted {entity}",
+                  entity, record_id, on=str(r["business_date"]), branch_id=r["branch_id"])
+    audit(db, actor, "SALES", f"{entity}.delete", entity, record_id, f"Deleted {entity.replace('_report', '')}",
+          {"amount": str(r[amount_col]) if amount_col else str(r.get("loss_value"))}, branch_id=r["branch_id"])
+    return db.one(f"SELECT * FROM {table} WHERE id = ?", (record_id,))
+
+
+def restore_record(db: Db, actor: Actor, entity: str, record_id: str, can_manage: bool) -> dict:
+    table, _, amount_col, cash_kind, _ = _RECORDS[entity]
+    r = _get(db, table, record_id, actor.org_id)
+    if not r["deleted_at"]:
+        return r
+    if not (can_manage or r["deleted_by"] == actor.user_id):
+        raise ServiceError("only a manager can restore this entry")
+    db.update(table, {"id": record_id}, {"deleted_at": None, "deleted_by": None})
+    if amount_col and r.get("money_account_id") and (entity == "expense" or r.get("settlement") == "PAID_NOW"):
+        cash_move(db, actor, r["money_account_id"], -money(r[amount_col]), cash_kind, f"Restored {entity}",
+                  entity, record_id, on=str(r["business_date"]), branch_id=r["branch_id"])
+    audit(db, actor, "SALES", f"{entity}.restore", entity, record_id, f"Restored {entity.replace('_report', '')}", {}, branch_id=r["branch_id"])
+    return db.one(f"SELECT * FROM {table} WHERE id = ?", (record_id,))
 
 
 # ================================================================== HR → FIN

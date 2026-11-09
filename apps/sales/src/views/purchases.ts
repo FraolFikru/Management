@@ -9,7 +9,7 @@ import { localDay, money, normalize, num, parseAmount, plain, relDay, round2, st
 import { EXPENSE_METHODS, MAIN_COLOR, MAIN_IDS, MAIN_TO_COGS, UNIT_CODES, isExpenseMethod, isMain } from "../catalog";
 import { newId } from "../seed";
 import {
-  canDelete, db, inPeriod, inventory, inventoryItem, lastCost, recordPurchase, removeRecord, restoreRecord, state, stampUser, user, vendors,
+  canDelete, db, inPeriod, inventory, inventoryItem, lastCost, recordPurchase, removeRecord, restoreRecord, state, stampUser, user, vendors, recordItem,
 } from "../store";
 import { $, esc, highlight, icon } from "../ui/dom";
 import { attachCombobox, type ComboOption } from "../ui/combobox";
@@ -259,6 +259,7 @@ function createItem(name: string, main: MainCategory): InventoryItem {
     unitCost: round2(parseAmount(d.unitCost) || 0), aliases: [], custom: true,
   };
   db.customInventory.push(item);
+  recordItem(item, name);
   return item;
 }
 
