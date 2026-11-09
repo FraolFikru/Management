@@ -109,7 +109,7 @@ function wasteForm(): string {
       <div class="field"><label for="wNotes">${t("Notes")} <span class="opt-label">${needsNote ? t("(required)") : t("(optional)")}</span></label>
         <textarea id="wNotes" class="input" rows="2" placeholder="${t("What happened?")}" data-bind="waste.notes" ${invalid(e, "notes")}>${esc(w.notes)}</textarea>${errText(e, "notes")}</div>
       <div class="field"><label for="wReporter">${t("Reporting Staff ID")}</label>
-        <select id="wReporter" class="input" data-bind="waste.reporter">${STAFF.map((s) =>
+        <select id="wReporter" class="input" data-bind="waste.reporter">${STAFF.filter((s) => !(s as { inactive?: boolean }).inactive).map((s) =>
           `<option value="${s.userId}" ${s.userId === w.reporter ? "selected" : ""}>${esc(s.userId)} · ${esc(s.name)} (${esc(roleName(s.role))})</option>`).join("")}</select></div>
       <div class="modal-foot">
         <small class="stamp">${icon("user")} ${t("Will be logged by {name} ({id})", { name: esc(user().name), id: esc(user().userId) })}</small>

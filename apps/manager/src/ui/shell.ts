@@ -7,6 +7,7 @@ import { LANGUAGES, getLanguage, t, tk } from "../i18n";
 import { DASHBOARD_ROLES, STAFF } from "../catalog";
 import { db, lowStock, pendingDispatches, state, user } from "../store";
 import { $, esc, icon, type IconName } from "./dom";
+import { isLive } from "../api";
 import { roleName } from "./shared";
 
 export const NAV: readonly { id: ViewId; label: string; short: string; icon: IconName }[] = [
@@ -20,6 +21,31 @@ export const NAV: readonly { id: ViewId; label: string; short: string; icon: Ico
 ];
 
 export const VIEW_IDS: readonly ViewId[] = NAV.map((n) => n.id);
+
+/** Live mode: real account sign-in (username + password). */
+export function renderSignIn(message: string, busy: boolean, username: string): string {
+  return `
+    <div class="signin">
+      <div class="signin-card card">
+        <div class="brand"><span class="brand-mark" aria-hidden="true">BA</span><span><strong>Bistro Addis</strong><small>${t("Branch manager")}</small></span></div>
+        <h1>${t("Sign in")}</h1>
+        <p class="meta">${t("Every approval, rejection and log is stamped with the person signed in.")}</p>
+        <form id="liveSignIn" class="form" novalidate>
+          <div class="field"><label for="liveUser">${t("Username")}</label>
+            <input id="liveUser" class="input" autocomplete="username" autocapitalize="none" spellcheck="false" value="${esc(username)}"></div>
+          <div class="field"><label for="livePass">${t("Password")}</label>
+            <input id="livePass" class="input" type="password" autocomplete="current-password" aria-describedby="err-live"></div>
+          <p class="err" id="err-live" role="alert">${esc(message)}</p>
+          <div class="form-actions">
+            <button type="submit" class="btn primary" ${busy ? "disabled" : ""}>${busy ? t("Signing in…") : t("Sign in")}</button>
+          </div>
+        </form>
+        <div class="seg lang" role="group" aria-label="${t("Language")}">
+          ${LANGUAGES.map((l) => `<button type="button" data-action="lang" data-value="${l.code}" lang="${l.code}" aria-pressed="${getLanguage() === l.code}">${l.name}</button>`).join("")}
+        </div>
+      </div>
+    </div>`;
+}
 
 export function renderShell(): void {
   const app = $("#app");
@@ -63,8 +89,8 @@ export function renderTopbar(): void {
         <span class="staff-id">${esc(u.userId)}</span>
       </button>
       <div class="user-menu" id="userMenu" ${state.userMenu ? "" : "hidden"}>
-        <p class="meta">${t("Switch user")}</p>
-        ${others.map((s) => `<button type="button" data-action="switch-user" data-value="${s.userId}"><span class="avatar xs" aria-hidden="true">${s.initials}</span>${esc(s.name)} <small>(${esc(roleName(s.role))})</small></button>`).join("")}
+        ${isLive ? `<button type="button" data-action="sign-out">${icon("arrow")} ${t("Sign out")}</button>` : `<p class="meta">${t("Switch user")}</p>`}
+        ${isLive ? "" : others.map((s) => `<button type="button" data-action="switch-user" data-value="${s.userId}"><span class="avatar xs" aria-hidden="true">${s.initials}</span>${esc(s.name)} <small>(${esc(roleName(s.role))})</small></button>`).join("")}
       </div>
     </div>
     ${lowChip()}
@@ -92,6 +118,7 @@ export function renderNav(): void {
   const counts: Partial<Record<ViewId, number>> = {
     dispatch: pendingDispatches().length,
     cogs: db.purchases.filter((p) => p.status === "PENDING").length,
+    waste: db.waste.filter((w) => w.pending).length,
   };
   const link = (n: (typeof NAV)[number], cls: string, short: boolean): string => {
     const c = counts[n.id];

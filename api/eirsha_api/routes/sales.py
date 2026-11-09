@@ -43,6 +43,7 @@ class WasteIn(BaseModel):
     customNotes: str | None = None
     reportedBy: str | None = None
     clientRef: str | None = None
+    approve: bool = False                          # a manager logging waste themselves: decided at once (needs waste.approve)
 
 
 class ExpenseIn(BaseModel):
@@ -152,8 +153,11 @@ def restore_entry(rid: str, request: Request, p: Principal = Depends(require("pu
 @router.post("/waste", status_code=201)
 def create_waste(body: WasteIn, p: Principal = Depends(require("waste.log")), db: Db = Depends(get_db)):
     with db.tx():
-        return s.log_waste(db, p.actor, branch_of(p), body.itemId, body.quantityLost, body.reason, body.customNotes,
-                           body.reportedBy, body.clientRef, id=body.id, unit_cost=body.unitCost, occurred_at=body.timestamp)
+        w = s.log_waste(db, p.actor, branch_of(p), body.itemId, body.quantityLost, body.reason, body.customNotes,
+                        body.reportedBy, body.clientRef, id=body.id, unit_cost=body.unitCost, occurred_at=body.timestamp)
+        if body.approve and "waste.approve" in p.permissions and w["approval_status"] == "PENDING":
+            w = s.decide_waste(db, p.actor, w["id"], True)
+        return w
 
 
 @router.get("/waste")
