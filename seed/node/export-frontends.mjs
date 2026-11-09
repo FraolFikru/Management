@@ -2,7 +2,7 @@
 
      node --no-warnings --import ./seed/node/register.mjs seed/node/export-frontends.mjs <frontends-root> <out-dir>
 
-   <frontends-root> holds the unzipped modules (sales-main/, managgerr-main/, …).
+   <frontends-root> is the apps/ folder of this repo (sales/, manager/, …).
    Each module's own generateSeed() runs, so the JSON is exactly the shape its
    local store uses today. i18n texts are captured from registerText() calls.  */
 import { mkdirSync, writeFileSync, existsSync } from "node:fs";
@@ -24,14 +24,14 @@ Map.prototype.set = function (k, v) {
   return origSet.call(this, k, v);
 };
 
-const MODULES = {
-  sales:   { dir: "sales-main/sales-main/src",              files: ["catalog.ts", "seed.ts"] },
-  manager: { dir: "managgerr-main/managgerr-main/src",      files: ["catalog.ts", "seed.ts"] },
-  finance: { dir: "finance-main/finance-main/src",          files: ["catalog.ts", "seed.ts"] },
-  hr:      { dir: "HR-main/HR-main/src",                    files: ["catalog.ts", "seed.ts"] },
-  admin:   { dir: "systemadmin-main/systemadmin-main/src",  files: ["catalog.ts", "seed.ts"] },
-  kds:     { dir: "kitchen-display/kds/src",                files: ["catalog.ts", "feed/demo.ts"] },
-  owner:   { dir: "ffii-main/ffii-main/src",                files: ["data.ts"] },
+const MODULES = {   // folders under apps/ in this repo
+  sales:   { dir: "sales/src",   files: ["catalog.ts", "seed.ts"] },
+  manager: { dir: "manager/src", files: ["catalog.ts", "seed.ts"] },
+  finance: { dir: "finance/src", files: ["catalog.ts", "seed.ts"] },
+  hr:      { dir: "hr/src",      files: ["catalog.ts", "seed.ts"] },
+  admin:   { dir: "admin/src",   files: ["catalog.ts", "seed.ts"] },
+  kds:     { dir: "kds/src",     files: ["catalog.ts", "feed/demo.ts"] },
+  owner:   { dir: "owner/src",   files: ["data.ts"] },
 };
 
 const runGenerators = async (mod, data) => {

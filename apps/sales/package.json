@@ -1,0 +1,17 @@
+{
+  "name": "bistro-ledger",
+  "private": true,
+  "version": "3.0.0",
+  "type": "module",
+  "description": "Restaurant sales, COGS/inventory purchases, waste reporting and staff audit trail for Ethiopian restaurants (en / am / om).",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  }
+}

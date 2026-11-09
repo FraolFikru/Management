@@ -1,0 +1,47 @@
+// Minimal inline SVG icon set (stroke icons, 24x24 grid).
+const paths: Record<string, string> = {
+  logo: `<path d="M7 17 17 7M7 11l4-4M13 17l4-4" />`,
+  chevrons: `<path d="m8 9 4-4 4 4M8 15l4 4 4-4" />`,
+  home: `<path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />`,
+  bars: `<path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />`,
+  receipt: `<rect x="3" y="5" width="18" height="14" rx="2" /><path d="M7 10h10M7 14h6" />`,
+  wallet: `<rect x="3" y="6" width="18" height="14" rx="2" /><path d="M3 10h18M16 15h2M7 6V4h10v2" />`,
+  "trend-up": `<path d="M3 17l6-6 4 4 8-8M15 7h6v6" />`,
+  "trend-down": `<path d="M3 7l6 6 4-4 8 8M15 17h6v-6" />`,
+  target: `<circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" />`,
+  file: `<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z" /><path d="M14 3v5h5M9 13h6M9 17h6" />`,
+  settings: `<circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />`,
+  info: `<circle cx="12" cy="12" r="9" /><path d="M12 16v-4M12 8h.01" />`,
+  "arrow-right": `<path d="M5 12h14M13 6l6 6-6 6" />`,
+  "arrow-up-right": `<path d="M7 17 17 7M8 7h9v9" />`,
+  "arrow-down-left": `<path d="M17 7 7 17M16 17H7V8" />`,
+  menu: `<path d="M4 6h16M4 12h16M4 18h16" />`,
+  search: `<circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />`,
+  bell: `<path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0" />`,
+  moon: `<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />`,
+  sun: `<circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />`,
+  warning: `<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01" />`,
+  "dots-v": `<circle cx="12" cy="5" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="12" cy="19" r="1" />`,
+  "dots-h": `<circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" />`,
+  plus: `<path d="M12 5v14M5 12h14" />`,
+  chip: `<rect x="3" y="6" width="18" height="13" rx="3" /><path d="M3 11h5M16 11h5M3 15h5M16 15h5M8 6v13M16 6v13" />`,
+  contactless: `<path d="M8.5 8.5a5 5 0 0 1 0 7M12 6a8.5 8.5 0 0 1 0 12M15.5 3.5a12 12 0 0 1 0 17" />`,
+  filter: `<path d="M3 4h18l-7 9v6l-4 2v-8z" />`,
+  "chevron-left": `<path d="m15 18-6-6 6-6" />`,
+  "chevron-right": `<path d="m9 18 6-6-6-6" />`,
+  users: `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>`,
+  box: `<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"/>`,
+  percent: `<circle cx="7" cy="7" r="2.5" /><circle cx="17" cy="17" r="2.5" /><path d="M19 5 5 19" />`,
+  help: `<circle cx="12" cy="12" r="9" /><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01" />`,
+  globe: `<circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />`,
+  refresh: `<path d="M3 12a9 9 0 0 1 15.5-6.3L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.3L3 16M3 21v-5h5" />`,
+  keyboard: `<rect x="2" y="6" width="20" height="12" rx="2" /><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10" />`,
+  pencil: `<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z" /><path d="m13.5 6.5 4 4" />`,
+  check: `<path d="m5 12 5 5 9-10" />`,
+  x: `<path d="M6 6l12 12M18 6 6 18" />`,
+};
+
+export function icon(name: string): string {
+  const body = paths[name] ?? "";
+  return `<svg class="ic ic-${name}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+}
