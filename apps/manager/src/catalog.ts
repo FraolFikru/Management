@@ -231,7 +231,7 @@ dish("water", "COLD_DRINKS", 40, L("Bottled Water", "የታሸገ ውሃ", "Bish
 dish("juice", "COLD_DRINKS", 120, L("Fresh Juice", "ትኩስ ጭማቂ", "Cuunfaa Haaraa"));
 dish("beer", "BAR", 110, L("Beer", "ቢራ", "Biiraa"));
 dish("tej", "BAR", 150, L("Tej (glass)", "ጠጅ (ብርጭቆ)", "Daadhii (burcuqqoo)"));
-export const MENU: readonly MenuItem[] = menu;
+export const MENU: MenuItem[] = menu;   // live mode: replaced with the branch menu from the backend
 
 /* ---------- dispatch destinations ---------- */
 
@@ -285,7 +285,7 @@ export const BRANCH = { id: "BR-BOLE-01", name: L("Bole Branch", "ቦሌ ቅር�
 registerText("branch.name", BRANCH.name);
 
 /** Staff IDs are what the audit trail prints. */
-export const STAFF: readonly StaffAccount[] = [
+export const STAFF: StaffAccount[] = [   // live mode: replaced with the branch staff from the backend
   { userId: "BM-001", name: "Hanna Tesfaye", role: "BRANCH_MANAGER", branchId: BRANCH.id, initials: "HT" },
   { userId: "AD-001", name: "Abebe Kebede", role: "ADMIN", branchId: BRANCH.id, initials: "AK" },
   { userId: "IC-201", name: "Dawit Alemu", role: "INVENTORY_CLERK", branchId: BRANCH.id, initials: "DA" },

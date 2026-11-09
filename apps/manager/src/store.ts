@@ -12,7 +12,9 @@ import type {
   AuditAction, AuditEntry, COGSCategory, DispatchRecord, ExpenseRecord, FieldErrors, InventoryItem, MenuCategory,
   PaymentMethod, PaymentSummary, PeriodId, ReviewStatus, Shift, StaffAccount, SupportedLanguage, ViewId, WasteLog, WasteReason,
 } from "./types";
-import { DASHBOARD_ROLES, STAFF } from "./catalog";
+import { DASHBOARD_ROLES, MENU, STAFF } from "./catalog";
+import { registerText, tkText } from "./i18n";
+import { isLive, loadAll, remote, sessionUser, signOut as apiSignOut } from "./api";
 import { generateSeed, newId } from "./seed";
 import { addDays, localDay, round2, today } from "./format";
 
@@ -106,7 +108,66 @@ export const db = {
 
 /* ---------- session ---------- */
 
-export const user = (): StaffAccount => STAFF.find((s) => s.userId === state.userId) ?? STAFF[0];
+/** Live mode: the signed-in manager (set once the backend data has loaded). */
+let liveUser: StaffAccount | null = null;
+export const signedIn = (): boolean => !isLive || liveUser !== null;
+
+export const user = (): StaffAccount => (isLive && liveUser) || STAFF.find((s) => s.userId === state.userId) || STAFF[0];
+
+/* ---------- backend sync (live mode) ----------
+   The screen updates at once; the change is then sent. If the backend
+   refuses it, the change is rolled back and onSyncError says why. */
+
+let syncError: (message: string) => void = () => {};
+export function onSyncError(fn: (message: string) => void): void { syncError = fn; }
+
+function push(task: () => Promise<unknown>, rollback: () => void): void {
+  if (!isLive) return;
+  task().catch((err: unknown) => {
+    rollback();
+    syncError(err instanceof Error ? err.message : String(err));
+  });
+}
+
+/** Put an object back exactly as it was (fields added since are removed). */
+function reset<T extends object>(obj: T, before: T): void {
+  for (const k of Object.keys(obj)) if (!(k in before)) delete (obj as Record<string, unknown>)[k];
+  Object.assign(obj, before);
+}
+
+const unlog = (e: AuditEntry): void => { db.audit = db.audit.filter((x) => x !== e); };
+
+function nameFor(key: string, name: string): void {
+  if (!tkText(key)) registerText(key, { en: name, am: name, om: name });
+}
+
+/** Replace the demo data with the branch's real data (after a live sign-in). Throws "no-access" if this account can't use the app. */
+export async function loadFromBackend(): Promise<void> {
+  const b = await loadAll().catch((err: unknown) => {
+    throw (err as { status?: number }).status === 403 ? new Error("no-access") : err;
+  });
+  const u = sessionUser();
+  if (!b.role || !u) throw new Error("no-access");
+  registerText("branch.name", { en: b.branch.name, am: b.branch.name, om: b.branch.name });
+  STAFF.splice(0, STAFF.length, ...b.staff);
+  MENU.splice(0, MENU.length, ...b.menu.map((m) => { nameFor(m.nameKey, m.id); return m; }));
+  for (const i of b.inventory) nameFor(i.nameKey, i.name ?? i.id);
+  db.inventory = b.inventory.map(({ name: _n, ...i }) => ({ ...i, groupKey: `main.${i.main}`, aliases: [] }));
+  db.sales = b.sales;
+  db.purchases = b.purchases;
+  db.dispatches = b.dispatches;
+  db.waste = b.waste;
+  db.expenses = b.expenses;
+  db.audit = b.audit.sort((x, y) => (x.timestamp < y.timestamp ? 1 : -1));
+  const me = b.staff.find((s) => s.userId === u.id);
+  liveUser = { userId: u.id, name: u.name, role: b.role, branchId: b.branch.id, initials: me?.initials ?? u.name.slice(0, 2).toUpperCase() };
+  state.userId = u.id;
+}
+
+export function signOut(): void {
+  void apiSignOut();
+  liveUser = null;
+}
 export const staffName = (id: string): string => STAFF.find((s) => s.userId === id)?.name ?? id;
 
 export function switchUser(id: string): void {
@@ -117,8 +178,10 @@ export function switchUser(id: string): void {
   savePrefs();
 }
 
-export function log(action: AuditAction, detail: Omit<AuditEntry, "id" | "action" | "userId" | "timestamp"> = {}): void {
-  db.audit.unshift({ id: newId("aud"), action, userId: state.userId, timestamp: new Date().toISOString(), ...detail });
+export function log(action: AuditAction, detail: Omit<AuditEntry, "id" | "action" | "userId" | "timestamp"> = {}): AuditEntry {
+  const e: AuditEntry = { id: newId("aud"), action, userId: state.userId, timestamp: new Date().toISOString(), ...detail };
+  db.audit.unshift(e);
+  return e;
 }
 
 /* ---------- lookups ---------- */
@@ -190,7 +253,7 @@ function totalsWhere(ok: (iso: string) => boolean): BranchTotals {
   let cogs = 0;
   for (const p of db.purchases) if (p.status !== "FLAGGED" && ok(p.timestamp)) cogs += p.totalCost;
   let waste = 0;
-  for (const w of db.waste) if (ok(w.timestamp)) waste += w.lossValue;
+  for (const w of db.waste) if (!w.pending && ok(w.timestamp)) waste += w.lossValue;
   let expenses = 0;
   for (const e of db.expenses) if (ok(e.timestamp)) expenses += e.amount;
   return { sales, tickets: tickets.size, cogs, waste, expenses };
@@ -221,22 +284,26 @@ export function approveDispatch(id: string): DispatchResult {
   if (!d || !it) return { ok: false, reason: "missing" };
   if (it.currentQuantity < d.quantity) return { ok: false, reason: "stock" };
   const before = it.currentQuantity;
+  const was = { ...d };
   it.currentQuantity = round2(it.currentQuantity - d.quantity);
   d.status = "APPROVED";
   d.approvedBy = state.userId;
   d.decidedAt = new Date().toISOString();
-  log("APPROVE_DISPATCH", { itemKey: it.nameKey, quantity: d.quantity, unit: d.unit, destination: d.destination });
+  const e = log("APPROVE_DISPATCH", { itemKey: it.nameKey, quantity: d.quantity, unit: d.unit, destination: d.destination });
+  push(() => remote.decideDispatch(id, true), () => { reset(d, was); it.currentQuantity = before; unlog(e); });
   return { ok: true, before, after: it.currentQuantity };
 }
 
 export function rejectDispatch(id: string, reason: string): boolean {
   const d = db.dispatches.find((x) => x.id === id && x.status === "PENDING");
   if (!d) return false;
+  const was = { ...d };
   d.status = "REJECTED";
   d.rejectionReason = reason;
   d.approvedBy = state.userId;
   d.decidedAt = new Date().toISOString();
-  log("REJECT_DISPATCH", { itemKey: d.itemName, quantity: d.quantity, unit: d.unit, destination: d.destination, text: reason });
+  const e = log("REJECT_DISPATCH", { itemKey: d.itemName, quantity: d.quantity, unit: d.unit, destination: d.destination, text: reason });
+  push(() => remote.decideDispatch(id, false, reason), () => { reset(d, was); unlog(e); });
   return true;
 }
 
@@ -245,12 +312,14 @@ export function reopenDispatch(id: string): void {
   const d = db.dispatches.find((x) => x.id === id);
   if (!d || d.status === "PENDING") return;
   const it = item(d.itemId);
+  const was = { ...d }, qty = it?.currentQuantity;
   if (d.status === "APPROVED" && it) it.currentQuantity = round2(it.currentQuantity + d.quantity);
   d.status = "PENDING";
   delete d.rejectionReason;
   delete d.approvedBy;
   delete d.decidedAt;
-  log("UNDO", { itemKey: d.itemName, quantity: d.quantity, unit: d.unit, destination: d.destination, text: "dispatch decision" });
+  const e = log("UNDO", { itemKey: d.itemName, quantity: d.quantity, unit: d.unit, destination: d.destination, text: "dispatch decision" });
+  push(() => remote.undo("dispatch_request", id), () => { reset(d, was); if (it && qty !== undefined) it.currentQuantity = qty; unlog(e); });
 }
 
 /* ---------- writes: COGS review ---------- */
@@ -260,12 +329,14 @@ export function approvePurchase(id: string): boolean {
   const p = db.purchases.find((x) => x.id === id && x.status !== "APPROVED");
   const it = p ? item(p.itemId) : undefined;
   if (!p || !it) return false;
+  const was = { ...p }, qty = it.currentQuantity;
   p.status = "APPROVED";
   p.reviewedBy = state.userId;
   p.reviewedAt = new Date().toISOString();
   delete p.flagReason;
   it.currentQuantity = round2(it.currentQuantity + p.quantity);
-  log("APPROVE_PURCHASE", { itemKey: it.nameKey, quantity: p.quantity, unit: p.unit, amount: p.totalCost });
+  const e = log("APPROVE_PURCHASE", { itemKey: it.nameKey, quantity: p.quantity, unit: p.unit, amount: p.totalCost });
+  push(() => remote.reviewPurchase(id, "APPROVE"), () => { reset(p, was); it.currentQuantity = qty; unlog(e); });
   return true;
 }
 
@@ -273,11 +344,13 @@ export function flagPurchase(id: string, reason: string): boolean {
   const p = db.purchases.find((x) => x.id === id && x.status === "PENDING");
   const it = p ? item(p.itemId) : undefined;
   if (!p || !it) return false;
+  const was = { ...p };
   p.status = "FLAGGED";
   p.flagReason = reason;
   p.reviewedBy = state.userId;
   p.reviewedAt = new Date().toISOString();
-  log("FLAG_PURCHASE", { itemKey: it.nameKey, quantity: p.quantity, unit: p.unit, amount: p.totalCost, text: reason });
+  const e = log("FLAG_PURCHASE", { itemKey: it.nameKey, quantity: p.quantity, unit: p.unit, amount: p.totalCost, text: reason });
+  push(() => remote.reviewPurchase(id, "FLAG", reason), () => { reset(p, was); unlog(e); });
   return true;
 }
 
@@ -285,12 +358,14 @@ export function reopenPurchase(id: string, wasApproved: boolean): void {
   const p = db.purchases.find((x) => x.id === id);
   const it = p ? item(p.itemId) : undefined;
   if (!p || !it) return;
+  const was = { ...p }, qty = it.currentQuantity;
   if (wasApproved) it.currentQuantity = round2(it.currentQuantity - p.quantity);
   p.status = "PENDING";
   delete p.reviewedBy;
   delete p.reviewedAt;
   delete p.flagReason;
-  log("UNDO", { itemKey: it.nameKey, quantity: p.quantity, unit: p.unit, text: "purchase review" });
+  const e = log("UNDO", { itemKey: it.nameKey, quantity: p.quantity, unit: p.unit, text: "purchase review" });
+  push(() => remote.undo("purchase", id), () => { reset(p, was); it.currentQuantity = qty; unlog(e); });
 }
 
 /* ---------- writes: waste & expenses ---------- */
@@ -298,9 +373,14 @@ export function reopenPurchase(id: string, wasApproved: boolean): void {
 export function logWaste(w: Omit<WasteLog, "id" | "loggedBy" | "timestamp">): WasteLog {
   const rec: WasteLog = { ...w, id: newId("wst"), loggedBy: state.userId, timestamp: new Date().toISOString() };
   db.waste.unshift(rec);
-  const it = item(w.itemId);
+  const it = item(w.itemId), qty = it?.currentQuantity;
   if (it) it.currentQuantity = Math.max(0, round2(it.currentQuantity - w.quantityLost));
-  log("LOG_WASTE", { itemKey: w.itemName, quantity: w.quantityLost, unit: w.unit, amount: w.lossValue, text: w.customNotes });
+  const e = log("LOG_WASTE", { itemKey: w.itemName, quantity: w.quantityLost, unit: w.unit, amount: w.lossValue, text: w.customNotes });
+  push(() => remote.waste(rec), () => {
+    db.waste = db.waste.filter((x) => x !== rec);
+    if (it && qty !== undefined) it.currentQuantity = qty;
+    unlog(e);
+  });
   return rec;
 }
 
@@ -308,15 +388,53 @@ export function removeWaste(id: string): void {
   const rec = db.waste.find((w) => w.id === id);
   if (!rec) return;
   db.waste = db.waste.filter((w) => w !== rec);
-  const it = item(rec.itemId);
+  const it = item(rec.itemId), qty = it?.currentQuantity;
   if (it) it.currentQuantity = round2(it.currentQuantity + rec.quantityLost);
-  log("UNDO", { itemKey: rec.itemName, quantity: rec.quantityLost, unit: rec.unit, text: "waste log" });
+  const e = log("UNDO", { itemKey: rec.itemName, quantity: rec.quantityLost, unit: rec.unit, text: "waste log" });
+  push(() => remote.removeWaste(id), () => { db.waste.unshift(rec); if (it && qty !== undefined) it.currentQuantity = qty; unlog(e); });
+}
+
+/** A waste report the inventory clerk sent in: approve (stock goes down) or reject (it is dropped). */
+export function decideWasteReport(id: string, approve: boolean, reason?: string): WasteLog | null {
+  const rec = db.waste.find((w) => w.id === id && w.pending);
+  if (!rec) return null;
+  const it = item(rec.itemId), qty = it?.currentQuantity;
+  if (approve) {
+    delete rec.pending;
+    if (it) it.currentQuantity = Math.max(0, round2(it.currentQuantity - rec.quantityLost));
+  } else {
+    db.waste = db.waste.filter((w) => w !== rec);
+  }
+  const e = log("LOG_WASTE", { itemKey: rec.itemName, quantity: rec.quantityLost, unit: rec.unit, amount: rec.lossValue,
+    text: approve ? "approved" : `rejected${reason ? `: ${reason}` : ""}` });
+  push(() => remote.decideWaste(id, approve, reason), () => {
+    rec.pending = true;
+    if (!db.waste.includes(rec)) db.waste.unshift(rec);
+    if (it && qty !== undefined) it.currentQuantity = qty;
+    unlog(e);
+  });
+  return rec;
+}
+
+/** Undo of a decision on a clerk's waste report: back to waiting. */
+export function reopenWasteReport(rec: WasteLog, wasApproved: boolean): void {
+  const it = item(rec.itemId), qty = it?.currentQuantity;
+  rec.pending = true;
+  if (!db.waste.includes(rec)) db.waste.unshift(rec);
+  if (wasApproved && it) it.currentQuantity = round2(it.currentQuantity + rec.quantityLost);
+  const e = log("UNDO", { itemKey: rec.itemName, quantity: rec.quantityLost, unit: rec.unit, text: "waste log" });
+  push(() => remote.undo("waste_report", rec.id), () => {
+    if (wasApproved) delete rec.pending; else db.waste = db.waste.filter((w) => w !== rec);
+    if (it && qty !== undefined) it.currentQuantity = qty;
+    unlog(e);
+  });
 }
 
 export function logExpense(e: Omit<ExpenseRecord, "id" | "loggedBy" | "timestamp">): ExpenseRecord {
   const rec: ExpenseRecord = { ...e, id: newId("exp"), loggedBy: state.userId, timestamp: new Date().toISOString() };
   db.expenses.unshift(rec);
-  log("LOG_EXPENSE", { text: e.reason, amount: e.amount });
+  const a = log("LOG_EXPENSE", { text: e.reason, amount: e.amount });
+  push(() => remote.expense(rec), () => { db.expenses = db.expenses.filter((x) => x !== rec); unlog(a); });
   return rec;
 }
 
@@ -324,5 +442,6 @@ export function removeExpense(id: string): void {
   const rec = db.expenses.find((e) => e.id === id);
   if (!rec) return;
   db.expenses = db.expenses.filter((e) => e !== rec);
-  log("UNDO", { text: rec.reason, amount: rec.amount });
+  const a = log("UNDO", { text: rec.reason, amount: rec.amount });
+  push(() => remote.removeExpense(id), () => { db.expenses.unshift(rec); unlog(a); });
 }

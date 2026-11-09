@@ -12,6 +12,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
 from . import realtime
@@ -44,6 +45,7 @@ app.add_middleware(CORSMiddleware,
                    allow_origins=[o.strip() for o in os.environ.get("EIRSHA_CORS", "").split(",") if o.strip()],
                    allow_origin_regex=f"(?:{BUILT_IN_ORIGINS})" + (f"|(?:{_extra})" if _extra else ""),
                    allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(GZipMiddleware, minimum_size=2000)   # the Manager/Finance bootstraps carry a month of records
 
 
 @app.middleware("http")

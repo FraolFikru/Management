@@ -698,7 +698,7 @@ def decide_waste(db: Db, actor: Actor, waste_id: str, approve: bool, reason: str
     if approve:
         apply_stock(db, actor, w["branch_id"], w["item_id"], -D(w["quantity_lost"]), "WASTE", money(w["unit_cost"]), waste_id=waste_id)
     audit(db, actor, "MGR", f"waste_report.{'approve' if approve else 'reject'}", "waste_report", waste_id, "Waste {status}",
-          {"status": st, "amount": str(w["loss_value"])}, branch_id=w["branch_id"])
+          {"status": st, "amount": str(w["loss_value"]), "reason": None if approve else reason}, branch_id=w["branch_id"])
     return db.one("SELECT * FROM waste_report WHERE id = ?", (waste_id,))
 
 
@@ -812,6 +812,52 @@ def restore_record(db: Db, actor: Actor, entity: str, record_id: str, can_manage
         cash_move(db, actor, r["money_account_id"], -money(r[amount_col]), cash_kind, f"Restored {entity}",
                   entity, record_id, on=str(r["business_date"]), branch_id=r["branch_id"])
     audit(db, actor, "SALES", f"{entity}.restore", entity, record_id, f"Restored {entity.replace('_report', '')}", {}, branch_id=r["branch_id"])
+    return db.one(f"SELECT * FROM {table} WHERE id = ?", (record_id,))
+
+
+def undo_decision(db: Db, actor: Actor, entity: str, record_id: str) -> dict:
+    """The manager's Undo right after a decision: puts a purchase review, dispatch decision or waste decision
+    back to PENDING and reverses its stock (and the bill an approved purchase created). Only the person who
+    decided, within UNDO_WINDOW."""
+    table, status_col, by_col, at_col = {
+        "purchase": ("purchase", "review_status", "reviewed_by", "reviewed_at"),
+        "dispatch_request": ("dispatch_request", "status", "decided_by", "decided_at"),
+        "waste_report": ("waste_report", "approval_status", "decided_by", "decided_at"),
+    }[entity]
+    r = _get(db, table, record_id, actor.org_id)
+    status = r[status_col]
+    if status == "PENDING":
+        return r
+    if r[by_col] != actor.user_id:
+        raise Conflict("only the manager who made this decision can undo it")
+    if not r[at_col] or datetime.now(timezone.utc) - _dt(r[at_col]) >= UNDO_WINDOW:
+        raise Conflict("this decision is more than 10 minutes old and can no longer be undone")
+    if entity == "purchase" and status == "APPROVED":
+        bills = db.all("SELECT DISTINCT b.id FROM bill b JOIN bill_line l ON l.bill_id = b.id WHERE l.purchase_id = ? AND b.status <> 'VOID'", (record_id,))
+        for b in bills:
+            if db.scalar("SELECT 1 FROM bill_payment WHERE bill_id = ? AND reference <> 'Paid at purchase'", (b["id"],)):
+                raise Conflict("Finance already paid this bill; correct it in Finance instead")
+            db.execute("DELETE FROM bill_payment WHERE bill_id = ?", (b["id"],))
+            db.update("bill", {"id": b["id"]}, {"status": "VOID"})
+        qty, _ = in_item_units(db, r["item_id"], D(r["quantity"]), r["unit_code"], D(r["unit_cost"]))
+        apply_stock(db, actor, r["branch_id"], r["item_id"], -qty, "PURCHASE", purchase_id=record_id)
+        db.update(table, {"id": record_id}, {"review_status": "PENDING", "reviewed_by": None, "reviewed_at": None, "flag_reason": None})
+    elif entity == "purchase":
+        db.update(table, {"id": record_id}, {"review_status": "PENDING", "reviewed_by": None, "reviewed_at": None, "flag_reason": None})
+    elif entity == "dispatch_request":
+        if status not in ("APPROVED", "REJECTED"):
+            raise Conflict("this transfer was already received")
+        if status == "APPROVED":
+            apply_stock(db, actor, r["branch_id"], r["item_id"], D(r["quantity"]), "TRANSFER_OUT" if r["to_branch_id"] else "DISPATCH",
+                        dispatch_id=record_id)
+        db.update(table, {"id": record_id}, {"status": "PENDING", "decided_by": None, "decided_at": None, "rejection_reason": None})
+    else:
+        if status == "APPROVED":
+            apply_stock(db, actor, r["branch_id"], r["item_id"], D(r["quantity_lost"]), "WASTE", waste_id=record_id)
+        db.update(table, {"id": record_id}, {"approval_status": "PENDING", "decided_by": None, "decided_at": None, "rejection_reason": None})
+    outbox(db, actor.org_id, r["branch_id"], "mgr.review", "reopened", entity, record_id, {"entity": entity, "id": record_id, "status": "PENDING"})
+    audit(db, actor, "MGR", f"{entity}.undo", entity, record_id, "Undid {status} decision", {"status": status},
+          before={status_col: status}, after={status_col: "PENDING"}, branch_id=r["branch_id"])
     return db.one(f"SELECT * FROM {table} WHERE id = ?", (record_id,))
 
 

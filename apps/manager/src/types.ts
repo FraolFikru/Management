@@ -182,6 +182,8 @@ export interface DispatchRecord extends DispatchRequest {
 
 export interface WasteLog extends WasteReportRecord {
   itemId: string;
+  /** live mode: reported by the inventory clerk and still waiting for the manager (not yet out of stock or in totals) */
+  pending?: boolean;
   /** staff ID of the person who entered the log (may differ from reportedBy) */
   loggedBy: string;
 }

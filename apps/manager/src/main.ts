@@ -8,10 +8,11 @@ import "./style.css";
 import type { ViewId } from "./types";
 import { isLanguage, setLanguage, t } from "./i18n";
 import { isPeriod } from "./catalog";
-import { savePrefs, state, switchUser, user } from "./store";
+import { loadFromBackend, onSyncError, savePrefs, signOut, signedIn, state, switchUser, user } from "./store";
+import { isLive, sessionUser, signIn as apiSignIn, signOut as apiSignOut } from "./api";
 import { $ } from "./ui/dom";
 import { wireApp, type ActionMap } from "./ui/app";
-import { VIEW_IDS, renderNav, renderShell, renderTopbar } from "./ui/shell";
+import { VIEW_IDS, renderNav, renderShell, renderSignIn, renderTopbar } from "./ui/shell";
 import { clearToast, runUndo, toast } from "./ui/toast";
 import { renderOverview } from "./views/overview";
 import { onSalesSearch, renderSales, salesActions } from "./views/sales";
@@ -32,9 +33,51 @@ const VIEWS: Record<ViewId, { title: string; render: () => string }> = {
   audit: { title: "Audit trail", render: renderAudit },
 };
 
+/* ---------- live mode (backend) ---------- */
+
+const live = { message: "", busy: false, username: "" };
+
+function liveMessage(err: unknown): string {
+  const m = err instanceof Error ? err.message : String(err);
+  if (m === "wrong") return t("Wrong username or password.");
+  if (m === "no-access") return t("This account can't open the manager dashboard.");
+  if (m.includes("Failed to fetch") || m.includes("NetworkError") || m.includes("Load failed")) return t("Cannot reach the server. It may be waking up — try again in a minute.");
+  return m;
+}
+
+/** Load the branch's data for the signed-in manager, then show the dashboard. */
+async function startLive(): Promise<void> {
+  live.busy = true; render();
+  try {
+    await loadFromBackend();
+    live.message = "";
+  } catch (err) {
+    live.message = liveMessage(err);
+    if (sessionUser()) await apiSignOut();
+  }
+  live.busy = false;
+  rebuild();
+}
+
+onSyncError((message) => {
+  toast(t("Not saved: {reason}", { reason: message }));
+  render();
+});
+
 /* ---------- rendering ---------- */
 
 function render(focusSelector?: string): void {
+  if (!signedIn()) {
+    const app = $("#app");
+    if (app) {
+      app.classList.add("signed-out");
+      app.innerHTML = renderSignIn(live.message, live.busy, live.username);
+    }
+    document.title = "Bistro Addis";
+    $<HTMLElement>(focusSelector ?? (live.message ? "#livePass" : "#liveUser"))?.focus();
+    return;
+  }
+  $("#app")?.classList.remove("signed-out");
   if (!$("#view")) renderShell();
   const view = $("#view");
   if (!view) return;
@@ -113,6 +156,13 @@ const shellActions: ActionMap = {
     toast(t("Now logged in as {name}", { name: user().name }));
   },
   undo: () => runUndo(),
+  "sign-out": () => {
+    signOut();
+    state.userMenu = false;
+    state.modal = null;
+    clearToast();
+    rebuild();
+  },
   "goto-low": () => {
     if (state.view !== "overview") navigate("overview");
     const w = $<HTMLElement>("#lowStock");
@@ -140,7 +190,16 @@ document.addEventListener("click", (e) => {
 document.addEventListener("submit", (e) => {
   e.preventDefault();
   const id = (e.target as HTMLFormElement).id;
-  if (id === "wasteForm") submitWaste();
+  if (id === "liveSignIn") {
+    if (live.busy) return;
+    const u = $<HTMLInputElement>("#liveUser")?.value ?? "";
+    const p = $<HTMLInputElement>("#livePass")?.value ?? "";
+    live.username = u;
+    if (!u.trim() || !p) { live.message = t("Enter your username and password."); render(); return; }
+    live.busy = true; live.message = ""; render();
+    apiSignIn(u, p).then(startLive, (err) => { live.busy = false; live.message = liveMessage(err); render(); });
+  }
+  else if (id === "wasteForm") submitWaste();
   else if (id === "reasonForm") submitReason();
   else if (id === "expenseForm") submitExpense();
 });
@@ -171,7 +230,7 @@ document.addEventListener("keydown", (e) => {
 
 window.addEventListener("hashchange", () => {
   const v = location.hash.slice(1) as ViewId;
-  if (VIEW_IDS.includes(v) && v !== state.view) { if (state.modal) closeModal(); navigate(v); }
+  if (VIEW_IDS.includes(v) && v !== state.view && signedIn()) { if (state.modal) closeModal(); navigate(v); }
 });
 
 /* ---------- boot ---------- */
@@ -181,4 +240,5 @@ document.documentElement.lang = state.lang;
 applyTheme();
 const start = location.hash.slice(1) as ViewId;
 state.view = VIEW_IDS.includes(start) ? start : "overview";
-render();
+if (isLive && sessionUser()) void startLive();
+else render();
