@@ -392,8 +392,17 @@ def void_line(db: Db, actor: Actor, line_id: str, reason: str) -> dict:
         db.update("kds_ticket_item", {"order_line_id": line_id}, {"is_voided": True})
         t = db.one("SELECT status FROM kds_ticket WHERE id = ?", (item["ticket_id"],))
         if t["status"] in ("PENDING", "PREPARING", "READY"):
-            outbox(db, actor.org_id, ln["branch_id"], "kds.ticket", "upsert", "kds_ticket", item["ticket_id"],
-                   {"type": "upsert", "ticket": kds_payload(db, item["ticket_id"])})
+            left = db.scalar("SELECT count(*) FROM kds_ticket_item WHERE ticket_id = ? AND NOT is_voided", (item["ticket_id"],))
+            if int(left) == 0:      # nothing left to cook: take the ticket off the board
+                changes: dict[str, Any] = {"status": "VOIDED"}
+                if db.dialect == "sqlite":   # PostgreSQL bumps version by trigger
+                    changes["version"] = int(db.scalar("SELECT version FROM kds_ticket WHERE id = ?", (item["ticket_id"],))) + 1
+                db.update("kds_ticket", {"id": item["ticket_id"]}, changes)
+                outbox(db, actor.org_id, ln["branch_id"], "kds.ticket", "remove", "kds_ticket", item["ticket_id"],
+                       {"type": "remove", "ticketId": item["ticket_id"]})
+            else:
+                outbox(db, actor.org_id, ln["branch_id"], "kds.ticket", "upsert", "kds_ticket", item["ticket_id"],
+                       {"type": "upsert", "ticket": kds_payload(db, item["ticket_id"])})
         if db.scalar("SELECT 1 FROM employee WHERE user_id = ?", (ln["opened_by"],)):
             db.insert("performance_log", {"id": new_id("pl"), "org_id": actor.org_id, "employee_id": ln["opened_by"],
                                           "branch_id": ln["branch_id"], "log_type": "VOID_INCIDENT", "severity": "LOW",
@@ -402,6 +411,20 @@ def void_line(db: Db, actor: Actor, line_id: str, reason: str) -> dict:
     audit(db, actor, "POS", "order_line.void", "order_line", line_id, "Voided {item} on order {orderNumber}",
           {"item": ln["item_name"], "orderNumber": ln["order_number"], "reason": reason}, branch_id=ln["branch_id"])
     return order_view(db, ln["order_id"])
+
+
+def cancel_open_order(db: Db, actor: Actor, order_id: str, reason: str = "Abandoned at checkout") -> dict:
+    """Drop an order that was never paid nor sent to the kitchen (e.g. the customer walked away
+    after a failed Telebirr payment). Anything already sent or paid needs a manager void."""
+    o = _get(db, "customer_order", order_id, actor.org_id)
+    if o["status"] != "OPEN":
+        raise Conflict("only an unsent, unpaid order can be cancelled here", status=o["status"])
+    if db.scalar("SELECT 1 FROM order_payment WHERE order_id = ? AND status = 'CAPTURED'", (order_id,)):
+        raise Conflict("order has a payment; ask a manager to void it")
+    db.update("customer_order", {"id": order_id}, {"status": "VOIDED", "voided_by": actor.user_id, "voided_at": now_iso(), "void_reason": reason})
+    audit(db, actor, "POS", "customer_order.cancel", "customer_order", order_id, "Order {orderNumber} cancelled before payment",
+          {"orderNumber": o["order_number"], "reason": reason}, branch_id=o["branch_id"])
+    return order_view(db, order_id)
 
 
 def pay_order(db: Db, actor: Actor, order_id: str, payments: list[dict]) -> dict:
@@ -419,6 +442,9 @@ def pay_order(db: Db, actor: Actor, order_id: str, payments: list[dict]) -> dict
             raise Invalid("unknown payment method", method=p["method"])
         if meth["requires_reference"] and not p.get("reference"):
             raise Invalid(f"{p['method']} needs the transaction reference")
+        if p.get("reference") and db.scalar("""SELECT 1 FROM order_payment WHERE payment_method_code = ? AND reference = ?
+                                                AND status = 'CAPTURED'""", (p["method"], p["reference"])):
+            raise Conflict(f"transaction ID {p['reference']} was already used for another payment")
         acc = account_for(db, actor.org_id, o["branch_id"], p["method"])
         pid = new_id("pay")
         db.insert("order_payment", {"id": pid, "order_id": order_id, "payment_method_code": p["method"], "money_account_id": acc,

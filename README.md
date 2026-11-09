@@ -47,6 +47,18 @@ Demo sign-in: any seeded username (for example `hanna.t` or `selam.g`) with pass
 Terminal PINs: `1111`/`2222`/`3333` for the three sales-main accounts, and `1234` for everyone else.
 These are for demos only; `020_demo.sql` must not go to production.
 
+## Connecting an app to the backend
+
+| App | Vercel environment variables | Status |
+|---|---|---|
+| `apps/cashier` | `VITE_API_URL=https://eirsha-api.onrender.com` | live: sign-in, branch menu, pay (Cash / Telebirr / CBE Birr) → kitchen |
+| `apps/kds` | `VITE_KDS_WS_URL=wss://eirsha-api.onrender.com/ws` · `VITE_KDS_API_URL=https://eirsha-api.onrender.com` | live: orders pushed in real time, Start / Ready / Picked up saved |
+| the other six | — | still on their built-in demo data |
+
+Vite reads these at build time, so redeploy after changing them. Leave them empty to keep the demo mode.
+Checkout order: the cashier creates the order, takes the payment, and only then sends it to the kitchen;
+a failed payment is retried on the same order, and an abandoned one is cancelled.
+
 ## Rebuilding the seed from the frontends
 
 ```bash

@@ -10,6 +10,12 @@ type Entry = { am: string; om: string };
 export const UI_STRINGS: Record<string, Entry> = {
   /* header */
   "Kitchen Display": { am: "የኩሽና ማሳያ", om: "Agarsiisa Kushinaa" },
+  /* sign-in (live mode) */
+  Username: { am: "የተጠቃሚ ስም", om: "Maqaa fayyadamaa" },
+  Password: { am: "የይለፍ ቃል", om: "Jecha icciitii" },
+  "Sign in": { am: "ግባ", om: "Seeni" },
+  "Wrong username or password": { am: "የተጠቃሚ ስም ወይም የይለፍ ቃል ተሳስቷል", om: "Maqaan fayyadamaa ykn jechi icciitii dogoggora" },
+  "Cannot reach the server. Try again in a minute.": { am: "አገልጋዩን ማግኘት አልተቻለም። ከአንድ ደቂቃ በኋላ እንደገና ይሞክሩ።", om: "Sarvarii argachuu hin dandeenye. Daqiiqaa tokko booda irra deebi'ii yaali." },
   "Bole Branch": { am: "ቦሌ ቅርንጫፍ", om: "Damee Boolee" },
   Stations: { am: "ክፍሎች", om: "Kutaalee" },
   "All stations": { am: "ሁሉም ክፍሎች", om: "Kutaalee hunda" },

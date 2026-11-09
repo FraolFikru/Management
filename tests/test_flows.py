@@ -96,7 +96,8 @@ def test_pos_to_kds_to_zreport(db: Db) -> None:
     tibs = db.scalar("SELECT id FROM order_line WHERE order_id = ? AND menu_item_id = 'beef-tibs'", (o["id"],))
     s.void_line(db, hanna, tibs, "Customer changed mind")
     assert db.scalar("SELECT count(*) FROM performance_log WHERE log_type = 'VOID_INCIDENT' AND employee_id = ?", (meron.user_id,)) == 1
-    assert s.kds_payload(db, t2["id"])["items"] == []                      # voided line leaves the KDS ticket
+    assert db.scalar("SELECT status FROM kds_ticket WHERE id = ?", (t2["id"],)) == "VOIDED"      # empty ticket leaves the board
+    assert events(db, "kds.ticket")[-1]["payload"] == {"type": "remove", "ticketId": t2["id"]}
 
     # pay with split tender; Telebirr needs a reference
     try:
@@ -107,19 +108,33 @@ def test_pos_to_kds_to_zreport(db: Db) -> None:
     paid = s.pay_order(db, meron, o["id"], [{"method": "TELEBIRR", "amount": 500, "reference": "TB123456"},
                                             {"method": "CASH", "amount": 360, "tendered": 400}])
     assert paid["status"] == "PAID" and paid["receipt_no"].startswith("BOL")
+    again = s.create_order(db, meron, BOLE, "TAKEOUT", [{"menu_item_id": "macchiato", "quantity": 1}])
+    try:
+        s.pay_order(db, meron, again["id"], [{"method": "TELEBIRR", "amount": 70, "reference": "TB123456"}])
+        raise AssertionError("reused Telebirr reference accepted")
+    except s.Conflict as e:
+        assert "already used" in str(e)
+    s.pay_order(db, meron, again["id"], [{"method": "CASH", "amount": 70}])
+    walked = s.create_order(db, meron, BOLE, "TAKEOUT", [{"menu_item_id": "macchiato", "quantity": 1}])
+    assert s.cancel_open_order(db, meron, walked["id"])["status"] == "VOIDED"
+    try:
+        s.cancel_open_order(db, meron, o["id"])
+        raise AssertionError("cancelled a paid, sent order")
+    except s.Conflict:
+        pass
     sale = db.all("SELECT * FROM v_sale_line WHERE ticket_no = ?", (o["order_number"],))
     assert len(sale) == 2                                                   # Manager sales overview sees both active lines
 
     day = o["business_date"]
     z = s.close_day(db, hanna, BOLE, day)
-    assert Decimal(z["gross"]) == Decimal("860.00") and Decimal(z["byMethod"]["TELEBIRR"]) == Decimal("500.00")
+    assert Decimal(z["gross"]) == Decimal("930.00") and Decimal(z["byMethod"]["TELEBIRR"]) == Decimal("500.00")
     assert Decimal(z["food"]) + Decimal(z["beverage"]) == Decimal(z["gross"]) - Decimal(z["vat"])
     rec = db.one("SELECT * FROM cash_reconciliation WHERE branch_id = ? AND business_date = ?", (BOLE, day))
-    assert D(rec["cash_expected"]) == Decimal("360.00")
+    assert D(rec["cash_expected"]) == Decimal("430.00")
     pnl = db.all("SELECT * FROM v_pnl_monthly WHERE section = 'REVENUE'")
-    assert D(pnl[0]["amount"]) == Decimal("747.83")                         # Finance P&L picks up the net revenue
+    assert D(pnl[0]["amount"]) == Decimal("808.70")                         # Finance P&L picks up the net revenue
     bal = db.one("SELECT balance FROM v_account_balance WHERE money_account_id = 'ACC-BOL-DRAWER'")
-    assert D(bal["balance"]) == Decimal("360.00")
+    assert D(bal["balance"]) == Decimal("430.00")
     try:
         s.close_day(db, hanna, BOLE, day)
         raise AssertionError("closed twice")

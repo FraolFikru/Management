@@ -5,6 +5,10 @@ import {
 } from './data';
 import { t, getLang, setLang, langName, type Lang } from './i18n';
 import { icon } from './icons';
+import {
+  isLive, currentUser, signIn, signOut, loadMenu, createOrder, payOrder, sendToKitchen, cancelOrder, cartSignature,
+  ApiError, type PayMethod, type PendingOrder, type SaleInput,
+} from './api';
 
 // ───────────────────────── State (in-memory only) ─────────────────────────
 
@@ -29,6 +33,10 @@ interface State {
   mobileView: MobileView;
   /** item id to briefly highlight on next render (tap feedback) */
   flash: string | null;
+  /** payment sheet; null = closed */
+  pay: { method: PayMethod; reference: string; busy: boolean; error: string } | null;
+  /** one-line message after a sale */
+  notice: { text: string; ok: boolean } | null;
 }
 
 const state: State = {
@@ -42,9 +50,19 @@ const state: State = {
   clearArmed: false,
   mobileView: 'menu',
   flash: null,
+  pay: null,
+  notice: null,
 };
 
 let clearTimer: number | undefined;
+/** Live mode: the order created for the current checkout, kept so a retry never makes a second one. */
+let pending: PendingOrder | null = null;
+
+/** Cancel a created-but-unpaid order (quietly: the cashier is moving on). */
+function dropPending(): void {
+  if (pending && !pending.paid) void cancelOrder(pending).catch(() => {});
+  pending = null;
+}
 
 // ───────────────────────── Helpers ─────────────────────────
 
@@ -65,13 +83,16 @@ function itemCount(): number {
   return state.lines.reduce((sum, l) => sum + l.qty, 0);
 }
 
+/** Prices already include VAT: the VAT is the part of the total, not added on top. */
 function totals(): { subtotal: number; vat: number; total: number } {
-  const subtotal = round2(
+  const total = round2(
     state.lines.reduce((sum, l) => sum + (findItem(l.itemId)?.price ?? 0) * l.qty, 0),
   );
-  const vat = round2(subtotal * VAT_RATE);
-  return { subtotal, vat, total: round2(subtotal + vat) };
+  const vat = round2((total * VAT_RATE) / (1 + VAT_RATE));
+  return { subtotal: round2(total - vat), vat, total };
 }
+
+const cashierName = (): string => currentUser()?.name ?? CASHIER_NAME;
 
 function visibleItems(): MenuItem[] {
   const q = state.query.trim().toLowerCase();
@@ -139,8 +160,136 @@ function clearOrder(): void {
 
 function charge(): void {
   if (!state.lines.length) return;
-  // Step 2: open the payment sheet (Cash / Telebirr / CBE).
+  state.pay = { method: 'CASH', reference: '', busy: false, error: '' };
+  renderSheet();
 }
+
+async function confirmPayment(): Promise<void> {
+  const p = state.pay;
+  if (!p || p.busy) return;
+  if (p.method !== 'CASH' && isLive && !p.reference.trim()) {
+    p.error = t('pay.needRef');
+    renderSheet();
+    return;
+  }
+  p.busy = true;
+  p.error = '';
+  renderSheet();
+  try {
+    let n = String(state.checkNo);
+    if (isLive) {
+      const sale: SaleInput = {
+        lines: state.lines, orderType: state.orderType, table: state.table,
+        method: p.method, reference: p.reference.trim() || undefined,
+      };
+      if (pending && pending.signature !== cartSignature(sale)) dropPending();
+      if (!pending) pending = await createOrder(sale);       // 1. order (not in the kitchen yet)
+      if (!pending.paid) {
+        await payOrder(pending, sale);                       // 2. money first
+        pending.paid = true;
+      }
+      await sendToKitchen(pending);                          // 3. then the kitchen
+      n = pending.orderNumber;
+      pending = null;
+      state.notice = { text: t('pay.done', { n }), ok: true };
+      state.checkNo = Number(n) + 1 || state.checkNo + 1;
+    } else {
+      state.notice = { text: t('pay.doneDemo', { n }), ok: true };
+      state.checkNo += 1;
+    }
+    state.lines = [];
+    state.pay = null;
+    announce(state.notice.text);
+    renderSheet();
+    update();
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 401) {
+      state.pay = null;
+      renderSignIn();
+      return;
+    }
+    p.busy = false;
+    p.error = t('pay.failed', { error: err instanceof Error ? err.message : String(err) });
+    renderSheet();
+  }
+}
+
+function renderSheet(): void {
+  document.getElementById('pay-sheet')?.remove();
+  const p = state.pay;
+  if (!p) return;
+  const { total } = totals();
+  const methods: PayMethod[] = ['CASH', 'TELEBIRR', 'CBE_BIRR'];
+  const sheet = document.createElement('div');
+  sheet.id = 'pay-sheet';
+  sheet.className = 'sheet-backdrop';
+  sheet.innerHTML = `
+    <div class="sheet panel" role="dialog" aria-modal="true" aria-labelledby="pay-title">
+      <h2 id="pay-title" class="sheet-title">${esc(t('pay.title'))} · <span class="mono">${esc(money(total))}</span></h2>
+      <div class="segmented segmented-lg" role="group" aria-label="${esc(t('pay.method'))}">
+        ${methods.map((m) => `<button data-action="pay-method" data-id="${m}" aria-pressed="${p.method === m}" ${p.busy ? 'disabled' : ''}>${esc(t(`pay.${m}`))}</button>`).join('')}
+      </div>
+      ${p.method !== 'CASH' ? `
+        <label class="field">
+          <span>${esc(t('pay.reference'))}</span>
+          <input id="pay-ref" class="mono" autocomplete="off" value="${esc(p.reference)}" ${p.busy ? 'disabled' : ''} />
+          <small>${esc(t('pay.referenceHint'))}</small>
+        </label>` : ''}
+      ${p.error ? `<p class="form-error" role="alert">${esc(p.error)}</p>` : ''}
+      <div class="order-actions">
+        <button class="btn btn-secondary" data-action="pay-cancel" ${p.busy ? 'disabled' : ''}>${esc(t('pay.cancel'))}</button>
+        <button class="btn btn-primary" data-action="pay-confirm" ${p.busy ? 'disabled' : ''}>
+          ${esc(p.busy ? t('pay.sending') : t('pay.confirm', { amount: money(total) }))}
+        </button>
+      </div>
+    </div>`;
+  document.body.append(sheet);
+  (sheet.querySelector<HTMLInputElement>('#pay-ref') ?? sheet.querySelector<HTMLButtonElement>('[data-action="pay-confirm"]'))?.focus();
+}
+
+// ───────────────────────── Sign-in (live mode) ─────────────────────────
+
+function renderSignIn(message = ''): void {
+  $('#app').innerHTML = `
+    <main class="signin">
+      <form class="panel signin-card" id="signin-form">
+        <h1 class="sheet-title">${esc(t('signin.title'))}</h1>
+        <label class="field"><span>${esc(t('signin.username'))}</span>
+          <input name="username" autocomplete="username" autocapitalize="none" required /></label>
+        <label class="field"><span>${esc(t('signin.password'))}</span>
+          <input name="password" type="password" autocomplete="current-password" required /></label>
+        ${message ? `<p class="form-error" role="alert">${esc(message)}</p>` : ''}
+        <button class="btn btn-primary" type="submit">${esc(t('signin.submit'))}</button>
+      </form>
+    </main>`;
+  $<HTMLInputElement>('#signin-form input[name="username"]').focus();
+}
+
+async function startLive(): Promise<void> {
+  $('#app').innerHTML = `<main class="signin"><p class="panel signin-card">${esc(t('menu.loading'))}</p></main>`;
+  try {
+    const items = await loadMenu();
+    MENU.splice(0, MENU.length, ...items);
+    renderShell();
+  } catch (err) {
+    renderSignIn(err instanceof ApiError && err.status === 401 ? '' : t('signin.offline'));
+  }
+}
+
+document.addEventListener('submit', async (e) => {
+  const form = e.target as HTMLFormElement;
+  if (form.id !== 'signin-form') return;
+  e.preventDefault();
+  const data = new FormData(form);
+  const btn = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+  btn.disabled = true;
+  try {
+    await signIn(String(data.get('username')), String(data.get('password')));
+    await startLive();
+  } catch (err) {
+    renderSignIn(err instanceof ApiError && err.status === 401 ? t('signin.wrong') : t('signin.offline'));
+  }
+});
 
 // ───────────────────────── Render ─────────────────────────
 
@@ -148,11 +297,11 @@ function renderShell(): void {
   const app = $('#app');
   app.innerHTML = `
     <header class="topbar" id="topbar"></header>
-    <div class="test-banner" role="note">
+    ${isLive ? '' : `<div class="test-banner" role="note">
       ${icon('alert', 20)}
       <strong>${esc(t('banner.title'))}</strong>
       <span>${esc(t('banner.text'))}</span>
-    </div>
+    </div>`}
     <main class="cashier" data-view="${state.mobileView}">
       <section class="menu" aria-label="${esc(t('menu.label'))}">
         <div class="search">
@@ -190,9 +339,10 @@ function renderTopbar(): void {
       <span class="badge badge-role">${esc(t('app.role'))}</span>
     </div>
     <div class="top-right">
-      <span class="cashier-name" title="${esc(t('top.cashier', { name: CASHIER_NAME }))}">
-        ${icon('user', 20)}<span>${esc(CASHIER_NAME)}</span>
+      <span class="cashier-name" title="${esc(t('top.cashier', { name: cashierName() }))}">
+        ${icon('user', 20)}<span>${esc(cashierName())}</span>
       </span>
+      ${isLive ? `<button class="btn btn-ghost" data-action="signout">${esc(t('top.signOut'))}</button>` : ''}
       <time class="clock mono" id="clock">${esc(now)}</time>
       <button class="btn btn-ghost btn-lang" data-action="lang"
         aria-label="${esc(t('top.langSwitch', { lang: langName(next) }))}">${esc(t('top.langShort'))}</button>
@@ -289,6 +439,7 @@ function renderOrder(): void {
       </div>
     </header>
 
+    ${state.notice ? `<p class="notice${state.notice.ok ? '' : ' is-error'}" role="status">${esc(state.notice.text)}</p>` : ''}
     <div class="order-body">
       ${empty ? `
         <div class="empty">
@@ -299,8 +450,8 @@ function renderOrder(): void {
     </div>
 
     <dl class="totals">
-      <div class="totals-row"><dt>${esc(t('totals.subtotal'))}</dt><dd class="mono">${formatMoney(subtotal)}</dd></div>
-      <div class="totals-row"><dt>${esc(t('totals.vat'))}</dt><dd class="mono">${formatMoney(vat)}</dd></div>
+      <div class="totals-row"><dt>${esc(t('totals.net'))}</dt><dd class="mono">${formatMoney(subtotal)}</dd></div>
+      <div class="totals-row"><dt>${esc(t('totals.vatIncluded'))}</dt><dd class="mono">${formatMoney(vat)}</dd></div>
       <div class="totals-row totals-total"><dt>${esc(t('totals.total'))}</dt><dd class="mono">${esc(money(total))}</dd></div>
     </dl>
 
@@ -339,12 +490,20 @@ document.addEventListener('click', (e) => {
   const id = el.dataset.id ?? '';
 
   switch (el.dataset.action) {
-    case 'add': addItem(id); break;
+    case 'add': addItem(id); state.notice = null; break;
     case 'inc': changeQty(id, 1); break;
     case 'dec': changeQty(id, -1); break;
     case 'remove': removeLine(id); break;
     case 'clear': clearOrder(); break;
     case 'charge': charge(); return;
+    case 'pay-method':
+      if (state.pay) { state.pay.method = id as PayMethod; state.pay.error = ''; renderSheet(); }
+      return;
+    case 'pay-cancel': dropPending(); state.pay = null; renderSheet(); return;
+    case 'pay-confirm': void confirmPayment(); return;
+    case 'signout':
+      void signOut().then(() => renderSignIn());
+      return;
     case 'category':
       state.category = id as CategoryId;
       state.query = '';
@@ -375,6 +534,12 @@ document.addEventListener('click', (e) => {
 
 document.addEventListener('input', (e) => {
   const target = e.target as HTMLElement;
+  if (target.id === 'pay-ref' && state.pay) {
+    state.pay.reference = (target as HTMLInputElement).value;
+    state.pay.error = '';
+    document.querySelector('#pay-sheet .form-error')?.remove();
+    return;
+  }
   if (target.id !== 'search') return;
   state.query = (target as HTMLInputElement).value;
   $('.search-clear').hidden = !state.query;
@@ -382,6 +547,10 @@ document.addEventListener('input', (e) => {
 });
 
 document.addEventListener('keydown', (e) => {
+  if (state.pay && !state.pay.busy) {
+    if (e.key === 'Escape') { dropPending(); state.pay = null; renderSheet(); return; }
+    if (e.key === 'Enter' && (e.target as HTMLElement).id === 'pay-ref') { void confirmPayment(); return; }
+  }
   if (e.key === 'Escape' && (e.target as HTMLElement).id === 'search' && state.query) {
     state.query = '';
     (e.target as HTMLInputElement).value = '';
@@ -409,4 +578,6 @@ window.setInterval(() => {
   }
 }, 15_000);
 
-renderShell();
+if (!isLive) renderShell();
+else if (currentUser()) void startLive();
+else renderSignIn();

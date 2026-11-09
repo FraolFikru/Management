@@ -12,11 +12,14 @@
      POST {api}/kds/tickets/{id}/bump     { at, by }
      POST {api}/kds/tickets/{id}/recall   { at, by }
    Each request carries an Idempotency-Key so a retry never applies twice.
+   Auth (Eirsha Ops): Authorization: Bearer <token> on REST, ?token= on the
+   WebSocket (browsers cannot set WebSocket headers).
    The server echoes the result as an "upsert" to every screen in the branch.
    ========================================================= */
 
 import type { ConnectionState, FeedCommand, FeedEvent, OrderFeed } from "../types";
 import { parseEvent } from "./validate";
+import { accessToken, handleUnauthorized } from "../auth";
 
 const MAX_BACKOFF_MS = 30_000;
 const SEND_ATTEMPTS = 3;
@@ -57,13 +60,18 @@ export class LiveOrderFeed implements OrderFeed {
     let lastError: unknown;
     for (let i = 0; i < SEND_ATTEMPTS; i++) {
       try {
+        const token = await accessToken(i > 0);
         const res = await fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json", "Idempotency-Key": key, "X-Branch-Id": this.branchId },
-          credentials: "include",
+          headers: {
+            "Content-Type": "application/json", "Idempotency-Key": key, "X-Branch-Id": this.branchId,
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify(body),
         });
         if (res.ok) return;
+        if (res.status === 401 && i === 0) continue;                     // token expired: refresh and retry once
+        if (res.status === 401) { handleUnauthorized(); throw new Error("Rejected (401)"); }
         if (res.status >= 400 && res.status < 500) throw new Error(`Rejected (${res.status})`); // don't retry client errors
         lastError = new Error(`Server error (${res.status})`);
       } catch (err) {
@@ -75,10 +83,13 @@ export class LiveOrderFeed implements OrderFeed {
     throw lastError instanceof Error ? lastError : new Error("Send failed");
   }
 
-  private open(): void {
+  private async open(): Promise<void> {
     this.onState(this.attempt === 0 ? "connecting" : "reconnecting");
     const url = new URL(this.wsUrl);
     url.searchParams.set("branch", this.branchId);
+    const token = await accessToken();
+    if (token) url.searchParams.set("token", token);
+    if (this.closed) return;
     const ws = new WebSocket(url);
     this.ws = ws;
     ws.onopen = () => { this.attempt = 0; this.onState("live"); };
@@ -86,12 +97,13 @@ export class LiveOrderFeed implements OrderFeed {
       const e = typeof m.data === "string" ? parseEvent(m.data) : null;
       if (e) this.onEvent(e);
     };
-    ws.onclose = () => {
+    ws.onclose = (ev) => {
       if (this.closed) return;
+      if (ev.code === 4401 || ev.code === 4403) { handleUnauthorized(); return; }   // signed out / no access to this branch
       this.attempt++;
       this.onState(navigator.onLine ? "reconnecting" : "offline");
       const delay = Math.min(MAX_BACKOFF_MS, 1000 * 2 ** Math.min(this.attempt, 5)) * (0.75 + Math.random() * 0.5);
-      this.retryTimer = window.setTimeout(() => this.open(), delay);
+      this.retryTimer = window.setTimeout(() => void this.open(), delay);
     };
     ws.onerror = () => ws.close();
   }
@@ -100,7 +112,7 @@ export class LiveOrderFeed implements OrderFeed {
     if (this.closed || this.ws?.readyState === WebSocket.OPEN) return;
     window.clearTimeout(this.retryTimer);
     this.drop();
-    this.open();
+    void this.open();
   };
 
   /** Close the current socket without triggering the reconnect logic. */

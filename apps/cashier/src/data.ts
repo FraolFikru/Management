@@ -13,7 +13,7 @@ export interface MenuItem {
   category: CategoryId;
   /** Dish names are menu data, so they live here per language rather than in i18n.ts */
   name: Record<Lang, string>;
-  /** Price in ETB, VAT exclusive */
+  /** Price in ETB, VAT included (what the customer pays) */
   price: number;
 }
 
@@ -29,23 +29,24 @@ export const CATEGORIES: Category[] = [
   { id: 'sides', labelKey: 'cat.sides' },
 ];
 
+/** Demo menu; in live mode it is replaced by the branch menu from the backend. */
 export const MENU: MenuItem[] = [
   // Mains
-  { id: 'kitfo', category: 'mains', name: { en: 'Kitfo Special', am: 'ክትፎ ስፔሻል' }, price: 650 },
-  { id: 'doro', category: 'mains', name: { en: 'Doro Wat', am: 'ዶሮ ወጥ' }, price: 720 },
-  { id: 'tibs', category: 'mains', name: { en: 'Tibs Mix', am: 'ጥብስ ሚክስ' }, price: 580 },
-  { id: 'shiro', category: 'mains', name: { en: 'Shiro', am: 'ሽሮ' }, price: 280 },
+  { id: 'kitfo', category: 'mains', name: { en: 'Kitfo Special', am: 'ክትፎ ስፔሻል' }, price: 750 },
+  { id: 'doro', category: 'mains', name: { en: 'Doro Wat', am: 'ዶሮ ወጥ' }, price: 830 },
+  { id: 'tibs', category: 'mains', name: { en: 'Tibs Mix', am: 'ጥብስ ሚክስ' }, price: 670 },
+  { id: 'shiro', category: 'mains', name: { en: 'Shiro', am: 'ሽሮ' }, price: 320 },
   // Breakfast
-  { id: 'firfir', category: 'breakfast', name: { en: 'Firfir', am: 'ፍርፍር' }, price: 220 },
-  { id: 'ful', category: 'breakfast', name: { en: 'Ful', am: 'ፉል' }, price: 200 },
-  { id: 'chechebsa', category: 'breakfast', name: { en: 'Chechebsa', am: 'ጨጨብሳ' }, price: 240 },
+  { id: 'firfir', category: 'breakfast', name: { en: 'Firfir', am: 'ፍርፍር' }, price: 250 },
+  { id: 'ful', category: 'breakfast', name: { en: 'Ful', am: 'ፉል' }, price: 230 },
+  { id: 'chechebsa', category: 'breakfast', name: { en: 'Chechebsa', am: 'ጨጨብሳ' }, price: 280 },
   // Drinks
-  { id: 'buna', category: 'drinks', name: { en: 'Buna (Coffee)', am: 'ቡና' }, price: 60 },
-  { id: 'shai', category: 'drinks', name: { en: 'Shai (Tea)', am: 'ሻይ' }, price: 40 },
-  { id: 'spris', category: 'drinks', name: { en: 'Spris Juice', am: 'ስፕሪስ ጭማቂ' }, price: 120 },
+  { id: 'buna', category: 'drinks', name: { en: 'Buna (Coffee)', am: 'ቡና' }, price: 70 },
+  { id: 'shai', category: 'drinks', name: { en: 'Shai (Tea)', am: 'ሻይ' }, price: 45 },
+  { id: 'spris', category: 'drinks', name: { en: 'Spris Juice', am: 'ስፕሪስ ጭማቂ' }, price: 140 },
   // Sides
-  { id: 'injera', category: 'sides', name: { en: 'Extra Injera', am: 'ተጨማሪ እንጀራ' }, price: 30 },
-  { id: 'ayib', category: 'sides', name: { en: 'Ayib', am: 'አይብ' }, price: 90 },
+  { id: 'injera', category: 'sides', name: { en: 'Extra Injera', am: 'ተጨማሪ እንጀራ' }, price: 35 },
+  { id: 'ayib', category: 'sides', name: { en: 'Ayib', am: 'አይብ' }, price: 105 },
 ];
 
 export function findItem(id: string): MenuItem | undefined {

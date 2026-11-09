@@ -70,7 +70,7 @@ export function ticketCard(tkt: KitchenTicket): string {
   const waitingOn = allDone ? [...new Set(othersOpen.map((i) => tk(`station.${i.station}`)))] : [];
   const tm = timerView(tkt);
   const staff = STAFF[tkt.submittedBy];
-  const who = staff ? staff.name : tkt.submittedBy;
+  const who = tkt.submittedByName || (staff ? staff.name : tkt.submittedBy);
   const fresh = isFresh(tkt.id);
   const late = tm.urgency === "late" && tkt.status !== "READY";
 
