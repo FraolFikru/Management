@@ -1,5 +1,5 @@
 # Eirsha Ops — build & check the database artefacts.
-FRONTENDS ?= ../frontends          # folder holding the unzipped modules (sales-main/, managgerr-main/, …)
+FRONTENDS ?= apps                  # the frontends in this repo (apps/sales, apps/manager, …)
 PG        ?= postgresql:///eirsha  # psql connection string
 SQLITE_DB ?= eirsha.db
 

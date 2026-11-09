@@ -10,6 +10,7 @@ diagrams, the cross-module flows, the API surface, the migration plan and the au
 resolved.
 
 ```
+apps/                           the 8 frontends: sales, manager, finance, hr, admin, kds, owner (ffii), cashier
 db/postgres/001_schema.sql      66 tables (source of truth; ownership notes on every table)
 db/postgres/002_views.sql       12 read models (P&L, bill status, manager queue, permissions…)
 db/sqlite/                      generated SQLite build (make sqlite-schema)
@@ -49,7 +50,7 @@ These are for demos only; `020_demo.sql` must not go to production.
 ## Rebuilding the seed from the frontends
 
 ```bash
-make seed FRONTENDS=/path/to/unzipped/modules   # needs Node 22+ and Python 3.10+
+make seed                       # reads apps/*; needs Node 22+ and Python 3.10+
 ```
 
 This runs each module's own `catalog.ts` / `seed.ts`, so the imported data has exactly the shapes the
