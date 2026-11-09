@@ -99,9 +99,14 @@ def void(lid: str, body: VoidIn, p: Principal = Depends(require("pos.void")), db
 
 @router.get("/orders")
 def orders(date: str | None = None, status: str | None = None, p: Principal = Depends(require("pos.sell", "mgr.dashboard")), db: Db = Depends(get_db)):
-    return db.all("""SELECT * FROM customer_order WHERE branch_id = ? AND business_date = coalesce(CAST(? AS text), business_date)
-                     AND (CAST(? AS text) IS NULL OR status = ?) ORDER BY created_at DESC LIMIT 500""",
-                  (branch_of(p), date, status, status))
+    sql, args = "SELECT * FROM customer_order WHERE branch_id = ?", [branch_of(p)]
+    if date:
+        sql += " AND business_date = ?"
+        args.append(date)
+    if status:
+        sql += " AND status = ?"
+        args.append(status)
+    return db.all(sql + " ORDER BY created_at DESC LIMIT 500", args)
 
 
 @router.get("/orders/{oid}")

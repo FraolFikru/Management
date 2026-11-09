@@ -81,7 +81,9 @@ class Db:
     # ---- execution ----
     def _sql(self, sql: str) -> str:
         if self.dialect == "postgres":
-            return re.sub(r"\?", "%s", sql)
+            # psycopg uses % for placeholders, so a literal % (LIKE 'menu.%', to_char masks)
+            # must be doubled before ? becomes %s.
+            return sql.replace("%", "%%").replace("?", "%s")
         return sql
 
     def execute(self, sql: str, params: tuple | list = ()) -> Any:
