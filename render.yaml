@@ -21,4 +21,4 @@ services:
       - key: EIRSHA_CORS
         value: https://sales-kappa-mauve.vercel.app,https://cashierr-mu.vercel.app,https://ffii-6ub2.vercel.app,https://managgerr.vercel.app,https://hr-six-ruddy.vercel.app,https://finance-tau-vert.vercel.app,https://systemadmin-eosin.vercel.app,https://kds-orcin.vercel.app,http://localhost:5173
       - key: EIRSHA_CORS_REGEX
-        value: ^https://([a-z0-9-]+-f-27f3|eirsha-(cashier|kds|sales|manager|finance|hr|admin|owner))\.vercel\.app$   # this Vercel team's deployments + the eirsha-* projects
+        value: ^https://([a-z0-9-]+-f-27f3|eirsha-(demo|cashier|kds|sales|manager|finance|hr|admin|owner))\.vercel\.app$   # this Vercel team's deployments + the eirsha-* projects
