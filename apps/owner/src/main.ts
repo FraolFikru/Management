@@ -20,6 +20,8 @@ import {
   type When,
 } from "./data";
 import { icon } from "./icons";
+import { getLiveSeries, loadLive } from "./live";
+import { isLive, saveBudget as apiSaveBudget, sessionUser, signIn as apiSignIn, signOut as apiSignOut } from "./api";
 import { LANGS, dayLong, dayShort, monthShort, translate, type Lang } from "./i18n";
 
 /* ---------- helpers ---------- */
@@ -218,7 +220,7 @@ function renderShell(): void {
         <span>Bistro OS</span>
       </div>
 
-      <button class="profile">
+      <button class="profile" ${isLive ? `data-signout title="${t("Sign out")}"` : ""}>
         <span class="avatar">${user.name.split(" ").map((p) => p[0]).join("")}</span>
         <span class="profile-text">
           <strong>${escapeHtml(user.name)}</strong>
@@ -268,9 +270,13 @@ function renderShell(): void {
 /* ---------- Dashboard ---------- */
 
 function renderDashboard(): string {
-  const alert = settings.showAlert
+  const worst = isLive ? sortedBudgetViews().find((v) => v.status !== "ok") : undefined;
+  const alertText = isLive
+    ? worst ? `${t(worst.line.category)}: ${t(STATUS_LABEL[worst.status])}` : ""
+    : t("Food cost is running 1.2% above target this week.");
+  const alert = settings.showAlert && alertText
     ? `<div class="alert" role="status">
-        <span>${icon("warning")} <strong>${t("Alert:")}</strong> ${t("Food cost is running 1.2% above target this week.")}</span>
+        <span>${icon("warning")} <strong>${t("Alert:")}</strong> ${escapeHtml(alertText)}</span>
         <a href="#" data-goto="Budgets">${t("Review budgets")} ${icon("arrow-right")}</a>
       </div>`
     : "";
@@ -776,7 +782,9 @@ function saveBudget(cat: Category): void {
   if (!line) return;
   const rounded = Math.round(value);
   state.lastBudgetEdit = rounded !== line.allocated ? { category: cat, previous: line.allocated } : state.lastBudgetEdit;
+  const before = line.allocated;
   line.allocated = rounded;
+  syncBudget(line, before);
   state.editingBudget = null;
   state.budgetError = "";
   refreshBudgets(`.c-act [data-budget-edit="${cat}"]`, t("{x} budget saved: {y}", { x: t(cat), y: money(rounded) }));
@@ -786,14 +794,29 @@ function undoBudget(): void {
   const last = state.lastBudgetEdit;
   if (!last) return;
   const line = budgets.find((b) => b.category === last.category);
-  if (line) line.allocated = last.previous;
+  if (line) { const before = line.allocated; line.allocated = last.previous; syncBudget(line, before); }
   state.lastBudgetEdit = null;
   refreshBudgets(`.c-act [data-budget-edit="${last.category}"]`, t("{x} budget saved: {y}", { x: t(last.category), y: money(last.previous) }));
+}
+
+/** Live mode: save a budget; if the backend refuses, put the old amount back and say why. */
+function syncBudget(line: BudgetLine, before: number): void {
+  if (!isLive) return;
+  const month = `${budgetPeriod.year}-${pad2(budgetPeriod.month + 1)}`;
+  apiSaveBudget(month, line.category, line.allocated).catch((err: unknown) => {
+    line.allocated = before;
+    refreshBudgets(undefined, t("Not saved: {reason}", { reason: err instanceof Error ? err.message : String(err) }));
+  });
 }
 
 /* ---------- Investments ---------- */
 
 function renderInvestments(): string {
+  if (isLive) return `
+    <div class="page-grid single">
+      <article class="panel"><div class="panel-head"><h2>${t("Investments")}</h2></div>
+        <p class="muted-note">${t("Investment plans aren't tracked in the system yet.")}</p></article>
+    </div>`;
   return `
     <div class="page-grid">
       <article class="panel">
@@ -1200,10 +1223,29 @@ function seriesFor(range: Range): ChartPoint[] {
   const L = settings.lang;
 
   if (range === "Monthly") {
-    return cashFlow.map((p, i) => ({ label: monthShort(L)[i], title: monthShort(L)[i], revenue: p.revenue, expenses: p.expenses }));
+    const all = cashFlow.map((p, i) => ({ label: monthShort(L)[i], title: monthShort(L)[i], revenue: p.revenue, expenses: p.expenses }));
+    if (!getLiveSeries()) return all;
+    // live: from the first month with figures up to this month (no empty future months)
+    const first = Math.max(0, cashFlow.findIndex((p) => p.revenue || p.expenses));
+    return all.slice(Math.min(first, new Date().getMonth()), new Date().getMonth() + 1);
   }
 
   const today = startOfDay(new Date());
+
+  const live = getLiveSeries();
+  if (live && range === "Weekly") {
+    return live.weekly.map((w, i) => {
+      const start = new Date(`${w.start}T00:00`);
+      return { label: `${t("W")}${i + 1}`, sub: fmtShort(start), title: t("Week of {x}", { x: fmtShort(start) }), revenue: w.revenue, expenses: w.expenses, today: i === live.weekly.length - 1 };
+    });
+  }
+  if (live && range === "Daily") {
+    return live.daily.map((x, i) => {
+      const d = new Date(`${x.date}T00:00`);
+      const dow = d.getDay();
+      return { label: dayShort(L)[dow], sub: pad2(d.getDate()), title: `${dayLong(L)[dow]} · ${fmtShort(d)}`, revenue: x.revenue, expenses: x.expenses, today: i === live.daily.length - 1 };
+    });
+  }
 
   if (range === "Weekly") {
     // last 8 weeks, each starting on Monday, ending with the current week
@@ -1364,7 +1406,8 @@ function renderChart(): void {
   hit.addEventListener("pointerleave", hide);
 
   // open on the most relevant point: October for monthly, the current week / today otherwise
-  show(state.range === "Monthly" ? 9 : data.length - 1);
+  // monthly: the latest full month (October in the demo)
+  show(state.range === "Monthly" ? (getLiveSeries() ? Math.max(0, data.length - 2) : 9) : data.length - 1);
 }
 
 /* ---------- transactions table ---------- */
@@ -1659,4 +1702,80 @@ function init(): void {
   renderPage();
 }
 
-init();
+/* ---------- live sign-in ---------- */
+
+const liveUi = { message: "", busy: false, username: "" };
+
+function liveMessage(err: unknown): string {
+  const m = err instanceof Error ? err.message : String(err);
+  if (m === "wrong") return t("Wrong username or password.");
+  if (m === "no-access") return t("This account can't open the owner dashboard.");
+  if (m.includes("Failed to fetch") || m.includes("NetworkError") || m.includes("Load failed")) return t("Cannot reach the server. It may be waking up — try again in a minute.");
+  return m;
+}
+
+function renderSignIn(): void {
+  applyAppearance();
+  $("#app").innerHTML = `
+  <div class="signin-wrap">
+    <form class="panel signin-card" id="liveSignIn" novalidate>
+      <div class="brand"><span class="brand-mark">${icon("logo")}</span><span>Bistro OS</span></div>
+      <h1>${t("Sign in")}</h1>
+      <p class="muted-note">${t("Owner and admin accounts only.")}</p>
+      <label class="signin-field"><span>${t("Username")}</span>
+        <input id="liveUser" autocomplete="username" autocapitalize="none" spellcheck="false" value="${escapeHtml(liveUi.username)}"></label>
+      <label class="signin-field"><span>${t("Password")}</span>
+        <input id="livePass" type="password" autocomplete="current-password"></label>
+      <p class="field-error" id="liveErr" role="alert">${escapeHtml(liveUi.message)}</p>
+      <button type="submit" class="btn btn-primary" ${liveUi.busy ? "disabled" : ""}>${liveUi.busy ? t("Signing in…") : t("Sign in")}</button>
+      <div class="seg-toggle lang-toggle" role="group" aria-label="${t("Language")}">
+        ${LANGS.map((l) => `<button type="button" data-signin-lang="${l.code}" lang="${l.code}" aria-pressed="${settings.lang === l.code}">${l.short}</button>`).join("")}
+      </div>
+    </form>
+  </div>`;
+  $<HTMLInputElement>(liveUi.message ? "#livePass" : "#liveUser").focus();
+}
+
+let started = false;
+async function startLive(): Promise<void> {
+  liveUi.busy = true;
+  renderSignIn();
+  try {
+    await loadLive();
+    liveUi.message = "";
+    liveUi.busy = false;
+    if (started) { renderShell(); applyAppearance(); renderPage(); }
+    else { started = true; init(); }
+  } catch (err) {
+    liveUi.message = liveMessage(err);
+    liveUi.busy = false;
+    if (sessionUser()) await apiSignOut();
+    renderSignIn();
+  }
+}
+
+function onSignInSubmit(e: Event): void {
+  const form = e.target as HTMLFormElement;
+  if (form.id !== "liveSignIn") return;
+  e.preventDefault();
+  if (liveUi.busy) return;
+  const u = $<HTMLInputElement>("#liveUser").value;
+  const p = $<HTMLInputElement>("#livePass").value;
+  liveUi.username = u;
+  if (!u.trim() || !p) { liveUi.message = t("Enter your username and password."); renderSignIn(); return; }
+  liveUi.busy = true; liveUi.message = ""; renderSignIn();
+  apiSignIn(u, p).then(startLive, (err) => { liveUi.busy = false; liveUi.message = liveMessage(err); renderSignIn(); });
+}
+
+if (isLive) {
+  document.addEventListener("submit", onSignInSubmit);
+  document.addEventListener("click", (e) => {
+    const el = e.target as HTMLElement;
+    const lang = el.closest<HTMLElement>("[data-signin-lang]")?.dataset.signinLang as Lang | undefined;
+    if (lang) { settings.lang = lang; saveSettings(); renderSignIn(); return; }
+    if (el.closest("[data-signout]")) { void apiSignOut(); liveUi.message = ""; renderSignIn(); }
+  });
+  if (sessionUser()) void startLive(); else renderSignIn();
+} else {
+  init();
+}
