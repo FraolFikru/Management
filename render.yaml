@@ -1,0 +1,22 @@
+# Render Blueprint: New → Blueprint → pick this repo. It creates the API service;
+# paste your Neon connection string into EIRSHA_DATABASE_URL when Render asks.
+services:
+  - type: web
+    name: eirsha-api
+    runtime: python
+    plan: free
+    region: frankfurt
+    buildCommand: pip install -r api/requirements.txt
+    startCommand: uvicorn eirsha_api.main:app --app-dir api --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: EIRSHA_DATABASE_URL
+        sync: false                      # Neon → Connection string (postgresql://…?sslmode=require)
+      - key: EIRSHA_JWT_SECRET
+        generateValue: true
+      - key: EIRSHA_LOAD_DEMO
+        value: "true"                    # demo data + demo logins; set to false for real use
+      - key: EIRSHA_CORS
+        value: https://sales-kappa-mauve.vercel.app,https://cashierr-mu.vercel.app,https://ffii-6ub2.vercel.app,https://managgerr.vercel.app,https://hr-six-ruddy.vercel.app,https://finance-tau-vert.vercel.app,https://systemadmin-eosin.vercel.app,https://kds-orcin.vercel.app,http://localhost:5173

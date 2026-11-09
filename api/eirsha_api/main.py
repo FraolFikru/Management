@@ -16,12 +16,14 @@ from fastapi.responses import JSONResponse
 
 from . import realtime
 from .db import Db
+from .db_init import ensure_database
 from .routes import admin, auth_routes, finance, hr, kds, manager, owner, pos, reference, sales
 from .services import ServiceError
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    ensure_database()                      # first start on an empty database: create schema + seed
     stop = asyncio.Event()
     task = asyncio.create_task(realtime.relay(Db.from_env(), stop))
     yield
@@ -42,6 +44,11 @@ async def db_per_request(request: Request, call_next):
         return await call_next(request)
     finally:
         request.state.db.conn.close()
+
+
+@app.get("/health")
+def health():
+    return {"ok": True}
 
 
 @app.exception_handler(ServiceError)
