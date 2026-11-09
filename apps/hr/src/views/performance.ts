@@ -6,7 +6,7 @@
 import { t, tk } from "../i18n";
 import { addDays, today } from "../format";
 import { LOG_COLOR, LOG_IDS, NEGATIVE_LOGS, isLogType } from "../catalog";
-import { branchStaff, db, employee, latestRating, punctuality, removeLog, state } from "../store";
+import { branchStaff, db, employee, latestRating, punctuality, removeLog, restoreLog, state } from "../store";
 import { esc, icon } from "../ui/dom";
 import { avatar, dot, empty, pill, roleName, seg, staffCell, stampOf, stars } from "../ui/shared";
 import { toast } from "../ui/toast";
@@ -84,6 +84,6 @@ export const performanceActions: ActionMap = {
     if (!l) return;
     removeLog(l.id);
     rerender();
-    toast(t("Entry deleted"), () => { db.logs.push(l); db.logs.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1)); rerender(); });
+    toast(t("Entry deleted"), () => { restoreLog(l); rerender(); });
   },
 };

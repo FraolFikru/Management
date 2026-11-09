@@ -9,7 +9,7 @@
 
 export type SupportedLanguage = "en" | "am" | "om";
 
-export type UserRole = "BRANCH_MANAGER" | "SALES_STAFF" | "KITCHEN_STAFF" | "INVENTORY_CLERK" | "ADMIN";
+export type UserRole = "BRANCH_MANAGER" | "SALES_STAFF" | "KITCHEN_STAFF" | "INVENTORY_CLERK" | "ADMIN" | "ACCOUNTANT" | "HR_OFFICER" | "OWNER";
 
 export interface Employee {
   id: string;
@@ -116,6 +116,10 @@ export interface Payslip {
 
 export interface PayrollRun {
   month: string; // "YYYY-MM"
+  /** live mode: payroll is approved per branch (none = the whole company) */
+  branchId?: string;
+  /** live mode: Finance already paid it, so it can't be reopened */
+  paid?: boolean;
   status: "DRAFT" | "APPROVED";
   approvedBy?: string;
   approvedAt?: string;

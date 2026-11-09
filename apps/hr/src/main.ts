@@ -11,10 +11,11 @@ import type { ViewId } from "./types";
 import { isLanguage, setLanguage, t } from "./i18n";
 import { BRANCHES } from "./catalog";
 import { today } from "./format";
-import { HR_USERS, savePrefs, state, user } from "./store";
+import { HR_USERS, loadFromBackend, onSyncError, savePrefs, signOut, signedIn, state, user } from "./store";
+import { isLive, sessionUser, signIn as apiSignIn, signOut as apiSignOut } from "./api";
 import { $ } from "./ui/dom";
 import { wireApp, type ActionMap } from "./ui/app";
-import { VIEW_IDS, renderNav, renderShell, renderTopbar } from "./ui/shell";
+import { VIEW_IDS, renderNav, renderShell, renderSignIn, renderTopbar } from "./ui/shell";
 import { clearToast, runUndo, toast } from "./ui/toast";
 import { renderToday } from "./views/today";
 import { onStaffInput, renderStaff, staffActions } from "./views/staff";
@@ -33,7 +34,49 @@ const VIEWS: Record<ViewId, { title: string; render: () => string }> = {
   performance: { title: "Performance & incidents", render: renderPerformance },
 };
 
+/* ---------- live mode (backend) ---------- */
+
+const liveUi = { message: "", busy: false, username: "" };
+
+function liveMessage(err: unknown): string {
+  const m = err instanceof Error ? err.message : String(err);
+  if (m === "wrong") return t("Wrong username or password.");
+  if (m === "no-access") return t("This account can't open the HR app.");
+  if (m.includes("Failed to fetch") || m.includes("NetworkError") || m.includes("Load failed")) return t("Cannot reach the server. It may be waking up — try again in a minute.");
+  return m;
+}
+
+/** Load the staff data for the signed-in account, then show the app. */
+async function startLive(): Promise<void> {
+  liveUi.busy = true; render();
+  try {
+    await loadFromBackend();
+    liveUi.message = "";
+  } catch (err) {
+    liveUi.message = liveMessage(err);
+    if (sessionUser()) await apiSignOut();
+  }
+  liveUi.busy = false;
+  rebuild();
+}
+
+onSyncError((message) => {
+  toast(t("Not saved: {reason}", { reason: message }));
+  render();
+});
+
 function render(focusSelector?: string): void {
+  if (!signedIn()) {
+    const app = $("#app");
+    if (app) {
+      app.classList.add("signed-out");
+      app.innerHTML = renderSignIn(liveUi.message, liveUi.busy, liveUi.username);
+    }
+    document.title = "Bistro Addis HR";
+    $<HTMLElement>(focusSelector ?? (liveUi.message ? "#livePass" : "#liveUser"))?.focus();
+    return;
+  }
+  $("#app")?.classList.remove("signed-out");
   if (!$("#view")) renderShell();
   const view = $("#view");
   if (!view) return;
@@ -95,6 +138,13 @@ const shellActions: ActionMap = {
     toast(t("Now logged in as {name}", { name: user().fullName }));
   },
   undo: () => runUndo(),
+  "sign-out": () => {
+    signOut();
+    state.userMenu = false;
+    state.modal = null;
+    clearToast();
+    rebuild();
+  },
 };
 
 const ACTIONS: ActionMap = {
@@ -118,7 +168,16 @@ document.addEventListener("click", (e) => {
 document.addEventListener("submit", (e) => {
   e.preventDefault();
   const id = (e.target as HTMLFormElement).id;
-  if (id === "employeeForm") submitEmployee();
+  if (id === "liveSignIn") {
+    if (liveUi.busy) return;
+    const u = $<HTMLInputElement>("#liveUser")?.value ?? "";
+    const p = $<HTMLInputElement>("#livePass")?.value ?? "";
+    liveUi.username = u;
+    if (!u.trim() || !p) { liveUi.message = t("Enter your username and password."); render(); return; }
+    liveUi.busy = true; liveUi.message = ""; render();
+    apiSignIn(u, p).then(startLive, (err) => { liveUi.busy = false; liveUi.message = liveMessage(err); render(); });
+  }
+  else if (id === "employeeForm") submitEmployee();
   else if (id === "logForm") submitLog();
   else if (id === "absentForm") submitAbsent();
 });
@@ -164,7 +223,7 @@ document.addEventListener("dragend", onDragEnd);
 
 window.addEventListener("hashchange", () => {
   const v = location.hash.slice(1) as ViewId;
-  if (VIEW_IDS.includes(v) && v !== state.view) { if (state.modal) closeModal(); navigate(v); }
+  if (VIEW_IDS.includes(v) && v !== state.view && signedIn()) { if (state.modal) closeModal(); navigate(v); }
 });
 
 // live hours on the clock board
@@ -176,4 +235,5 @@ setLanguage(state.lang);
 applyTheme();
 const start = location.hash.slice(1) as ViewId;
 state.view = VIEW_IDS.includes(start) ? start : "today";
-render();
+if (isLive && sessionUser()) void startLive();
+else render();

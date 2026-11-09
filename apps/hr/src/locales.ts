@@ -750,4 +750,15 @@ export const UI_STRINGS: Record<string, Entry> = {
   "{n} staff · avg {x}": { am: "{n} ሰራተኞች · አማካይ {x}", om: "hojjettoota {n} · giddugala {x}" },
   "{n} void incidents": { am: "{n} የመሰረዝ ክስተቶች", om: "taatee haquu {n}" },
   "{type} logged for {name} · by {by}": { am: "{type} ለ{name} ተመዝግቧል · በ{by}", om: "{type} {name}f galmaa'eera · {by}n" },
+  /* live mode (Eirsha Ops backend) */
+  "HR & staff": { am: "የሰው ሀብት እና ሰራተኞች", om: "Humna namaa fi hojjettoota" },
+  "Every change to staff, shifts, attendance and payroll is stamped with the person signed in.": { am: "በሰራተኞች፣ በፈረቃ፣ በመገኘት እና በደመወዝ ላይ የሚደረግ እያንዳንዱ ለውጥ በገባው ሰው ስም ይመዘገባል።", om: "Jijjiiramni hojjettoota, shiftii, argamuu fi mindaa irratti godhamu hundi maqaa nama seeneen galmaa'a." },
+  Username: { am: "የተጠቃሚ ስም", om: "Maqaa fayyadamaa" },
+  Password: { am: "የይለፍ ቃል", om: "Jecha icciitii" },
+  "Signing in…": { am: "በመግባት ላይ…", om: "Seenaa jira…" },
+  "Enter your username and password.": { am: "የተጠቃሚ ስምዎን እና የይለፍ ቃልዎን ያስገቡ።", om: "Maqaa fayyadamaa fi jecha icciitii galchi." },
+  "Wrong username or password.": { am: "የተጠቃሚ ስም ወይም የይለፍ ቃል ትክክል አይደለም።", om: "Maqaan fayyadamaa ykn jechi icciitii dogoggora." },
+  "This account can't open the HR app.": { am: "ይህ መለያ የሰው ሀብት መተግበሪያውን መክፈት አይችልም።", om: "Herregni kun appii humna namaa banuu hin danda'u." },
+  "Cannot reach the server. It may be waking up — try again in a minute.": { am: "ከሰርቨሩ ጋር መገናኘት አልተቻለም። እየተነሳ ሊሆን ይችላል — ከአንድ ደቂቃ በኋላ እንደገና ይሞክሩ።", om: "Sarvarii qaqqabuu hin dandeenye. Ka'aa jiraachuu danda'a — daqiiqaa booda irra deebi'ii yaali." },
+  "Not saved: {reason}": { am: "አልተቀመጠም፦ {reason}", om: "Hin olkaa'amne: {reason}" },
 };

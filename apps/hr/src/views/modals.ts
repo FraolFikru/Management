@@ -8,7 +8,7 @@ import { addDays, fmtDay, money, parseAmount, parseDay, today } from "../format"
 import { BRANCHES, LOG_COLOR, LOG_IDS, MONTH_HOURS, ROLE_IDS, SHIFTS, SHIFT_COLOR, isLogType, isRole } from "../catalog";
 import { workedHours } from "../seed";
 import {
-  addLog, db, employee, entryFor, latestRating, markAbsent, payslip, punctuality, removeLog, restoreAttendance, saveEmployee, snapshot, state, user, type Modal,
+  addLog, db, employee, entryFor, latestRating, markAbsent, payslip, punctuality, removeLog, restoreAttendance, saveEmployee, snapshot, state, undoHire, user, type Modal,
 } from "../store";
 import { $, $$, esc, icon } from "../ui/dom";
 import { avatar, clearErrors, dot, errText, fmtH, invalid, pill, roleName, showErrors, stars } from "../ui/shared";
@@ -128,8 +128,8 @@ export function submitEmployee(): void {
   closeModal();
   rerender();
   toast(before ? t("{name} updated · by {by}", { name: saved.fullName, by: user().fullName }) : t("{name} added as {id} · by {by}", { name: saved.fullName, id: saved.id, by: user().fullName }), () => {
-    if (before) Object.assign(saved, before);
-    else db.employees = db.employees.filter((x) => x !== saved);
+    if (before) { const { id: _id, ...rest } = before; saveEmployee(rest, saved.id); }
+    else undoHire(saved);
     rerender();
   });
 }
@@ -245,14 +245,14 @@ export function submitAbsent(): void {
   const a0 = db.attendance.find((x) => x.id === m.id);
   if (!a0) return;
   const before = snapshot(a0);
-  const logsBefore = db.logs.length;
+  const newest = db.logs[0];
   const a = markAbsent(m.id, absentNote.trim());
   closeModal();
   if (!a) return;
   rerender();
   toast(t("{name} marked absent · by {by}", { name: a.employeeName, by: user().fullName }), () => {
     restoreAttendance(before);
-    if (db.logs.length > logsBefore) db.logs.shift();
+    if (db.logs[0] && db.logs[0] !== newest) removeLog(db.logs[0].id);
     rerender();
   });
 }

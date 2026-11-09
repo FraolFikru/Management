@@ -3,9 +3,9 @@
    monthly salary. */
 
 import { t, tk } from "../i18n";
-import { normalize } from "../format";
+import { normalize, today } from "../format";
 import { ROLE_COLOR, ROLE_IDS, isRole } from "../catalog";
-import { db, latestRating, punctuality, setStatus, state, user } from "../store";
+import { db, entryFor, latestRating, punctuality, setShift, setStatus, state, user } from "../store";
 import { $, esc, icon } from "../ui/dom";
 import { dot, empty, payLabel, pill, roleName, seg, staffCell, stars } from "../ui/shared";
 import { toast } from "../ui/toast";
@@ -101,8 +101,9 @@ export const staffActions: ActionMap = {
     rerender();
     toast(prev === "ACTIVE" ? t("{name} deactivated · future shifts removed · by {by}", { name: e.fullName, by: user().fullName })
       : t("{name} reactivated · by {by}", { name: e.fullName, by: user().fullName }), () => {
-      e.status = prev;
-      db.schedule = [...db.schedule.filter((s) => s.employeeId !== e.id), ...shiftsBefore];
+      setStatus(e.id, prev);
+      // shifts that deactivating removed are planned again
+      for (const s of shiftsBefore) if (s.date > today() && !entryFor(e.id, s.date)) setShift(e.id, s.date, s.shift);
       rerender();
     });
   },
