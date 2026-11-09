@@ -32,7 +32,10 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Eirsha Ops API", version="1.0.0", lifespan=lifespan)
+# Browsers may call the API from the listed sites, plus any address matching EIRSHA_CORS_REGEX
+# (e.g. every Vercel deployment of this team). Auth is a Bearer token, not cookies.
 app.add_middleware(CORSMiddleware, allow_origins=os.environ.get("EIRSHA_CORS", "http://localhost:5173").split(","),
+                   allow_origin_regex=os.environ.get("EIRSHA_CORS_REGEX") or None,
                    allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 

@@ -20,3 +20,5 @@ services:
         value: "true"                    # demo data + demo logins; set to false for real use
       - key: EIRSHA_CORS
         value: https://sales-kappa-mauve.vercel.app,https://cashierr-mu.vercel.app,https://ffii-6ub2.vercel.app,https://managgerr.vercel.app,https://hr-six-ruddy.vercel.app,https://finance-tau-vert.vercel.app,https://systemadmin-eosin.vercel.app,https://kds-orcin.vercel.app,http://localhost:5173
+      - key: EIRSHA_CORS_REGEX
+        value: ^https://[a-z0-9-]+-f-27f3\.vercel\.app$   # every deployment of the "f-27f3" Vercel team
