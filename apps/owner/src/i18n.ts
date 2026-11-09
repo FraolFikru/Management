@@ -15,6 +15,21 @@ export const LANGS: { code: Lang; short: string; name: string }[] = [
 type Entry = { am: string; om: string };
 
 const dict: Record<string, Entry> = {
+  /* live mode (Eirsha Ops backend) */
+  "Sign in": { am: "ግባ", om: "Seeni" },
+  "Sign out": { am: "ውጣ", om: "Ba'i" },
+  "Username": { am: "የተጠቃሚ ስም", om: "Maqaa fayyadamaa" },
+  "Password": { am: "የይለፍ ቃል", om: "Jecha icciitii" },
+  "Signing in…": { am: "በመግባት ላይ…", om: "Seenaa jira…" },
+  "Enter your username and password.": { am: "የተጠቃሚ ስምዎን እና የይለፍ ቃልዎን ያስገቡ።", om: "Maqaa fayyadamaa fi jecha icciitii galchi." },
+  "Wrong username or password.": { am: "የተጠቃሚ ስም ወይም የይለፍ ቃል ትክክል አይደለም።", om: "Maqaan fayyadamaa ykn jechi icciitii dogoggora." },
+  "This account can't open the owner dashboard.": { am: "ይህ መለያ የባለቤት ዳሽቦርዱን መክፈት አይችልም።", om: "Herregni kun daashboordii abbaa qabeenyaa banuu hin danda'u." },
+  "Cannot reach the server. It may be waking up — try again in a minute.": { am: "ከሰርቨሩ ጋር መገናኘት አልተቻለም። እየተነሳ ሊሆን ይችላል — ከአንድ ደቂቃ በኋላ እንደገና ይሞክሩ።", om: "Sarvarii qaqqabuu hin dandeenye. Ka'aa jiraachuu danda'a — daqiiqaa booda irra deebi'ii yaali." },
+  "Owner and admin accounts only.": { am: "ለባለቤት እና ለአስተዳዳሪ መለያዎች ብቻ።", om: "Herrega abbaa qabeenyaa fi bulchaa qofa." },
+  "Not saved: {reason}": { am: "አልተቀመጠም፦ {reason}", om: "Hin olkaa'amne: {reason}" },
+  "last month": { am: "ባለፈው ወር", om: "ji'a darbe" },
+  "Investment plans aren't tracked in the system yet.": { am: "የኢንቨስትመንት ዕቅዶች ገና በሲስተሙ ውስጥ አልተመዘገቡም።", om: "Karoorri invastimantii ammaaf sirna keessatti hin galmoofne." },
+
   /* navigation & shell */
   Dashboard: { am: "ዳሽቦርድ", om: "Daashboordii" },
   Analytics: { am: "ትንታኔ", om: "Xiinxala" },

@@ -41,7 +41,7 @@ export interface Stat {
   lowerIsBetter: boolean;
 }
 
-export const user = {
+export const user = {   // live mode: the signed-in owner
   name: "Abebe Kebede",
   email: "owner@bistroaddis.com",
   restaurant: "Bistro Addis",
@@ -122,16 +122,20 @@ const round1 = (n: number): number => Math.round(n * 10) / 10;
 const pctChange = (now: number, before: number): number => round1(((now - before) / before) * 100);
 const margin = (p: MonthPoint): number => ((p.revenue - p.expenses) / p.revenue) * 100;
 
-const current = cashFlow[9]; // October — latest closed month
-const previous = cashFlow[8];
-const totalBalance = Math.round(Object.values(paymentMethods).reduce((s, p) => s + p.balance, 0) * 100) / 100;
+/** The four headline cards, from a month and the one before it. Live mode rebuilds them from the real books. */
+export function buildStats(current: MonthPoint, previous: MonthPoint, balanceChange: number, note: string): Stat[] {
+  const totalBalance = Math.round(Object.values(paymentMethods).reduce((s, p) => s + p.balance, 0) * 100) / 100;
+  const pc = (a: number, b: number): number => (b ? pctChange(a, b) : 0);
+  const mg = (p: MonthPoint): number => (p.revenue ? margin(p) : 0);
+  return [
+    { label: "Total Balance", value: totalBalance, note: "across 3 accounts", change: balanceChange, icon: "wallet", unit: "ETB", lowerIsBetter: false },
+    { label: "Total Revenue", value: current.revenue, note, change: pc(current.revenue, previous.revenue), icon: "trend-up", unit: "ETB", lowerIsBetter: false },
+    { label: "Total Expense", value: current.expenses, note, change: pc(current.expenses, previous.expenses), icon: "receipt", unit: "ETB", lowerIsBetter: true },
+    { label: "Profit Margin", value: round1(mg(current)), note: "target ≥ 35%", change: round1(mg(current) - mg(previous)), icon: "percent", unit: "%", lowerIsBetter: false },
+  ];
+}
 
-export const stats: Stat[] = [
-  { label: "Total Balance", value: totalBalance, note: "across 3 accounts", change: 6.8, icon: "wallet", unit: "ETB", lowerIsBetter: false },
-  { label: "Total Revenue", value: current.revenue, note: "this month", change: pctChange(current.revenue, previous.revenue), icon: "trend-up", unit: "ETB", lowerIsBetter: false },
-  { label: "Total Expense", value: current.expenses, note: "this month", change: pctChange(current.expenses, previous.expenses), icon: "receipt", unit: "ETB", lowerIsBetter: true },
-  { label: "Profit Margin", value: round1(margin(current)), note: "target ≥ 35%", change: round1(margin(current) - margin(previous)), icon: "percent", unit: "%", lowerIsBetter: false },
-];
+export const stats: Stat[] = buildStats(cashFlow[9], cashFlow[8], 6.8, "this month"); // October — latest closed month
 
 /* ---------- transactions ---------- */
 
@@ -245,6 +249,7 @@ export const budgets: BudgetLine[] = [
 
 /* ---------- goals ---------- */
 
+/** Live mode: replaced with real figures. */
 export const goals: { title: string; current: number; target: number; unit: "ETB" | "%" | "★"; deadline: Date | null; lowerIsBetter?: boolean }[] = [
   { title: "Monthly Revenue Target", current: 128400, target: 150000, unit: "ETB", deadline: new Date(2026, 10, 30) },
   { title: "Food Cost under 30%", current: 31.2, target: 30, unit: "%", deadline: new Date(2026, 11, 15), lowerIsBetter: true },
