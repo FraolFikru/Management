@@ -48,7 +48,7 @@ export function withholdingRate(v: Vendor, billSubtotal: number): number {
 }
 
 /** Opening balances on the first seeded day. */
-export const OPENING = { CASH: 20000, BANK: 650000, TELEBIRR: 40000, CBE_BIRR: 30000 };
+export const OPENING: Record<"CASH" | "BANK" | "TELEBIRR" | "CBE_BIRR", number> = { CASH: 20000, BANK: 650000, TELEBIRR: 40000, CBE_BIRR: 30000 };   // live mode: real opening balances
 
 export interface SeedData {
   start: string;

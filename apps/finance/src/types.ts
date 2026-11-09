@@ -49,6 +49,8 @@ export interface Vendor {
   category: CostCategory;
   termsDays: number;
   phone: string;
+  /** live mode: the stand-in "supplier" for expenses paid on the spot at a branch (not offered for new bills) */
+  internal?: boolean;
 }
 
 export interface BillPayment {
@@ -64,6 +66,8 @@ export interface BillPayment {
   reference: string;
   paidBy: string;
   timestamp: string;
+  /** live mode: the money already left when the purchase / expense was logged, so it is not counted again */
+  noCash?: boolean;
 }
 
 export interface Bill {
@@ -82,6 +86,10 @@ export interface Bill {
   hasReceipt: boolean;
   payments: BillPayment[];
   enteredBy: string;
+  /** live mode: an expense a branch paid on the spot (read-only here) */
+  expense?: boolean;
+  /** live mode: created when the manager approved a purchase */
+  fromPurchase?: boolean;
 }
 
 export type BillStatus = "OPEN" | "PARTIAL" | "DUE_SOON" | "OVERDUE" | "PAID";
@@ -104,6 +112,8 @@ export interface TaxFiling {
   filedBy?: string;
   filedAt?: string;
   reference?: string;
+  /** live mode: the amount paid to the tax office when it was filed */
+  amount?: number;
 }
 
 /* --- cash & reconciliation --- */

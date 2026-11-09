@@ -994,4 +994,14 @@ export const UI_STRINGS: Record<string, Entry> = {
   "{x} overdue": { am: "{x} ጊዜው ያለፈ", om: "{x} yeroon darbe" },
   "{x} withheld": { am: "{x} ተቀንሷል", om: "{x} qabame" },
   "{x} withheld for tax": { am: "{x} ለግብር ተቀንሷል", om: "{x} gibiraaf qabame" },
+  /* live mode (Eirsha Ops backend) */
+  "Every bill, payment, filing and reconciliation is stamped with the person signed in.": { am: "እያንዳንዱ ደረሰኝ፣ ክፍያ፣ የግብር ማስታወቂያ እና ማስታረቅ በገባው ሰው ስም ይመዘገባል።", om: "Nagahee, kaffaltii, ibsa gibiraa fi walsimsiisni hundi maqaa nama seeneen galmaa'a." },
+  Username: { am: "የተጠቃሚ ስም", om: "Maqaa fayyadamaa" },
+  Password: { am: "የይለፍ ቃል", om: "Jecha icciitii" },
+  "Signing in…": { am: "በመግባት ላይ…", om: "Seenaa jira…" },
+  "Enter your username and password.": { am: "የተጠቃሚ ስምዎን እና የይለፍ ቃልዎን ያስገቡ።", om: "Maqaa fayyadamaa fi jecha icciitii galchi." },
+  "Wrong username or password.": { am: "የተጠቃሚ ስም ወይም የይለፍ ቃል ትክክል አይደለም።", om: "Maqaan fayyadamaa ykn jechi icciitii dogoggora." },
+  "This account can't open the finance app.": { am: "ይህ መለያ የፋይናንስ መተግበሪያውን መክፈት አይችልም።", om: "Herregni kun appii faayinaansii banuu hin danda'u." },
+  "Cannot reach the server. It may be waking up — try again in a minute.": { am: "ከሰርቨሩ ጋር መገናኘት አልተቻለም። እየተነሳ ሊሆን ይችላል — ከአንድ ደቂቃ በኋላ እንደገና ይሞክሩ።", om: "Sarvarii qaqqabuu hin dandeenye. Ka'aa jiraachuu danda'a — daqiiqaa booda irra deebi'ii yaali." },
+  "Not saved: {reason}": { am: "አልተቀመጠም፦ {reason}", om: "Hin olkaa'amne: {reason}" },
 };

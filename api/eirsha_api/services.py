@@ -632,7 +632,10 @@ def review_purchase(db: Db, actor: Actor, purchase_id: str, decision: str, reaso
 
 
 def pay_bill(db: Db, actor: Actor, bill_id: str, amount: Any, method: str, paid_on: str | None = None,
-             reference: str | None = None, money_account_id: str | None = None) -> dict:
+             reference: str | None = None, money_account_id: str | None = None, *, id: str | None = None) -> dict:
+    if id and (done := db.one("SELECT * FROM bill_payment WHERE id = ?", (id,))):      # retry of the same payment
+        return {"paymentId": id, "amount": str(done["amount"]), "withheld": str(done["withheld"]),
+                "netPaid": str(money(done["amount"]) - money(done["withheld"])), "withholdingRate": str(done["withholding_rate"])}
     b = db.one("SELECT * FROM v_bill_status WHERE id = ? AND org_id = ?", (bill_id, actor.org_id))
     if not b:
         raise NotFound("bill not found")
@@ -647,7 +650,7 @@ def pay_bill(db: Db, actor: Actor, bill_id: str, amount: Any, method: str, paid_
     # withholding is on the pre-VAT value of what is settled
     withheld = money(amt * money(b["subtotal"]) / money(b["total"]) * rate) if rate else Decimal(0)
     acc = money_account_id or account_for(db, actor.org_id, None, method)
-    pid = new_id("bp")
+    pid = id or new_id("bp")
     db.insert("bill_payment", {"id": pid, "bill_id": bill_id, "paid_on": on, "amount": amt, "withholding_rate": rate, "withheld": withheld,
                                "payment_method_code": method, "money_account_id": acc, "reference": reference, "paid_by": actor.user_id})
     cash_move(db, actor, acc, -(amt - withheld), "VENDOR", f"{v['name']} {b['bill_no']}", "bill_payment", pid, on=on, branch_id=b["branch_id"])
@@ -658,6 +661,27 @@ def pay_bill(db: Db, actor: Actor, bill_id: str, amount: Any, method: str, paid_
           {"vendor": v["name"], "amount": str(amt), "withheld": str(withheld), "method": method})
     return {"paymentId": pid, "amount": str(amt), "withheld": str(withheld), "netPaid": str(amt - withheld), "withholdingRate": str(rate),
             "balanceDue": str(balance - amt)}
+
+
+def undo_bill_payment(db: Db, actor: Actor, payment_id: str) -> dict:
+    """Undo right after paying a bill (same person, within UNDO_WINDOW): the payment is removed and the money put back."""
+    p = db.one("SELECT * FROM bill_payment WHERE id = ?", (payment_id,))
+    if not p:
+        raise NotFound("payment not found")
+    b = _get(db, "bill", p["bill_id"], actor.org_id)
+    if p["paid_by"] != actor.user_id:
+        raise Conflict("only the person who made this payment can undo it")
+    if datetime.now(timezone.utc) - _dt(p["created_at"]) >= UNDO_WINDOW:
+        raise Conflict("this payment is more than 10 minutes old and can no longer be undone")
+    net = money(p["amount"]) - money(p["withheld"])
+    if p["money_account_id"]:
+        cash_move(db, actor, p["money_account_id"], net, "VENDOR", f"Reversed payment {b['bill_no']}", "bill_payment", payment_id,
+                  on=str(p["paid_on"]), branch_id=b["branch_id"])
+    db.execute("DELETE FROM bill_payment WHERE id = ?", (payment_id,))
+    if b["status"] == "PAID":
+        db.update("bill", {"id": b["id"]}, {"status": "OPEN"})
+    audit(db, actor, "FIN", "bill.unpay", "bill", b["id"], "Payment undone: {amount} ETB", {"amount": str(p["amount"])})
+    return {"billId": b["id"], "paymentId": payment_id}
 
 
 # ================================================================== waste, dispatch, expenses

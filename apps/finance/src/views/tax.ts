@@ -8,7 +8,7 @@ import { t } from "../i18n";
 import { addDays, daysBetween, fmtDay, money, today } from "../format";
 import { WHT_RATE, WHT_THRESHOLD } from "../catalog";
 import { lastOfMonth, monthKey, vendorById } from "../seed";
-import { db, deductibleVat, filing, filingDue, reopenReturn, state, user, vatSummary } from "../store";
+import { db, deductibleVat, filing, fileReturn, filingDue, reopenReturn, state, user, vatSummary } from "../store";
 import { esc, icon } from "../ui/dom";
 import { empty, monthLabel, pill, seg, stampOf } from "../ui/shared";
 import { openModal } from "../ui/modal-bus";
@@ -123,6 +123,10 @@ export const taxActions: ActionMap = {
     const before = { ...filing(month, k) };
     reopenReturn(month, k);
     rerender(`[data-action="file-return"][data-value="${month}|${k}"]`);
-    toast(t("{k} return for {m} reopened · by {name}", { k, m: monthLabel(month), name: user().name }), () => { Object.assign(filing(month, k), before); rerender(); });
+    toast(t("{k} return for {m} reopened · by {name}", { k, m: monthLabel(month), name: user().name }), () => {
+      if (before.status === "FILED") fileReturn(month, k, before.reference ?? "");
+      Object.assign(filing(month, k), { filedBy: before.filedBy, filedAt: before.filedAt });
+      rerender();
+    });
   },
 };

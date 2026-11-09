@@ -13,8 +13,10 @@
 import type {
   AccountId, Bill, BillPayment, BillStatus, CostCategory, FieldErrors, Movement, PaymentMethod, PayrollCost, Reconciliation, SupportedLanguage, TaxFiling, Vendor, ViewId,
 } from "./types";
-import { ACCOUNT_IDS, COGS_IDS, DAILY_FLOAT, DUE_SOON_DAYS, METHOD_ACCOUNT, OPEX_IDS, PROFIT_TAX_RATE, RECON_TOLERANCE, USERS, isCogs } from "./catalog";
+import { ACCOUNT_IDS, COGS_IDS, DAILY_FLOAT, DUE_SOON_DAYS, METHOD_ACCOUNT, OPEX_IDS, PROFIT_TAX_RATE, RECON_TOLERANCE, ROLE_LABEL, USERS, isCogs } from "./catalog";
 import { OPENING, VENDORS, generateSeed, lastOfMonth, monthKey, newId, vendorById, withholdingRate } from "./seed";
+import { registerText } from "./i18n";
+import { isLive, loadAll, remote, sessionUser, signOut as apiSignOut } from "./api";
 import { addDays, daysBetween, parseDay, round2, today } from "./format";
 
 /* ---------- UI state ---------- */
@@ -85,6 +87,79 @@ export const db = {
 };
 
 export const user = () => USERS.find((u) => u.id === state.userId) ?? USERS[0];
+
+/* ---------- live mode (backend) ----------
+   The screen updates at once; the change is then sent. If the backend
+   refuses it, the change is rolled back and onSyncError says why. */
+
+let signedInLive = false;
+export const signedIn = (): boolean => !isLive || signedInLive;
+/** Live mode: the branch whose till is reconciled, and its name. */
+export const live = { branch: "", branchName: "" };
+/** Money movements from the backend ledger (bill payments are rebuilt from the bills). */
+let ledger: Movement[] = [];
+/** Money moved by this session's filings and reconciliations (until the next load). */
+let sessionMoves: Movement[] = [];
+/** Bank deposit already booked per reconciled day. */
+let deposits: Record<string, number> = {};
+
+let syncError: (message: string) => void = () => {};
+export function onSyncError(fn: (message: string) => void): void { syncError = fn; }
+
+function push<T>(task: () => Promise<T>, rollback: () => void, then?: (r: T) => void): void {
+  if (!isLive) return;
+  task().then((r) => then?.(r), (err: unknown) => {
+    rollback();
+    syncError(err instanceof Error ? err.message : String(err));
+  });
+}
+
+const dropMoves = (list: Movement[]): void => { sessionMoves = sessionMoves.filter((m) => !list.includes(m)); };
+
+/** Replace the demo books with the real ones (after a live sign-in). Throws "no-access" if this account can't use the app. */
+export async function loadFromBackend(): Promise<void> {
+  const b = await loadAll().catch((err: unknown) => {
+    throw (err as { status?: number }).status === 403 ? new Error("no-access") : err;
+  });
+  const u = sessionUser();
+  if (!b.role || !u) throw new Error("no-access");
+  USERS.splice(0, USERS.length, ...b.users.map((x) => {
+    const role = ROLE_LABEL[x.role] ?? { en: x.role, am: x.role, om: x.role };
+    registerText(`user.${x.id}`, role);
+    return { id: x.id, name: x.name, role };
+  }));
+  VENDORS.splice(0, VENDORS.length, ...b.vendors);
+  Object.assign(OPENING, b.opening);
+  db.start = b.start;
+  db.sales = b.sales;
+  db.bills = b.bills;
+  db.payroll = b.payroll;
+  db.filings = b.filings;
+  db.recon = b.recon;
+  db.vendors = b.vendors.filter((v) => !v.internal);
+  ledger = b.movements;
+  deposits = b.deposits;
+  sessionMoves = [];
+  live.branch = b.reconBranch;
+  live.branchName = b.reconBranchName;
+  state.userId = u.id;
+  signedInLive = true;
+}
+
+export function signOut(): void {
+  void apiSignOut();
+  signedInLive = false;
+}
+
+/** Live movements: the backend ledger + bill payments from the bills + what this session moved. */
+function liveMovements(): Movement[] {
+  const out: Movement[] = [...ledger, ...sessionMoves];
+  for (const b of db.bills) for (const p of b.payments) {
+    if (p.noCash) continue;
+    out.push({ date: p.date, account: METHOD_ACCOUNT[p.method], amount: -p.netPaid, label: vendorById(b.vendorId)?.name ?? b.vendorId, kind: "VENDOR" });
+  }
+  return out.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+}
 export const userName = (id: string): string => USERS.find((u) => u.id === id)?.name ?? id;
 
 /* ---------- periods ---------- */
@@ -260,17 +335,39 @@ export function vatSummary(month: string) {
 
 export function fileReturn(month: string, kind: "VAT" | "WHT", reference: string): TaxFiling {
   const f = filing(month, kind);
+  const was = { ...f };
   f.status = "FILED";
   f.filedBy = state.userId;
   f.filedAt = new Date().toISOString();
   f.reference = reference;
+  if (isLive) {
+    const v = vatSummary(month);
+    const amount = round2(kind === "VAT" ? Math.max(0, v.net) : v.withheld);
+    f.amount = amount;
+    const moves: Movement[] = amount ? [{ date: today(), account: "BANK", amount: -amount, label: `${kind} ${month}`, kind: "TAX" }] : [];
+    sessionMoves.push(...moves);
+    push(() => remote.filing(month, kind, true, reference, amount), () => { resetObj(f, was); dropMoves(moves); });
+  }
   return f;
 }
 
 export function reopenReturn(month: string, kind: "VAT" | "WHT"): void {
   const f = filing(month, kind);
+  const was = { ...f };
+  const paid = f.status === "FILED" ? f.amount ?? 0 : 0;
   f.status = "OPEN";
-  delete f.filedBy; delete f.filedAt; delete f.reference;
+  delete f.filedBy; delete f.filedAt; delete f.reference; delete f.amount;
+  if (isLive) {
+    const moves: Movement[] = paid ? [{ date: today(), account: "BANK", amount: paid, label: `Reversed ${kind} ${month}`, kind: "TAX" }] : [];
+    sessionMoves.push(...moves);
+    push(() => remote.filing(month, kind, false), () => { resetObj(f, was); dropMoves(moves); });
+  }
+}
+
+/** Put an object back exactly as it was (fields added since are removed). */
+function resetObj<T extends object>(obj: T, before: T): void {
+  for (const k of Object.keys(obj)) if (!(k in before)) delete (obj as Record<string, unknown>)[k];
+  Object.assign(obj, before);
 }
 
 /* ---------- payables writes ---------- */
@@ -282,10 +379,15 @@ export function addBill(data: Omit<Bill, "id" | "payments" | "enteredBy" | "vat"
     ...data, id: newId("bill"), vat, total: round2(data.subtotal + vat), dueDate: data.dueDate ?? addDays(data.issueDate, v.termsDays), payments: [], enteredBy: state.userId,
   };
   db.bills.push(b);
+  push(() => remote.addBill(b), () => { db.bills = db.bills.filter((x) => x !== b); });
   return b;
 }
 
-export const removeBill = (id: string): void => { db.bills = db.bills.filter((b) => b.id !== id); };
+export const removeBill = (id: string): void => {
+  const b = db.bills.find((x) => x.id === id);
+  db.bills = db.bills.filter((x) => x.id !== id);
+  if (b) push(() => remote.voidBill(id), () => { db.bills.push(b); });
+};
 
 export function payBill(billId: string, amount: number, method: PaymentMethod, reference: string, date: string): BillPayment | null {
   const b = db.bills.find((x) => x.id === billId);
@@ -297,12 +399,18 @@ export function payBill(billId: string, amount: number, method: PaymentMethod, r
     id: newId("pay"), date, amount: amt, withheld, netPaid: round2(amt - withheld), method, reference, paidBy: state.userId, timestamp: new Date().toISOString(),
   };
   b.payments.push(p);
+  // the backend works out withholding on the pre-VAT part of what is settled: keep its figures
+  push(() => remote.pay(b.id, p), () => { b.payments = b.payments.filter((x) => x !== p); },
+    (r) => { p.withheld = Number(r.withheld); p.netPaid = Number(r.netPaid); });
   return p;
 }
 
 export function unpay(billId: string, paymentId: string): void {
   const b = db.bills.find((x) => x.id === billId);
-  if (b) b.payments = b.payments.filter((p) => p.id !== paymentId);
+  if (!b) return;
+  const p = b.payments.find((x) => x.id === paymentId);
+  b.payments = b.payments.filter((x) => x.id !== paymentId);
+  if (p) push(() => remote.unpay(paymentId), () => { b.payments.push(p); });
 }
 
 /* ---------- reconciliation ---------- */
@@ -316,16 +424,31 @@ export function reconStatus(r: Pick<Reconciliation, "cashExpected" | "cashCounte
 export function saveRecon(date: string, v: Omit<Reconciliation, "date" | "status" | "reconciledBy" | "reconciledAt" | "cashExpected" | "telebirrExpected" | "cbeBirrExpected">): Reconciliation | null {
   const r = db.recon.find((x) => x.date === date);
   if (!r) return null;
+  const was = { ...r };
   Object.assign(r, v);
   r.status = reconStatus(r);
   r.reconciledBy = state.userId;
   r.reconciledAt = new Date().toISOString();
+  if (isLive) {
+    // a confirmed deposit moves that cash from the safe to the bank (re-saving adjusts it), as the backend does
+    const done = deposits[date] ?? 0;
+    const delta = round2((r.bankConfirmed ? r.bankDeposit : 0) - done);
+    const day = addDays(date, 1);
+    const moves: Movement[] = delta ? [
+      { date: day, account: "CASH", amount: -delta, label: "Deposit to CBE", kind: "DEPOSIT" },
+      { date: day, account: "BANK", amount: delta, label: "Cash deposit", kind: "DEPOSIT" },
+    ] : [];
+    sessionMoves.push(...moves);
+    deposits[date] = done + delta;
+    push(() => remote.recon(live.branch, r), () => { resetObj(r, was); dropMoves(moves); deposits[date] = done; });
+  }
   return r;
 }
 
 /* ---------- cash movements & balances ---------- */
 
 export function movements(): Movement[] {
+  if (isLive) return liveMovements();
   const out: Movement[] = [];
   for (const s of db.sales) {
     out.push({ date: s.date, account: "CASH", amount: s.byMethod.CASH, label: "Cash sales", kind: "SALES" });
