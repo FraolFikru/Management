@@ -72,9 +72,23 @@ export const ACCOUNT_IDS = Object.keys(ACCOUNTS) as AccountId[];
 export const METHOD_ACCOUNT: Record<PaymentMethod, AccountId> = { CASH: "CASH", TELEBIRR: "TELEBIRR", CBE_BIRR: "CBE_BIRR" };
 
 /** Finance users (sign-off on payments, filings, reconciliations). */
-export const USERS = [
+export const USERS: { id: string; name: string; role: LocalizedText }[] = [   // live mode: replaced with the real accounts
   { id: "EMP-002", name: "Abebe Kebede", role: L("Finance admin", "የፋይናንስ አስተዳዳሪ", "Bulchaa faayinaansii") },
   { id: "EMP-001", name: "Hanna Tesfaye", role: L("Branch Manager", "የቅርንጫፍ ሥራ አስኪያጅ", "Hoji Gaggeessaa Damee") },
   { id: "EMP-020", name: "Mahlet Assefa", role: L("Accountant", "የሂሳብ ባለሙያ", "Ogeessa herregaa") },
-] as const;
+];
+
+/** Role names for live accounts. */
+export const ROLE_LABEL: Record<string, LocalizedText> = {
+  ACCOUNTANT: L("Accountant", "የሂሳብ ባለሙያ", "Ogeessa herregaa"),
+  ADMIN: L("Admin", "አስተዳዳሪ", "Bulchaa"),
+  OWNER: L("Owner", "ባለቤት", "Abbaa qabeenyaa"),
+  BRANCH_MANAGER: L("Branch Manager", "የቅርንጫፍ ሥራ አስኪያጅ", "Hoji Gaggeessaa Damee"),
+  INVENTORY_CLERK: L("Inventory clerk", "የክምችት ሰራተኛ", "Hojjetaa kuusaa"),
+  HR_OFFICER: L("HR officer", "የሰው ሀብት ባለሙያ", "Ogeessa humna namaa"),
+  SALES_STAFF: L("Sales staff", "የሽያጭ ሰራተኛ", "Hojjetaa gurgurtaa"),
+  CASHIER: L("Cashier", "ገንዘብ ተቀባይ", "Kaffaltii fudhataa"),
+  WAITER: L("Waiter", "አስተናጋጅ", "Tajaajilaa"),
+  KITCHEN_STAFF: L("Kitchen staff", "የወጥ ቤት ሰራተኛ", "Hojjetaa kushinaa"),
+};
 USERS.forEach((u) => registerText(`user.${u.id}`, u.role));
