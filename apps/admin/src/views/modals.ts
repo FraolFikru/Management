@@ -3,6 +3,7 @@
    is logged and can be undone from the toast. */
 
 import type { Branch, FieldErrors, UserAccount, UserRole } from "../types";
+import { isLive } from "../api";
 import { t, tk } from "../i18n";
 import { money, parseAmount, plain } from "../format";
 import { ROLE_IDS, isRole } from "../catalog";
@@ -21,6 +22,8 @@ type BranchDraft = Omit<Branch, "id" | "openedOn">;
 let bd: BranchDraft = { name: "", code: "", address: "", phone: "", managerId: "", isActive: true };
 type UserDraft = Omit<UserAccount, "id" | "lastLoginAt">;
 let ud: UserDraft = { fullName: "", username: "", role: "SALES_STAFF", assignedBranchId: "", isActive: true, phone: "" };
+/** Live mode only: password for a new account, or a new one for an existing account (empty = keep). */
+let pw = "";
 let pd = { price: "", scope: "ALL" };
 let bk = { percent: "", category: "ALL" as "ALL" | "FOOD" | "DRINK" };
 
@@ -32,6 +35,7 @@ export function openModal(m: Exclude<Modal, null>, from: HTMLElement): void {
     const b = m.id ? branchById(m.id) : undefined;
     bd = b ? { name: b.name, code: b.code, address: b.address, phone: b.phone, managerId: b.managerId, isActive: b.isActive } : { name: "", code: "", address: "", phone: "", managerId: "", isActive: true };
   } else if (m.kind === "user") {
+    pw = "";
     const u = m.id ? db.users.find((x) => x.id === m.id) : undefined;
     ud = u ? { fullName: u.fullName, username: u.username, role: u.role, assignedBranchId: u.assignedBranchId, isActive: u.isActive, phone: u.phone }
       : { fullName: "", username: "", role: "SALES_STAFF", assignedBranchId: state.scope === "ALL" ? db.branches[0].id : state.scope, isActive: true, phone: "" };
@@ -115,7 +119,10 @@ function userForm(id: string | null): string {
         `<option value="${b.id}" ${ud.assignedBranchId === b.id ? "selected" : ""}>${esc(b.name)}</option>`).join("")}</select></div>
       ${input("uPhone", "user.phone", t("Phone number"), ud.phone, "phone", 'inputmode="tel" placeholder="+251 911 000 000"')}
     </div>
-    ${id ? `<label class="check-line"><input type="checkbox" data-bind="user.isActive" ${ud.isActive ? "checked" : ""}> ${t("Account can sign in")}</label>` : `<p class="hint">${t("A temporary password is sent to the phone number by SMS.")}</p>`}
+    ${isLive ? `<div class="field"><label for="uPass">${id ? t("New password (leave empty to keep the current one)") : t("Password")}</label>
+      <input id="uPass" class="input" type="password" autocomplete="new-password" value="${esc(pw)}" data-bind="user.password" ${invalid(state.errors, "password")}>
+      ${errText(state.errors, "password")}<small class="hint">${t("At least 8 characters. Tell the person in private; they can change it after signing in.")}</small></div>` : ""}
+    ${id ? `<label class="check-line"><input type="checkbox" data-bind="user.isActive" ${ud.isActive ? "checked" : ""}> ${t("Account can sign in")}</label>` : isLive ? "" : `<p class="hint">${t("A temporary password is sent to the phone number by SMS.")}</p>`}
     ${foot(id ? t("Save user") : t("Create user"))}
   </form>`;
 }
@@ -130,8 +137,10 @@ function submitUser(id: string | null): void {
   if (!/^(\+251|0)\s?[79]\d{2}\s?\d{3}\s?\d{3}$/.test(ud.phone.trim())) e.phone = t("Use an Ethiopian number, e.g. +251 911 234 567.");
   if (was && was.role === "ADMIN" && was.isActive && (ud.role !== "ADMIN" || !ud.isActive) && activeAdmins().length <= 1) e.role = t("Keep at least one active Admin.");
   if (was && was.id === state.userId && (ud.role !== "ADMIN" || !ud.isActive)) e.role = t("You can't remove your own Admin access.");
-  if (showErrors(e, ["fullName", "username", "role", "phone"])) return;
-  const { account, undo } = saveUser({ ...ud, id, fullName: ud.fullName.trim(), username, phone: ud.phone.trim() });
+  if (isLive && ((!id && pw.length < 8) || (id && pw && pw.length < 8))) e.password = t("At least 8 characters.");
+  if (showErrors(e, ["fullName", "username", "role", "phone", "password"])) return;
+  const { account, undo } = saveUser({ ...ud, id, fullName: ud.fullName.trim(), username, phone: ud.phone.trim() }, pw);
+  pw = "";
   closeModal();
   rerender();
   renderNav();
@@ -217,6 +226,7 @@ export function onModalInput(scope: string, key: string, el: HTMLInputElement): 
     if (key === "name" || key === "code" || key === "address" || key === "phone" || key === "managerId") { bd[key] = v; clearErrors([key]); }
   } else if (scope === "user") {
     if (key === "isActive") { ud.isActive = el.checked; clearErrors(["role"]); return; }
+    if (key === "password") { pw = el.value; clearErrors(["password"]); return; }
     if (key === "fullName" || key === "username" || key === "phone" || key === "assignedBranchId") { ud[key] = v; clearErrors([key]); }
   } else if (scope === "price") { pd.price = v; clearErrors(["price"]); }
   else if (scope === "bulk") { bk.percent = v; clearErrors(["percent"]); const ex = $("#bkEx"); if (ex) { const tmp = document.createElement("div"); tmp.innerHTML = bulkForm(); ex.innerHTML = tmp.querySelector("#bkEx")?.innerHTML ?? ""; } }

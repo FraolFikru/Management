@@ -9,7 +9,8 @@ import "./style.css";
 import type { ViewId } from "./types";
 import { isLanguage, setLanguage, t, tk } from "./i18n";
 import { PERMISSIONS } from "./catalog";
-import { db, isAdmin, permsOf, savePrefs, signIn, state, user } from "./store";
+import { db, isAdmin, loadFromBackend, onSyncError, permsOf, savePrefs, signIn, state, user } from "./store";
+import { ApiError, isLive, sessionUser, signIn as apiSignIn, signOut } from "./api";
 import { $, esc, icon } from "./ui/dom";
 import { wireApp, type ActionMap } from "./ui/app";
 import { VIEW_IDS, renderNav, renderShell, renderTopbar } from "./ui/shell";
@@ -108,6 +109,7 @@ const shellActions: ActionMap = {
     toast(t("Now logged in as {name}", { name: user().fullName }));
   },
   undo: () => runUndo(),
+  "sign-out": () => { void signOut().then(() => renderSignIn()); },
 };
 
 const ACTIONS: ActionMap = { ...shellActions, ...storeActions, ...branchActions, ...accessActions, ...receiptActions, ...auditActions, ...modalActions };
@@ -165,6 +167,53 @@ window.addEventListener("hashchange", () => {
   if (VIEW_IDS.includes(v) && v !== state.view) { if (state.modal) closeModal(); navigate(v); }
 });
 
+/* ---------- sign-in (live mode) ---------- */
+
+function renderSignIn(message = ""): void {
+  const app = $("#app");
+  if (!app) return;
+  app.innerHTML = `<main class="signin-wrap"><form id="signinForm" class="card signin-card form" novalidate>
+      <span class="brand-mark">BA</span>
+      <h1>${t("Sign in to System admin")}</h1>
+      <div class="field"><label for="siUser">${t("Username")}</label><input id="siUser" class="input" name="username" autocomplete="username" autocapitalize="off" required></div>
+      <div class="field"><label for="siPass">${t("Password")}</label><input id="siPass" class="input" name="password" type="password" autocomplete="current-password" required></div>
+      ${message ? `<p class="signin-error" role="alert">${esc(message)}</p>` : ""}
+      <button type="submit" class="btn primary">${t("Sign in")}</button>
+    </form></main>`;
+  $<HTMLInputElement>("#siUser")?.focus();
+}
+
+async function startLive(): Promise<void> {
+  const app = $("#app");
+  if (app) app.innerHTML = `<main class="signin-wrap"><p class="card signin-card">${t("Loading…")}</p></main>`;
+  try {
+    await loadFromBackend();
+  } catch (err) {
+    renderSignIn(err instanceof ApiError && err.status === 401 ? "" : err instanceof ApiError && err.status === 403
+      ? t("This account can't open System admin.") : t("Cannot reach the server. It may be waking up — try again in a minute."));
+    return;
+  }
+  if (app) app.innerHTML = "";
+  render();
+}
+
+document.addEventListener("submit", (e) => {
+  const form = e.target as HTMLFormElement;
+  if (form.id !== "signinForm") return;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  const data = new FormData(form);
+  void apiSignIn(String(data.get("username")), String(data.get("password")))
+    .then(() => startLive())
+    .catch((err) => renderSignIn(err instanceof ApiError && err.status === 401
+      ? t("Wrong username or password") : t("Cannot reach the server. It may be waking up — try again in a minute.")));
+}, { capture: true });
+
+onSyncError((message) => {
+  render();
+  toast(t("Not saved: {reason}", { reason: message }));
+});
+
 /* ---------- boot ---------- */
 
 setLanguage(state.lang);
@@ -172,4 +221,6 @@ applyTheme();
 signIn();
 const start = location.hash.slice(1) as ViewId;
 state.view = VIEW_IDS.includes(start) ? start : "store";
-render();
+if (!isLive) render();
+else if (sessionUser()) void startLive();
+else renderSignIn();

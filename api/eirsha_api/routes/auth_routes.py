@@ -4,7 +4,7 @@ from __future__ import annotations
 import hashlib
 
 from fastapi import APIRouter, Header, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ..auth import issue_tokens, verify_secret
 from ..db import now_iso
@@ -27,6 +27,11 @@ class PinLogin(BaseModel):
 
 class Refresh(BaseModel):
     refreshToken: str
+
+
+class PasswordChange(BaseModel):
+    currentPassword: str
+    newPassword: str = Field(min_length=8)
 
 
 @router.post("/login")
@@ -75,6 +80,21 @@ def logout(p: Principal = Depends(current), db: Db = Depends(get_db)):
     with db.tx():
         db.update("auth_session", {"id": p.session_id}, {"revoked_at": now_iso()})
         audit(db, p.actor, "AUTH", "auth.sign_out", "session", p.session_id, "Signed out")
+    return {"ok": True}
+
+
+@router.post("/password")
+def change_password(body: PasswordChange, p: Principal = Depends(current), db: Db = Depends(get_db)):
+    """Anyone signed in can replace their own password (e.g. the demo one)."""
+    from ..auth import hash_secret
+    with db.tx():
+        u = db.one("SELECT password_hash FROM app_user WHERE id = ?", (p.actor.user_id,))
+        if not verify_secret(body.currentPassword, u["password_hash"]):
+            raise HTTPException(401, "current password is wrong")
+        db.update("app_user", {"id": p.actor.user_id}, {"password_hash": hash_secret(body.newPassword)})
+        db.execute("UPDATE auth_session SET revoked_at = ? WHERE user_id = ? AND id <> ? AND revoked_at IS NULL",
+                   (now_iso(), p.actor.user_id, p.session_id))
+        audit(db, p.actor, "AUTH", "auth.password_change", "app_user", p.actor.user_id, "Changed own password")
     return {"ok": True}
 
 

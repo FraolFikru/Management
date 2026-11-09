@@ -3,6 +3,7 @@
    tabs on phones. */
 
 import type { ViewId } from "../types";
+import { isLive } from "../api";
 import { LANGUAGES, getLanguage, t, tk } from "../i18n";
 import { db, isAdmin, state, user } from "../store";
 import { $, esc, icon, type IconName } from "./dom";
@@ -48,9 +49,10 @@ export function renderTopbar(): void {
         <span class="staff-id">${esc(u.id)}</span>
       </button>
       <div class="user-menu" id="userMenu" ${state.userMenu ? "" : "hidden"}>
+        ${isLive ? `<button type="button" data-action="sign-out">${icon("lock")} ${t("Sign out")}</button>` : `
         <p class="meta">${t("Switch user")}</p>
         ${db.users.filter((x) => x.id !== u.id && x.isActive && (x.role === "ADMIN" || x.role === "BRANCH_MANAGER")).map((x) =>
-          `<button type="button" data-action="switch-user" data-value="${x.id}">${avatar(x.id, "xs")}${esc(x.fullName)} <small>(${esc(tk(`role.${x.role}`))})</small></button>`).join("")}
+          `<button type="button" data-action="switch-user" data-value="${x.id}">${avatar(x.id, "xs")}${esc(x.fullName)} <small>(${esc(tk(`role.${x.role}`))})</small></button>`).join("")}`}
       </div>
     </div>
     ${isAdmin() ? `<label class="scope-pick"><span class="sr">${t("Branch view")}</span>${icon("store")}

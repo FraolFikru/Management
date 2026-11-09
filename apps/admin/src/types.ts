@@ -14,7 +14,9 @@ export interface LocalizedText {
 
 export type ViewId = "store" | "branches" | "access" | "receipt" | "audit";
 
-export type UserRole = "ADMIN" | "BRANCH_MANAGER" | "SALES_STAFF" | "KITCHEN_STAFF" | "INVENTORY_CLERK";
+export type UserRole = "ADMIN" | "BRANCH_MANAGER" | "SALES_STAFF" | "KITCHEN_STAFF" | "INVENTORY_CLERK"
+  /** added with the Eirsha Ops backend: office roles across all branches */
+  | "ACCOUNTANT" | "HR_OFFICER" | "OWNER";
 
 export type CurrencySymbol = "ETB" | "Br";
 
