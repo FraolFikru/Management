@@ -116,8 +116,8 @@ export const remote = {
   price: (p: MenuPrice) => put(`/admin/menu-prices/${encodeURIComponent(p.id)}`, { basePrice: p.basePrice, overrides: p.overrides }),
   permission: (role: string, flag: string, granted: boolean) =>
     put(`/admin/permissions/${encodeURIComponent(role)}/${encodeURIComponent(flagCodes[flag] ?? flag)}?granted=${granted}`, {}),
-  createUser: (u: UserAccount, password?: string) => post("/admin/users", { ...userBody(u), id: u.id, password: password || null }),
-  updateUser: (u: UserAccount, password?: string) => put(`/admin/users/${encodeURIComponent(u.id)}`, { ...userBody(u), password: password || null }),
+  createUser: (u: UserAccount, password?: string, pin?: string) => post<{ staff_code?: string }>("/admin/users", { ...userBody(u), id: u.id, password: password || null, pin: pin || null }),
+  updateUser: (u: UserAccount, password?: string, pin?: string) => put<{ staffCode?: string }>(`/admin/users/${encodeURIComponent(u.id)}`, { ...userBody(u), password: password || null, pin: pin || null }),
   receipt: (r: ReceiptConfig) => put("/admin/receipt", r),
   exportLog: (what: string, format: string, rows: number) => post("/admin/exports/log", { what, format, rows }),
 };

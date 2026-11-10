@@ -19,13 +19,15 @@ from . import realtime
 from .db import Db
 from .db_init import ensure_database
 from .erase import erase_if_requested
-from .routes import admin, auth_routes, finance, hr, kds, manager, owner, pos, reference, sales
+from .migrate import migrate
+from .routes import admin, auth_routes, finance, floor, hr, kds, manager, owner, pos, reference, sales
 from .services import ServiceError
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     ensure_database()                      # first start on an empty database: create schema + seed
+    migrate()                              # schema additions since the first release (safe to repeat)
     erase_if_requested()                   # EIRSHA_ERASE_DEMO_KEEP=<username>: one-time start from scratch
     stop = asyncio.Event()
     task = asyncio.create_task(realtime.relay(Db.from_env(), stop))
@@ -39,7 +41,7 @@ app = FastAPI(title="Eirsha Ops API", version="1.0.0", lifespan=lifespan)
 # Built in, so a hand-edited Render variable can't drop an app: the eight eirsha-* Vercel
 # projects, every deployment of the team's Vercel account (…-f-27f3.vercel.app) and localhost.
 # EIRSHA_CORS (exact addresses) and EIRSHA_CORS_REGEX can add more.
-BUILT_IN_ORIGINS = (r"https://eirsha-(demo|cashier|kds|sales|manager|finance|hr|admin|owner)\.vercel\.app"
+BUILT_IN_ORIGINS = (r"https://eirsha-(demo|cashier|kds|sales|manager|finance|hr|admin|owner|waiter)\.vercel\.app"
                     r"|https://[a-z0-9-]+-f-27f3\.vercel\.app"
                     r"|http://(localhost|127\.0\.0\.1):\d+")
 _extra = os.environ.get("EIRSHA_CORS_REGEX", "").strip().lstrip("^").rstrip("$")

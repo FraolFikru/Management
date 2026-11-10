@@ -20,6 +20,7 @@ export const ROLES = reg<UserRole>("role", {
   ADMIN: { en: "Admin", am: "አስተዳዳሪ", om: "Bulchiinsa" },
   BRANCH_MANAGER: { en: "Branch Manager", am: "የቅርንጫፍ ሥራ አስኪያጅ", om: "Hoji-gaggeessaa Damee" },
   SALES_STAFF: { en: "Sales Staff", am: "የሽያጭ ሰራተኛ", om: "Hojjetaa Gurgurtaa" },
+  WAITER: { en: "Waiter", am: "አስተናጋጅ", om: "Keessummeessaa" },
   KITCHEN_STAFF: { en: "Kitchen Staff", am: "የወጥ ቤት ሰራተኛ", om: "Hojjetaa Kushinaa" },
   INVENTORY_CLERK: { en: "Inventory Clerk", am: "የንብረት ጸሐፊ", om: "Barreessaa Kuusaa" },
   ACCOUNTANT: { en: "Accountant", am: "የሂሳብ ባለሙያ", om: "Herrega-qabaa" },
@@ -31,8 +32,9 @@ export const ROLE_IDS = Object.keys(ROLES) as UserRole[];
 /** Which apps each role signs in to (shown under the role in the user form). */
 export const ROLE_APPS: Record<UserRole, string> = {
   ADMIN: "All apps",
-  BRANCH_MANAGER: "Manager · Cashier · Kitchen display",
-  SALES_STAFF: "Cashier",
+  BRANCH_MANAGER: "Manager · Cashier · Waiter · Kitchen display",
+  SALES_STAFF: "Cashier · takes table payments",
+  WAITER: "Waiter app (tables, no cash)",
   KITCHEN_STAFF: "Kitchen display",
   INVENTORY_CLERK: "Purchases & stock",
   ACCOUNTANT: "Finance",
@@ -88,6 +90,7 @@ export const DEFAULT_PERMISSIONS: RolePermissions[] = [
   { role: "ADMIN", ...all(true) },
   { role: "BRANCH_MANAGER", ...all(true), canAccessAdmin: false },
   { role: "SALES_STAFF", ...all(false), canMakeSales: true, canRequestDispatch: true },
+  { role: "WAITER", ...all(false), canMakeSales: true },
   { role: "KITCHEN_STAFF", ...all(false), canRequestDispatch: true, canLogWaste: true },
   { role: "INVENTORY_CLERK", ...all(false), canApproveDispatch: true, canLogWaste: true, canRequestDispatch: true },
   { role: "ACCOUNTANT", ...all(false), canViewReports: true },

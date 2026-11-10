@@ -57,7 +57,7 @@ async def ws(websocket: WebSocket, branch: str = Query(...), token: str = Query(
         await websocket.close(code=4401)
         return
     db = Db.from_env()
-    allowed = db.scalar("""SELECT 1 FROM v_user_permission WHERE user_id = ? AND permission_code = 'kds.view'
+    allowed = db.scalar("""SELECT 1 FROM v_user_permission WHERE user_id = ? AND permission_code IN ('kds.view', 'pos.sell')
                            AND (branch_id = ? OR (SELECT scope FROM role WHERE code = ?) = 'ORG')""", (claims["sub"], branch, claims["role"]))
     if not allowed:
         db.conn.close()

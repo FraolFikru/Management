@@ -26,12 +26,13 @@ export const ROLES = reg<UserRole>("role", {
   ADMIN: L("Admin", "አስተዳዳሪ", "Bulchaa"),
   ACCOUNTANT: L("Accountant", "የሂሳብ ባለሙያ", "Ogeessa herregaa"),
   HR_OFFICER: L("HR officer", "የሰው ሀብት ባለሙያ", "Ogeessa humna namaa"),
+  WAITER: L("Waiter", "አስተናጋጅ", "Keessummeessaa"),
   OWNER: L("Owner", "ባለቤት", "Abbaa qabeenyaa"),
 });
 export const ROLE_IDS = Object.keys(ROLES) as UserRole[];
 export const ROLE_COLOR: Record<UserRole, string> = {
   BRANCH_MANAGER: "#c9a0f2", SALES_STAFF: "#8fd3f4", KITCHEN_STAFF: "#f2c48d", INVENTORY_CLERK: "#5bd18b", ADMIN: "#a4acc4",
-  ACCOUNTANT: "#7fd1c7", HR_OFFICER: "#f29fb5", OWNER: "#e6d38a",
+  ACCOUNTANT: "#7fd1c7", HR_OFFICER: "#f29fb5", OWNER: "#e6d38a", WAITER: "#9ec5ff",
 };
 export const isRole = (v: string): v is UserRole => v in ROLES;
 

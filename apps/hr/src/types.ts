@@ -9,7 +9,7 @@
 
 export type SupportedLanguage = "en" | "am" | "om";
 
-export type UserRole = "BRANCH_MANAGER" | "SALES_STAFF" | "KITCHEN_STAFF" | "INVENTORY_CLERK" | "ADMIN" | "ACCOUNTANT" | "HR_OFFICER" | "OWNER";
+export type UserRole = "BRANCH_MANAGER" | "SALES_STAFF" | "KITCHEN_STAFF" | "INVENTORY_CLERK" | "ADMIN" | "ACCOUNTANT" | "HR_OFFICER" | "OWNER" | "WAITER";
 
 export interface Employee {
   id: string;

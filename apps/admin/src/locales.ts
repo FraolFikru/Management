@@ -1018,4 +1018,14 @@ export const UI_STRINGS: Record<string, Entry> = {
   "{x} overdue": { am: "{x} ጊዜው ያለፈ", om: "{x} yeroon darbe" },
   "{x} withheld": { am: "{x} ተቀንሷል", om: "{x} qabame" },
   "{x} withheld for tax": { am: "{x} ለግብር ተቀንሷል", om: "{x} gibiraaf qabame" },
+  /* table service (Waiter app) */
+  "Manager · Cashier · Waiter · Kitchen display": { am: "ሥራ አስኪያጅ · ገንዘብ ተቀባይ · አስተናጋጅ · የወጥ ቤት ማሳያ", om: "Hoogganaa · Kaffaltii fudhataa · Keessummeessaa · Agarsiisa kushinaa" },
+  "Cashier · takes table payments": { am: "ገንዘብ ተቀባይ · የጠረጴዛ ክፍያ ይቀበላል", om: "Kaffaltii fudhataa · kaffaltii minjaalaa fudhata" },
+  "Waiter app (tables, no cash)": { am: "የአስተናጋጅ መተግበሪያ (ጠረጴዛዎች፣ ጥሬ ገንዘብ የለም)", om: "Appii keessummeessaa (minjaalota, maallaqa callaa malee)" },
+  "Waiter app PIN (4–6 digits)": { am: "የአስተናጋጅ መተግበሪያ ፒን (4–6 አሃዝ)", om: "PIN appii keessummeessaa (lakkoofsa 4–6)" },
+  "New Waiter app PIN (leave empty to keep the current one)": { am: "አዲስ የአስተናጋጅ መተግበሪያ ፒን (ያለውን ለማቆየት ባዶ ይተዉ)", om: "PIN haaraa appii keessummeessaa (kan jiru eeguuf duwwaa dhiisi)" },
+  "Signs in to the Waiter app with staff code {code} and this PIN.": { am: "በሰራተኛ ኮድ {code} እና በዚህ ፒን ወደ አስተናጋጅ መተግበሪያ ይገባል።", om: "Koodii hojjetaa {code} fi PIN kanaan appii keessummeessaa seena." },
+  "Signs in to the Waiter app with a staff code and this PIN. The staff code appears in the user list after saving.": { am: "በሰራተኛ ኮድ እና በዚህ ፒን ወደ አስተናጋጅ መተግበሪያ ይገባል። የሰራተኛ ኮዱ ከተቀመጠ በኋላ በተጠቃሚዎች ዝርዝር ውስጥ ይታያል።", om: "Koodii hojjetaa fi PIN kanaan appii keessummeessaa seena. Koodiin erga olkaa'amee booda tarree fayyadamtootaa keessatti mul'ata." },
+  "Use 4 to 6 digits.": { am: "ከ4 እስከ 6 አሃዝ ይጠቀሙ።", om: "Lakkoofsa 4 hanga 6 fayyadami." },
+  "PIN set": { am: "ፒን ተዘጋጅቷል", om: "PIN qophaa'eera" },
 };

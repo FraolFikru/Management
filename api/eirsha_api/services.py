@@ -218,8 +218,10 @@ def add_lines(db: Db, actor: Actor, order_id: str, lines: list[dict]) -> None:
                       WHERE v.branch_id = ? AND v.menu_item_id = ?""", (o["branch_id"], ln["menu_item_id"]))
         if not m or not m["is_available"]:
             raise Invalid("menu item not available at this branch", menu_item_id=ln["menu_item_id"])
+        if ln.get("id") and db.scalar("SELECT 1 FROM order_line WHERE id = ?", (ln["id"],)):
+            continue                                  # a retried request: this line is already on the check
         n += 1
-        lid = new_id("ol")
+        lid = ln.get("id") or new_id("ol")
         mods = ln.get("modifiers") or []
         mod_rows, mod_total = [], Decimal(0)
         for md in mods:
@@ -257,13 +259,25 @@ def order_view(db: Db, order_id: str) -> dict:
     return o
 
 
-def send_to_kitchen(db: Db, actor: Actor, order_id: str) -> dict:
-    """Fire every active line not yet on a ticket as a new KDS ticket (later courses → later tickets)."""
+def floor_event(db: Db, org_id: str, branch_id: str, kind: str, order: dict) -> None:
+    """Tell the Waiter / Manager / Cashier screens a table changed (they refetch the floor)."""
+    if order.get("table_id"):
+        outbox(db, org_id, branch_id, "floor", kind, "customer_order", order["id"],
+               {"orderId": order["id"], "tableId": order["table_id"], "table": order.get("table_number"), "waiterId": order.get("waiter_id")})
+
+
+def send_to_kitchen(db: Db, actor: Actor, order_id: str, *, course: int | None = None, line_ids: list[str] | None = None) -> dict:
+    """Fire active lines not yet on a ticket as a new KDS ticket (later courses → later tickets).
+    With `course` or `line_ids` only those lines are fired; the rest stay held on the check."""
     o = _get(db, "customer_order", order_id, actor.org_id)
     if o["status"] in ("VOIDED", "REFUNDED"):
         raise Conflict("order is voided")
     lines = db.all("""SELECT * FROM order_line l WHERE l.order_id = ? AND l.status = 'ACTIVE'
                       AND NOT EXISTS (SELECT 1 FROM kds_ticket_item i WHERE i.order_line_id = l.id) ORDER BY line_no""", (order_id,))
+    if course is not None:
+        lines = [ln for ln in lines if int(ln["course"]) == int(course)]
+    if line_ids is not None:
+        lines = [ln for ln in lines if ln["id"] in set(line_ids)]
     if not lines:
         raise Conflict("nothing new to send")
     seq = int(db.scalar("SELECT coalesce(max(fire_seq), 0) FROM kds_ticket WHERE order_id = ?", (order_id,))) + 1
@@ -280,6 +294,7 @@ def send_to_kitchen(db: Db, actor: Actor, order_id: str) -> dict:
         db.update("customer_order", {"id": order_id}, {"status": "SENT"})
     ticket = kds_payload(db, tid)
     outbox(db, actor.org_id, o["branch_id"], "kds.ticket", "upsert", "kds_ticket", tid, {"type": "upsert", "ticket": ticket})
+    floor_event(db, actor.org_id, o["branch_id"], "sent", o)
     audit(db, actor, "POS", "customer_order.send", "kds_ticket", tid, "Order {orderNumber} sent to kitchen",
           {"orderNumber": o["order_number"], "items": len(lines)}, branch_id=o["branch_id"])
     return ticket
@@ -370,6 +385,8 @@ def kds_command(db: Db, actor: Actor, ticket_id: str, cmd: str, body: dict) -> d
     db.update("kds_ticket", {"id": ticket_id}, ch)
     payload = {"type": "remove", "ticketId": ticket_id} if event == "remove" else {"type": "upsert", "ticket": kds_payload(db, ticket_id)}
     outbox(db, actor.org_id, t["branch_id"], "kds.ticket", event, "kds_ticket", ticket_id, payload)
+    floor_event(db, actor.org_id, t["branch_id"], "ready" if ch.get("status") == "READY" else "kitchen",
+                db.one("SELECT * FROM customer_order WHERE id = ?", (t["order_id"],)))
     audit(db, actor, "KDS", f"kds_ticket.{cmd}", "kds_ticket", ticket_id, "Ticket {orderNumber}: {cmd}",
           {"orderNumber": t["order_number"], "cmd": cmd, **{k: v for k, v in body.items() if k in ("status", "itemId", "isCompleted")}},
           branch_id=t["branch_id"])
@@ -457,6 +474,7 @@ def pay_order(db: Db, actor: Actor, order_id: str, payments: list[dict]) -> dict
         db.update("customer_order", {"id": order_id}, {"status": "PAID", "paid_at": now_iso(), "receipt_no": receipt})
     outbox(db, actor.org_id, o["branch_id"], "mgr.sales", "paid" if total == due else "part_paid", "customer_order", order_id,
            {"orderId": order_id, "orderNumber": o["order_number"], "amount": str(total)})
+    floor_event(db, actor.org_id, o["branch_id"], "paid" if total == due else "part_paid", o)
     audit(db, actor, "POS", "customer_order.pay", "customer_order", order_id, "Order {orderNumber} paid {amount} ETB",
           {"orderNumber": o["order_number"], "amount": str(total), "methods": [p["method"] for p in payments]}, branch_id=o["branch_id"])
     return order_view(db, order_id)

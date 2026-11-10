@@ -27,7 +27,7 @@ function usersTable(): string {
     <tbody>${list.map((u) => {
       const ll = lastLogin(u.id);
       return `<tr class="${u.isActive ? "" : "muted-row"}">
-        <th scope="row"><span class="person">${avatar(u.id, "sm")}<span><strong>${esc(u.fullName)}</strong><small class="mono">@${esc(u.username)} · ${esc(u.id)}</small></span></span></th>
+        <th scope="row"><span class="person">${avatar(u.id, "sm")}<span><strong>${esc(u.fullName)}</strong><small class="mono">@${esc(u.username)} · ${esc(u.staffCode || u.id)}${u.hasPin ? ` · ${t("PIN set")}` : ""}</small></span></span></th>
         <td><span class="role-tag r-${u.role.toLowerCase()}">${esc(tk(`role.${u.role}`))}</span></td>
         <td>${esc(branchName(u.assignedBranchId))}</td>
         <td>${ll ? `<time class="nowrap" datetime="${esc(ll)}">${esc(relDay(localDay(ll)))} · ${esc(fmtTime(ll))}</time>` : `<span class="meta">${t("Never")}</span>`}</td>
