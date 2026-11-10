@@ -72,5 +72,5 @@ async def service_error(_: Request, exc: ServiceError) -> JSONResponse:
     return JSONResponse(status_code=exc.status, content={"error": str(exc), **exc.detail})
 
 
-for r in (auth_routes, reference, sales, manager, pos, kds, finance, hr, admin, owner):
+for r in (auth_routes, reference, sales, manager, pos, kds, finance, hr, admin, owner, floor):
     app.include_router(r.router)
