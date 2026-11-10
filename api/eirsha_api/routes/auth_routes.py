@@ -63,6 +63,36 @@ def pin_login(body: PinLogin, db: Db = Depends(get_db), x_device_id: str = Heade
         return out
 
 
+FLOOR_ROLES = ("WAITER", "SALES_STAFF", "KITCHEN_STAFF")
+PIN_TRIES, PIN_LOCK_MINUTES = 5, 5
+
+
+@router.post("/staff-pin")
+def staff_pin_login(body: PinLogin, db: Db = Depends(get_db)):
+    """Floor staff on a phone: staff code + PIN, no registered device. Only floor roles may sign in this way
+    (a 4–6 digit PIN is too weak for a manager or admin), and five wrong PINs lock the code for five minutes."""
+    from datetime import datetime, timedelta, timezone
+    with db.tx():
+        u = db.one("SELECT * FROM app_user WHERE upper(staff_code) = upper(CAST(? AS text)) AND is_active AND deleted_at IS NULL", (body.staffCode.strip(),))
+        now = datetime.now(timezone.utc)
+        if u and u["locked_until"] and datetime.fromisoformat(str(u["locked_until"]).replace("Z", "+00:00")) > now:
+            raise HTTPException(429, "too many wrong PINs: wait a few minutes and try again")
+        if not u or u["role_code"] not in FLOOR_ROLES or not verify_secret(body.pin, u["pin_hash"]):
+            if u:
+                n = int(u["failed_logins"]) + 1
+                db.update("app_user", {"id": u["id"]}, {"failed_logins": 0 if n >= PIN_TRIES else n,
+                                                        "locked_until": (now + timedelta(minutes=PIN_LOCK_MINUTES)).isoformat() if n >= PIN_TRIES else None})
+            failed = True
+        else:
+            failed = False
+            db.update("app_user", {"id": u["id"]}, {"locked_until": None})
+            out = issue_tokens(db, u, u["home_branch_id"])
+            audit(db, Actor.load(db, u["id"]), "AUTH", "auth.sign_in", "session", out["sessionId"], "Signed in with PIN")
+    if failed:                                        # raised outside the transaction so the failed-try count is kept
+        raise HTTPException(401, "wrong staff code or PIN")
+    return out
+
+
 @router.post("/refresh")
 def refresh(body: Refresh, db: Db = Depends(get_db)):
     with db.tx():

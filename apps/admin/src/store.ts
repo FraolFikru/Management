@@ -219,8 +219,14 @@ if (!isLive) enforceLocks();
 
 export const activeAdmins = (): UserAccount[] => db.users.filter((u) => u.isActive && u.role === "ADMIN");
 
-/** `password` (live mode): required for a new account, optional on edit (empty = keep the current one). */
-export function saveUser(data: Omit<UserAccount, "id" | "lastLoginAt"> & { id: string | null }, password = ""): { account: UserAccount; undo: () => void } {
+let remoteChange: () => void = () => {};
+/** Called when the backend's answer changed something on screen (e.g. a new account's staff code). */
+export function onRemoteChange(fn: () => void): void { remoteChange = fn; }
+
+/** `password` (live mode): required for a new account, optional on edit (empty = keep the current one).
+    `pin`: the 4–6 digit Waiter-app PIN (empty = keep). The backend answers with the account's staff code. */
+export function saveUser(data: Omit<UserAccount, "id" | "lastLoginAt"> & { id: string | null }, password = "", pin = ""): { account: UserAccount; undo: () => void } {
+  const badge = (u: UserAccount, code?: string): void => { if (code) u.staffCode = code; if (pin) u.hasPin = true; remoteChange(); };
   if (data.id) {
     const u = db.users.find((x) => x.id === data.id) as UserAccount;
     const before = { ...u };
@@ -229,7 +235,7 @@ export function saveUser(data: Omit<UserAccount, "id" | "lastLoginAt"> & { id: s
       ? log("ROLE", "Changed {name}'s role: {from} → {to}", { name: u.fullName, from: `role.${before.role}`, to: `role.${u.role}` }, u.assignedBranchId)
       : log("USER", "Edited account {name}", { name: u.fullName }, u.assignedBranchId);
     const local = (): void => { Object.assign(u, before); unlog(e); };
-    push(() => remote.updateUser(u, password), local);
+    push(() => remote.updateUser(u, password, pin).then((r) => badge(u, r.staffCode)), local);
     return { account: u, undo: () => { local(); push(() => remote.updateUser(u), () => {}); } };
   }
   const n = db.users.length + 1;
@@ -237,7 +243,7 @@ export function saveUser(data: Omit<UserAccount, "id" | "lastLoginAt"> & { id: s
   db.users.push(u);
   const e = log("USER", "Created account {name} ({role})", { name: u.fullName, role: `role.${u.role}` }, u.assignedBranchId);
   const local = (): void => { db.users = db.users.filter((x) => x !== u); unlog(e); };
-  push(() => remote.createUser(u, password), local);
+  push(() => remote.createUser(u, password, pin).then((r) => badge(u, r.staff_code)), local);
   // Live: accounts are never deleted (the activity log points at them) — undo deactivates instead.
   return { account: u, undo: () => { if (isLive) { u.isActive = false; push(() => remote.updateUser(u), () => { u.isActive = true; }); } else local(); } };
 }

@@ -16,7 +16,9 @@ export type ViewId = "store" | "branches" | "access" | "receipt" | "audit";
 
 export type UserRole = "ADMIN" | "BRANCH_MANAGER" | "SALES_STAFF" | "KITCHEN_STAFF" | "INVENTORY_CLERK"
   /** added with the Eirsha Ops backend: office roles across all branches */
-  | "ACCOUNTANT" | "HR_OFFICER" | "OWNER";
+  | "ACCOUNTANT" | "HR_OFFICER" | "OWNER"
+  /** added with table service: takes tables in the Waiter app */
+  | "WAITER";
 
 export type CurrencySymbol = "ETB" | "Br";
 
@@ -81,6 +83,10 @@ export interface UserAccount {
   /** added */
   phone: string;
   lastLoginAt?: string;
+  /** live mode: the badge code floor staff sign in to the Waiter app with (given by the backend) */
+  staffCode?: string;
+  /** live mode: a Waiter-app PIN has been set */
+  hasPin?: boolean;
 }
 
 /** added: a branch location. */

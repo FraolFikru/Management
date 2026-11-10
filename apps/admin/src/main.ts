@@ -9,7 +9,7 @@ import "./style.css";
 import type { ViewId } from "./types";
 import { isLanguage, setLanguage, t, tk } from "./i18n";
 import { PERMISSIONS } from "./catalog";
-import { db, isAdmin, loadFromBackend, onSyncError, permsOf, savePrefs, signIn, state, user } from "./store";
+import { db, isAdmin, loadFromBackend, onRemoteChange, onSyncError, permsOf, savePrefs, signIn, state, user } from "./store";
 import { ApiError, isLive, sessionUser, signIn as apiSignIn, signOut } from "./api";
 import { $, esc, icon } from "./ui/dom";
 import { wireApp, type ActionMap } from "./ui/app";
@@ -208,6 +208,8 @@ document.addEventListener("submit", (e) => {
     .catch((err) => renderSignIn(err instanceof ApiError && err.status === 401
       ? t("Wrong username or password") : t("Cannot reach the server. It may be waking up — try again in a minute.")));
 }, { capture: true });
+
+onRemoteChange(() => { if (!state.modal) render(); });
 
 onSyncError((message) => {
   render();

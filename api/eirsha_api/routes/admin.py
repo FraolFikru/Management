@@ -43,6 +43,20 @@ class UserIn(BaseModel):
     phone: str | None = None
     isActive: bool = True
     password: str | None = Field(default=None, min_length=8)
+    pin: str | None = Field(default=None, pattern=r"^\d{4,6}$")     # floor staff sign in to the Waiter app with staff code + PIN
+
+
+_CODE_PREFIX = {"WAITER": "W", "SALES_STAFF": "SS", "KITCHEN_STAFF": "KS", "BRANCH_MANAGER": "BM", "INVENTORY_CLERK": "IC",
+                "ACCOUNTANT": "AC", "HR_OFFICER": "HR", "ADMIN": "AD", "OWNER": "OW"}
+
+
+def _staff_code(db: Db, org: str, role: str) -> str:
+    """The next free badge code for a role: W-101, W-102, …"""
+    prefix = _CODE_PREFIX.get(role, "ST")
+    n = 101
+    while db.scalar("SELECT 1 FROM app_user WHERE org_id = ? AND staff_code = ?", (org, f"{prefix}-{n}")):
+        n += 1
+    return f"{prefix}-{n}"
 
 
 class BranchIn(BaseModel):
@@ -118,7 +132,7 @@ def bootstrap(days: int = 90, p: Principal = Depends(require("admin.access")), d
     branches = [{"id": b["id"], "name": b["name"], "code": b["code"], "address": b["address"] or "", "phone": b["phone"] or "",
                  "managerId": b["manager_user_id"] or "", "isActive": bool(b["is_active"]), "openedOn": str(b["opened_on"] or "")}
                 for b in db.all("SELECT * FROM branch WHERE org_id = ? AND deleted_at IS NULL ORDER BY opened_on IS NULL, opened_on, id", (org,))]
-    users = [{"id": u["id"], "fullName": u["full_name"], "username": u["username"] or "", "role": u["role_code"],
+    users = [{"id": u["id"], "fullName": u["full_name"], "username": u["username"] or "", "role": u["role_code"], "staffCode": u["staff_code"] or "", "hasPin": bool(u["pin_hash"]),
               "assignedBranchId": u["home_branch_id"] or "", "isActive": bool(u["is_active"]), "phone": u["phone"] or "",
               **({"lastLoginAt": s._iso(u["last_login_at"])} if u["last_login_at"] else {})}
              for u in db.all("SELECT * FROM app_user WHERE org_id = ? AND deleted_at IS NULL ORDER BY id", (org,))]
@@ -239,9 +253,11 @@ def add_user(body: UserIn, p: Principal = Depends(require("admin.users_manage"))
         db.insert("app_user", {"id": uid, "org_id": p.actor.org_id, "full_name": body.fullName, "username": body.username.lower(), "role_code": body.role,
                                "home_branch_id": body.assignedBranchId, "phone": body.phone, "is_active": body.isActive,
                                "initials": "".join(w[0] for w in body.fullName.split()[:2]).upper(),
+                               "staff_code": _staff_code(db, p.actor.org_id, body.role),
+                               "pin_hash": hash_secret(body.pin) if body.pin else None,
                                "password_hash": hash_secret(body.password) if body.password else None})
         s.audit(db, p.actor, "ADMIN", "app_user.create", "app_user", uid, "User {name} created as {role}", {"name": body.fullName, "role": body.role})
-        return db.one("SELECT id, full_name, username, role_code, home_branch_id, is_active FROM app_user WHERE id = ?", (uid,))
+        return db.one("SELECT id, full_name, username, role_code, home_branch_id, is_active, staff_code FROM app_user WHERE id = ?", (uid,))
 
 
 def _check_username(db: Db, org: str, username: str, uid: str) -> None:
@@ -269,6 +285,10 @@ def edit_user(uid: str, body: UserIn, p: Principal = Depends(require("admin.user
         if body.password:
             changes["password_hash"] = hash_secret(body.password)
             changes["failed_logins"] = 0
+        if body.pin:
+            changes.update(pin_hash=hash_secret(body.pin), failed_logins=0, locked_until=None)
+        if not u["staff_code"]:
+            changes["staff_code"] = _staff_code(db, p.actor.org_id, body.role)
         db.update("app_user", {"id": uid}, changes)
         if not body.isActive or body.password:      # sign them out everywhere
             db.execute("UPDATE auth_session SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL", (now_iso(), uid))
@@ -281,7 +301,7 @@ def edit_user(uid: str, body: UserIn, p: Principal = Depends(require("admin.user
         s.audit(db, p.actor, "ADMIN", what, "app_user", uid, text,
                 {"name": body.fullName, "from": f"role.{u['role_code']}", "to": f"role.{body.role}"}, branch_id=body.assignedBranchId,
                 before={"role": u["role_code"], "active": bool(u["is_active"])}, after={"role": body.role, "active": body.isActive})
-        return {"ok": True}
+        return {"ok": True, "staffCode": changes.get("staff_code") or u["staff_code"]}
 
 
 @router.get("/permissions")

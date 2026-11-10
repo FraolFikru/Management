@@ -24,6 +24,9 @@ type UserDraft = Omit<UserAccount, "id" | "lastLoginAt">;
 let ud: UserDraft = { fullName: "", username: "", role: "SALES_STAFF", assignedBranchId: "", isActive: true, phone: "" };
 /** Live mode only: password for a new account, or a new one for an existing account (empty = keep). */
 let pw = "";
+/** Live mode only: a new Waiter-app PIN (empty = keep). */
+let pin = "";
+const PIN_ROLES = ["WAITER", "SALES_STAFF", "KITCHEN_STAFF"];
 let pd = { price: "", scope: "ALL" };
 let bk = { percent: "", category: "ALL" as "ALL" | "FOOD" | "DRINK" };
 
@@ -35,9 +38,9 @@ export function openModal(m: Exclude<Modal, null>, from: HTMLElement): void {
     const b = m.id ? branchById(m.id) : undefined;
     bd = b ? { name: b.name, code: b.code, address: b.address, phone: b.phone, managerId: b.managerId, isActive: b.isActive } : { name: "", code: "", address: "", phone: "", managerId: "", isActive: true };
   } else if (m.kind === "user") {
-    pw = "";
+    pw = ""; pin = "";
     const u = m.id ? db.users.find((x) => x.id === m.id) : undefined;
-    ud = u ? { fullName: u.fullName, username: u.username, role: u.role, assignedBranchId: u.assignedBranchId, isActive: u.isActive, phone: u.phone }
+    ud = u ? { fullName: u.fullName, username: u.username, role: u.role, assignedBranchId: u.assignedBranchId, isActive: u.isActive, phone: u.phone, staffCode: u.staffCode, hasPin: u.hasPin }
       : { fullName: "", username: "", role: "SALES_STAFF", assignedBranchId: state.scope === "ALL" ? db.branches[0].id : state.scope, isActive: true, phone: "" };
   } else if (m.kind === "price") {
     const p = db.prices.find((x) => x.id === m.id);
@@ -122,6 +125,9 @@ function userForm(id: string | null): string {
     ${isLive ? `<div class="field"><label for="uPass">${id ? t("New password (leave empty to keep the current one)") : t("Password")}</label>
       <input id="uPass" class="input" type="password" autocomplete="new-password" value="${esc(pw)}" data-bind="user.password" ${invalid(state.errors, "password")}>
       ${errText(state.errors, "password")}<small class="hint">${t("At least 8 characters. Tell the person in private; they can change it after signing in.")}</small></div>` : ""}
+    ${isLive && PIN_ROLES.includes(ud.role) ? `<div class="field"><label for="uPin">${ud.hasPin ? t("New Waiter app PIN (leave empty to keep the current one)") : t("Waiter app PIN (4–6 digits)")}</label>
+      <input id="uPin" class="input" inputmode="numeric" maxlength="6" autocomplete="off" value="${esc(pin)}" data-bind="user.pin" ${invalid(state.errors, "pin")}>
+      ${errText(state.errors, "pin")}<small class="hint">${ud.staffCode ? t("Signs in to the Waiter app with staff code {code} and this PIN.", { code: ud.staffCode }) : t("Signs in to the Waiter app with a staff code and this PIN. The staff code appears in the user list after saving.")}</small></div>` : ""}
     ${id ? `<label class="check-line"><input type="checkbox" data-bind="user.isActive" ${ud.isActive ? "checked" : ""}> ${t("Account can sign in")}</label>` : isLive ? "" : `<p class="hint">${t("A temporary password is sent to the phone number by SMS.")}</p>`}
     ${foot(id ? t("Save user") : t("Create user"))}
   </form>`;
@@ -138,9 +144,11 @@ function submitUser(id: string | null): void {
   if (was && was.role === "ADMIN" && was.isActive && (ud.role !== "ADMIN" || !ud.isActive) && activeAdmins().length <= 1) e.role = t("Keep at least one active Admin.");
   if (was && was.id === state.userId && (ud.role !== "ADMIN" || !ud.isActive)) e.role = t("You can't remove your own Admin access.");
   if (isLive && ((!id && pw.length < 8) || (id && pw && pw.length < 8))) e.password = t("At least 8 characters.");
-  if (showErrors(e, ["fullName", "username", "role", "phone", "password"])) return;
-  const { account, undo } = saveUser({ ...ud, id, fullName: ud.fullName.trim(), username, phone: ud.phone.trim() }, pw);
-  pw = "";
+  const newPin = PIN_ROLES.includes(ud.role) ? pin.trim() : "";
+  if (newPin && !/^\d{4,6}$/.test(newPin)) e.pin = t("Use 4 to 6 digits.");
+  if (showErrors(e, ["fullName", "username", "role", "phone", "password", "pin"])) return;
+  const { account, undo } = saveUser({ ...ud, id, fullName: ud.fullName.trim(), username, phone: ud.phone.trim() }, pw, newPin);
+  pw = ""; pin = "";
   closeModal();
   rerender();
   renderNav();
@@ -227,6 +235,7 @@ export function onModalInput(scope: string, key: string, el: HTMLInputElement): 
   } else if (scope === "user") {
     if (key === "isActive") { ud.isActive = el.checked; clearErrors(["role"]); return; }
     if (key === "password") { pw = el.value; clearErrors(["password"]); return; }
+    if (key === "pin") { pin = el.value; clearErrors(["pin"]); return; }
     if (key === "fullName" || key === "username" || key === "phone" || key === "assignedBranchId") { ud[key] = v; clearErrors([key]); }
   } else if (scope === "price") { pd.price = v; clearErrors(["price"]); }
   else if (scope === "bulk") { bk.percent = v; clearErrors(["percent"]); const ex = $("#bkEx"); if (ex) { const tmp = document.createElement("div"); tmp.innerHTML = bulkForm(); ex.innerHTML = tmp.querySelector("#bkEx")?.innerHTML ?? ""; } }

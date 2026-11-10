@@ -21,7 +21,7 @@ log = logging.getLogger("eirsha.erase")
 
 # Children before parents, so foreign keys are never left dangling.
 HISTORY = [
-    "kds_ticket_item", "kds_ticket", "order_line_modifier", "order_payment", "stock_movement", "order_line", "customer_order",
+    "kds_ticket_item", "kds_ticket", "order_line_modifier",   # (dining_table is setup, not history: kept) "order_payment", "stock_movement", "order_line", "customer_order",
     "till_session", "daily_sales_payment", "daily_sales_summary", "cash_reconciliation", "cash_movement",
     "bill_payment", "bill_line", "bill", "purchase", "waste_report", "dispatch_request", "expense",
     "payslip", "payroll_run", "tax_filing", "budget_line", "attendance_break", "attendance_record", "schedule_entry",
