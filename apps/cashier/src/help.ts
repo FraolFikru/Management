@@ -13,17 +13,19 @@ export const ROLE_NAME: Record<string, string> = {
 
 export const CONTENT: HelpContent = {
   app: "Cashier",
-  intro: "For cashiers: take orders at the counter, send them to the kitchen and take payment.",
+  intro: "For cashiers: take orders at the counter, send them to the kitchen, take payment, and collect the bills waiters send from the tables.",
   steps: [
     { title: "Choose dine-in or takeaway", body: "For dine-in, pick the table number too." },
     { title: "Add the items", body: "Tap items on the menu or search by name. Use + and – to change how many." },
     { title: "Charge", body: "Tap Charge and choose cash, telebirr or CBE Birr. For telebirr and CBE Birr, type the transaction reference from the customer's phone." },
     { title: "Hand over the receipt", body: "The order is saved with your name and goes to the kitchen screen." },
+    { title: "Collect table bills", body: "When a waiter requests the bill, Table bills at the top turns blue with a count. Open it, pick the table, check the items and take cash, telebirr or CBE Birr. Type the cash received to see the change." },
   ],
   faqs: [
     { q: "The payment failed.", a: "Nothing was charged in SEER. Check the connection below and try again. For telebirr or CBE Birr, check the reference was typed correctly." },
     { q: "I added the wrong item.", a: "Before charging, remove it with – or the remove button. After payment, ask your branch manager." },
-    { q: "A waiter's table wants to pay in cash.", a: "Waiters can't take cash, so the cashier does. Open the Waiter app and use the Bill filter to see the tables waiting to pay." },
+    { q: "A waiter's table wants to pay in cash.", a: "Waiters can't take cash, so the cashier does. Tap Table bills at the top: tables that asked for the bill are listed first. Open the table, take the payment, and the table is freed for the waiter." },
+    { q: "Table bills turned blue with a number.", a: "That many tables have asked for the bill. It updates by itself every 15 seconds." },
     { q: "A price looks old.", a: "Sign out and back in to load the latest menu and prices." },
     { q: "I can't sign in.", a: "Check the connection below. If the password is wrong, ask a System Admin to set a new one." },
   ],

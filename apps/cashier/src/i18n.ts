@@ -73,7 +73,7 @@ const en = {
   'pay.doneDemo': 'Demo: order #{n} was not saved',
   'pay.failed': 'Could not complete the order: {error}',
   'pay.needRef': 'Enter the transaction ID',
-  'signin.title': 'Sign in to the cashier',
+  'signin.title': 'Sign in',
   'signin.username': 'Username',
   'signin.password': 'Password',
   'signin.submit': 'Sign in',
@@ -83,6 +83,31 @@ const en = {
   'menu.loading': 'Loading menu…',
   'totals.net': 'Before VAT',
   'totals.vatIncluded': 'VAT included (15%)',
+  'bills.button': 'Table bills',
+  'bills.title': 'Table bills',
+  'bills.asked': 'Asked for the bill',
+  'bills.open': 'Other open tables',
+  'bills.none': 'No table is waiting to pay.',
+  'bills.table': 'Table {name}',
+  'bills.waiter': 'Waiter: {name}',
+  'bills.minAgo': '{n} min ago',
+  'bills.justNow': 'just now',
+  'bills.back': 'All tables',
+  'bills.close': 'Close',
+  'bills.loading': 'Loading…',
+  'bills.failed': 'Could not load the tables: {error}',
+  'bills.notAsked': 'The waiter has not asked for this bill yet. You can still take payment.',
+  'bills.paidAlready': 'Already paid',
+  'bills.amountDue': 'Amount due',
+  'bills.paid': 'Table {name} paid · receipt {receipt}',
+  'bills.count': '{n} tables asked for the bill',
+  'bills.newRequest': 'Table {name} asked for the bill',
+  'pay.received': 'Cash received (optional)',
+  'pay.change': 'Change: {amount}',
+  'pay.short': 'That is less than the amount due',
+  'signin.note': 'For cashiers, branch managers and system admins.',
+  'signin.busy': 'Signing in…',
+  'signin.language': 'Language',
 } as const;
 
 export type Key = keyof typeof en;
@@ -159,7 +184,7 @@ const am: Record<Key, string> = {
   'pay.doneDemo': 'ሙከራ፦ ትዕዛዝ #{n} አልተቀመጠም',
   'pay.failed': 'ትዕዛዙን ማጠናቀቅ አልተቻለም፦ {error}',
   'pay.needRef': 'የግብይት መለያ ቁጥሩን ያስገቡ',
-  'signin.title': 'ወደ ገንዘብ ተቀባይ ይግቡ',
+  'signin.title': 'ይግቡ',
   'signin.username': 'የተጠቃሚ ስም',
   'signin.password': 'የይለፍ ቃል',
   'signin.submit': 'ግባ',
@@ -169,12 +194,47 @@ const am: Record<Key, string> = {
   'menu.loading': 'ምናሌ በመጫን ላይ…',
   'totals.net': 'ከተ.እ.ታ በፊት',
   'totals.vatIncluded': 'የተካተተ ተ.እ.ታ (15%)',
+  'bills.button': 'የጠረጴዛ ሂሳቦች',
+  'bills.title': 'የጠረጴዛ ሂሳቦች',
+  'bills.asked': 'ሂሳብ የጠየቁ',
+  'bills.open': 'ሌሎች ክፍት ጠረጴዛዎች',
+  'bills.none': 'የሚከፍል ጠረጴዛ የለም።',
+  'bills.table': 'ጠረጴዛ {name}',
+  'bills.waiter': 'አስተናጋጅ፦ {name}',
+  'bills.minAgo': 'ከ{n} ደቂቃ በፊት',
+  'bills.justNow': 'አሁን',
+  'bills.back': 'ሁሉም ጠረጴዛዎች',
+  'bills.close': 'ዝጋ',
+  'bills.loading': 'በመጫን ላይ…',
+  'bills.failed': 'ጠረጴዛዎቹን መጫን አልተቻለም፦ {error}',
+  'bills.notAsked': 'አስተናጋጁ ገና ሂሳብ አልጠየቀም። አሁንም ክፍያ መቀበል ይችላሉ።',
+  'bills.paidAlready': 'ቀድሞ የተከፈለ',
+  'bills.amountDue': 'የሚከፈል መጠን',
+  'bills.paid': 'ጠረጴዛ {name} ተከፍሏል · ደረሰኝ {receipt}',
+  'bills.count': '{n} ጠረጴዛዎች ሂሳብ ጠይቀዋል',
+  'bills.newRequest': 'ጠረጴዛ {name} ሂሳብ ጠይቋል',
+  'pay.received': 'የተቀበሉት ጥሬ ገንዘብ (አማራጭ)',
+  'pay.change': 'መልስ፦ {amount}',
+  'pay.short': 'ከሚከፈለው መጠን ያነሰ ነው',
+  'signin.note': 'ለገንዘብ ተቀባዮች፣ ለቅርንጫፍ ሥራ አስኪያጆች እና ለሲስተም አስተዳዳሪዎች።',
+  'signin.busy': 'በመግባት ላይ…',
+  'signin.language': 'ቋንቋ',
 };
 
 const dict: Record<Lang, Record<Key, string>> = { en, am };
 const LANG_NAMES: Record<Lang, string> = { en: 'English', am: 'አማርኛ' };
 
-let current: Lang = 'en';
+const LANG_KEY = 'seer.cashier.lang';
+function savedLang(): Lang {
+  try {
+    return localStorage.getItem(LANG_KEY) === 'am' ? 'am' : 'en';
+  } catch {
+    return 'en';
+  }
+}
+
+let current: Lang = savedLang();
+document.documentElement.lang = current;
 
 export function getLang(): Lang {
   return current;
@@ -183,6 +243,11 @@ export function getLang(): Lang {
 export function setLang(lang: Lang): void {
   current = lang;
   document.documentElement.lang = lang;
+  try {
+    localStorage.setItem(LANG_KEY, lang);
+  } catch {
+    /* private mode: this visit only */
+  }
 }
 
 export function langName(lang: Lang): string {
