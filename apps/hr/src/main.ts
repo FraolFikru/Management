@@ -72,7 +72,7 @@ function render(focusSelector?: string): void {
       app.classList.add("signed-out");
       app.innerHTML = renderSignIn(liveUi.message, liveUi.busy, liveUi.username);
     }
-    document.title = "Bistro Addis HR";
+    document.title = "SEER · HR";
     $<HTMLElement>(focusSelector ?? (liveUi.message ? "#livePass" : "#liveUser"))?.focus();
     return;
   }
@@ -82,7 +82,7 @@ function render(focusSelector?: string): void {
   if (!view) return;
   view.innerHTML = VIEWS[state.view].render();
   renderNav();
-  document.title = `${t(VIEWS[state.view].title)} · Bistro Addis HR`;
+  document.title = `${t(VIEWS[state.view].title)} · SEER HR`;
   if (focusSelector) $<HTMLElement>(focusSelector)?.focus();
 }
 

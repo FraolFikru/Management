@@ -44,7 +44,7 @@ export interface Stat {
 export const user = {   // live mode: the signed-in owner
   name: "Abebe Kebede",
   email: "owner@bistroaddis.com",
-  restaurant: "Bistro Addis",
+  restaurant: "SEER",
 };
 
 export const cashFlow: MonthPoint[] = [

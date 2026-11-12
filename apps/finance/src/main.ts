@@ -65,7 +65,7 @@ function render(focusSelector?: string): void {
       app.classList.add("signed-out");
       app.innerHTML = renderSignIn(liveUi.message, liveUi.busy, liveUi.username);
     }
-    document.title = "Bistro Addis Finance";
+    document.title = "SEER · Finance";
     $<HTMLElement>(focusSelector ?? (liveUi.message ? "#livePass" : "#liveUser"))?.focus();
     return;
   }
@@ -75,7 +75,7 @@ function render(focusSelector?: string): void {
   if (!view) return;
   view.innerHTML = VIEWS[state.view].render();
   renderNav();
-  document.title = `${t(VIEWS[state.view].title)} · Bistro Addis Finance`;
+  document.title = `${t(VIEWS[state.view].title)} · SEER Finance`;
   if (focusSelector) $<HTMLElement>(focusSelector)?.focus();
 }
 

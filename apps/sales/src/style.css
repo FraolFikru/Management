@@ -782,3 +782,11 @@ select.input option { background: var(--surface); color: var(--text); }
   .pick-chip { min-height: 38px; padding: 7px 11px; font-size: 13px; }
   .pay-grid:has(> :nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* ── SEER brand logo (light/dark mode swap) ── */
+.brand-logo, .brand-logo-sm { height: 32px; width: auto; object-fit: contain; }
+.brand-logo-sm { height: 22px; }
+.brand-logo.dark-only, .brand-logo-sm.dark-only { display: none; }
+:root[data-theme="dark"] .brand-logo:not(.dark-only), :root[data-theme="dark"] .brand-logo-sm:not(.dark-only) { display: none; }
+:root[data-theme="dark"] .brand-logo.dark-only, :root[data-theme="dark"] .brand-logo-sm.dark-only { display: inline; }
+

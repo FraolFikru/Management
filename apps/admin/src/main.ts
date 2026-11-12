@@ -49,7 +49,7 @@ function render(focusSelector?: string): void {
   if (!view) return;
   view.innerHTML = isAdmin() ? VIEWS[state.view].render() : renderNoAccess();
   renderNav();
-  document.title = `${t(VIEWS[state.view].title)} · Bistro Addis Admin`;
+  document.title = `${t(VIEWS[state.view].title)} · SEER Admin`;
   if (focusSelector) $<HTMLElement>(focusSelector)?.focus();
 }
 
@@ -173,8 +173,8 @@ function renderSignIn(message = ""): void {
   const app = $("#app");
   if (!app) return;
   app.innerHTML = `<main class="signin-wrap"><form id="signinForm" class="card signin-card form" novalidate>
-      <span class="brand-mark">BA</span>
-      <h1>${t("Sign in to System admin")}</h1>
+      <img class="brand-logo" src="/logo-light.png" alt="SEER"><img class="brand-logo dark-only" src="/logo-dark.png" alt="SEER">
+      <h1>${t("Sign in to SEER Admin")}</h1>
       <div class="field"><label for="siUser">${t("Username")}</label><input id="siUser" class="input" name="username" autocomplete="username" autocapitalize="off" required></div>
       <div class="field"><label for="siPass">${t("Password")}</label><input id="siPass" class="input" name="password" type="password" autocomplete="current-password" required></div>
       ${message ? `<p class="signin-error" role="alert">${esc(message)}</p>` : ""}

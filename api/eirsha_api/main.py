@@ -1,4 +1,4 @@
-"""Eirsha Ops API — one backend for the seven frontends.
+"""SEER API — one backend for the seven frontends.
 
     pip install -r api/requirements.txt
     EIRSHA_DATABASE_URL=postgresql:///eirsha  uvicorn eirsha_api.main:app --app-dir api
@@ -36,7 +36,7 @@ async def lifespan(app: FastAPI):
     task.cancel()
 
 
-app = FastAPI(title="Eirsha Ops API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="SEER API", version="1.0.0", lifespan=lifespan)
 # Which websites may call the API from a browser. Auth is a Bearer token, not cookies.
 # Built in, so a hand-edited Render variable can't drop an app: the eight eirsha-* Vercel
 # projects, every deployment of the team's Vercel account (…-f-27f3.vercel.app) and localhost.

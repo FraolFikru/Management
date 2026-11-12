@@ -1423,3 +1423,11 @@ table.matrix tr.group:hover { background: none; box-shadow: none; }
 .signin-card { width: min(400px, 100%); display: grid; gap: 14px; padding: 28px; }
 .signin-card h1 { font-size: 20px; margin: 0; }
 .signin-error { margin: 0; padding: 10px 12px; border-radius: 10px; color: var(--bad); background: var(--spend-soft); font-weight: 600; }
+
+/* ── SEER brand logo (light/dark mode swap) ── */
+.brand-logo, .brand-logo-sm { height: 32px; width: auto; object-fit: contain; }
+.brand-logo-sm { height: 22px; }
+.brand-logo.dark-only, .brand-logo-sm.dark-only { display: none; }
+:root[data-theme="dark"] .brand-logo:not(.dark-only), :root[data-theme="dark"] .brand-logo-sm:not(.dark-only) { display: none; }
+:root[data-theme="dark"] .brand-logo.dark-only, :root[data-theme="dark"] .brand-logo-sm.dark-only { display: inline; }
+

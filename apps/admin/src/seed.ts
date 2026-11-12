@@ -16,7 +16,7 @@ function rng(seed: number): () => number {
 
 export const PROFILE: StoreProfile = {
   id: "STORE-01",
-  businessName: "Bistro Addis Restaurant PLC",
+  businessName: "SEER Restaurant PLC",
   branchName: "Bole Branch",
   tinNumber: "0045871236",
   vatNumber: "VAT-1187654",
@@ -54,7 +54,7 @@ export const PERMISSIONS_SEED: RolePermissions[] = DEFAULT_PERMISSIONS.map((p) =
 
 export const RECEIPT: ReceiptConfig = {
   paperWidthMm: 80,
-  headerMessage: "Welcome to Bistro Addis\nእንኳን ደህና መጡ",
+  headerMessage: "Welcome to SEER\nእንኳን ደህና መጡ",
   footerMessage: "Thank you for dining with us!\nAmesegenalehu! / Galatoomaa!",
   showTinOnReceipt: true,
   showVatBreakdown: true,
