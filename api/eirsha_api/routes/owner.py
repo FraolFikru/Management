@@ -141,6 +141,16 @@ def owner_bootstrap(p: Principal = Depends(require_owner("owner.dashboard")), db
         g = GROUP_OF.get(r["category"], "Food Cost" if r["category"] not in GROUP_OF and r["category"] else "Supplies")   # waste reasons → food cost
         costs.setdefault(m, {}).setdefault(g, 0)
         costs[m][g] += _f(r["amount"])
+    # The P&L counts a purchase once a manager approves it. The owner wants money already spent,
+    # so purchases still waiting for review count here too (rejected ones don't).
+    for r in db.all("""SELECT business_date, cost_category_code AS category, sum(total_cost - vat_amount) AS amount FROM purchase p
+                       WHERE org_id = ? AND review_status = 'PENDING' AND deleted_at IS NULL AND business_date >= ?
+                         AND NOT EXISTS (SELECT 1 FROM bill_line bl WHERE bl.purchase_id = p.id)
+                       GROUP BY business_date, cost_category_code""", (org, _add_months(year_start, -1).isoformat())):
+        m = str(r["business_date"])[:7]
+        g = GROUP_OF.get(r["category"], "Food Cost" if r["category"] not in GROUP_OF and r["category"] else "Supplies")
+        costs.setdefault(m, {}).setdefault(g, 0)
+        costs[m][g] += _f(r["amount"])
     month_cost = lambda m: sum(costs.get(m, {}).values())
     month_rev = lambda m: sum(v for d, v in rev.items() if d.startswith(m))
 
@@ -149,7 +159,7 @@ def owner_bootstrap(p: Principal = Depends(require_owner("owner.dashboard")), db
                  for i in range(12)]
 
     daily_cost: dict[str, float] = {}
-    for sql in ("SELECT business_date AS d, sum(total_cost - vat_amount) AS a FROM purchase WHERE org_id = ? AND review_status = 'APPROVED' AND deleted_at IS NULL AND business_date >= ? GROUP BY business_date",
+    for sql in ("SELECT business_date AS d, sum(total_cost - vat_amount) AS a FROM purchase WHERE org_id = ? AND review_status IN ('PENDING','APPROVED') AND deleted_at IS NULL AND business_date >= ? GROUP BY business_date",
                 "SELECT business_date AS d, sum(amount - vat_amount) AS a FROM expense WHERE org_id = ? AND deleted_at IS NULL AND review_status IN ('PENDING','APPROVED') AND business_date >= ? GROUP BY business_date",
                 "SELECT business_date AS d, sum(loss_value) AS a FROM waste_report WHERE org_id = ? AND approval_status = 'APPROVED' AND deleted_at IS NULL AND business_date >= ? GROUP BY business_date",
                 "SELECT issue_date AS d, sum(subtotal) AS a FROM bill WHERE org_id = ? AND status <> 'VOID' AND source <> 'PURCHASE' AND issue_date >= ? GROUP BY issue_date"):
