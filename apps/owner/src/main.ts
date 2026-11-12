@@ -216,8 +216,8 @@ function renderShell(): void {
   <div class="layout">
     <aside class="sidebar" id="sidebar">
       <div class="brand">
-        <span class="brand-mark">${icon("logo")}</span>
-        <span>Bistro OS</span>
+        <img class="brand-logo" src="/logo-light.png" alt="SEER"><img class="brand-logo dark-only" src="/logo-dark.png" alt="SEER">
+        <span><strong>SEER</strong></span>
       </div>
 
       <button class="profile" ${isLive ? `data-signout title="${t("Sign out")}"` : ""}>
@@ -926,7 +926,7 @@ const row = (title: string, desc: string, control: string): string =>
 
 function renderSettings(): string {
   return `
-    <p class="page-intro">${t("Personalize Bistro OS for how you run your restaurant.")}</p>
+    <p class="page-intro">${t("Personalize SEER for how you run your restaurant.")}</p>
     <div class="settings-grid">
       <article class="panel">
         <div class="panel-head"><h2>${t("Appearance")}</h2></div>
@@ -1006,7 +1006,7 @@ const helpSteps: { icon: string; title: string; body: string }[] = [
 function renderHelp(): string {
   return `
     <div class="help-intro">
-      <h2>${t("How to use Bistro OS")}</h2>
+      <h2>${t("How to use SEER")}</h2>
       <p>${t("Six habits that keep your numbers accurate and your restaurant profitable.")}</p>
     </div>
     <ol class="help-grid">
@@ -1719,7 +1719,7 @@ function renderSignIn(): void {
   $("#app").innerHTML = `
   <div class="signin-wrap">
     <form class="panel signin-card" id="liveSignIn" novalidate>
-      <div class="brand"><span class="brand-mark">${icon("logo")}</span><span>Bistro OS</span></div>
+      <div class="brand"><img class="brand-logo" src="/logo-light.png" alt="SEER"><img class="brand-logo dark-only" src="/logo-dark.png" alt="SEER"><span><strong>SEER</strong></span></div>
       <h1>${t("Sign in")}</h1>
       <p class="muted-note">${t("Owner and admin accounts only.")}</p>
       <label class="signin-field"><span>${t("Username")}</span>

@@ -2,7 +2,7 @@ export type Lang = 'en' | 'am';
 export const LANGS: Lang[] = ['en', 'am'];
 
 const en = {
-  'app.name': 'Restaurant Owner OS',
+  'app.name': 'SEER · Cashier',
   'app.role': 'Cashier',
   'banner.title': 'Demo mode',
   'banner.text': 'Payments are not processed',
@@ -88,7 +88,7 @@ const en = {
 export type Key = keyof typeof en;
 
 const am: Record<Key, string> = {
-  'app.name': 'Restaurant Owner OS',
+  'app.name': 'SEER · Cashier',
   'app.role': 'ገንዘብ ተቀባይ',
   'banner.title': 'የሙከራ ሁነታ',
   'banner.text': 'ክፍያዎች አይፈጸሙም',

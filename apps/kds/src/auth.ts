@@ -70,7 +70,7 @@ export function signInScreen(): Promise<void> {
     const draw = (msg = ""): void => {
       wrap.innerHTML = `
         <form class="signin-card" id="kds-signin">
-          <h1>${t("Kitchen Display")}</h1>
+          <div class="brand kds-brand"><img class="brand-logo" src="/logo-light.png" alt="SEER"><img class="brand-logo dark-only" src="/logo-dark.png" alt="SEER"></div><h1>${t("Kitchen Display")}</h1>
           <label>${t("Username")}<input name="username" autocomplete="username" autocapitalize="none" required></label>
           <label>${t("Password")}<input name="password" type="password" autocomplete="current-password" required></label>
           ${msg ? `<p class="signin-error" role="alert">${msg}</p>` : ""}

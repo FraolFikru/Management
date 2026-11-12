@@ -309,3 +309,11 @@ body.alerting .topbar { animation: alert-flash 0.6s ease-in-out 3; }
 .signin-card label { display: grid; gap: 6px; font-weight: 600; }
 .signin-card input { min-height: 52px; padding: 0 14px; font-size: 1.1rem; color: var(--text); background: var(--surface-2); border: 1px solid var(--surface-2); border-radius: 10px; }
 .signin-error { margin: 0; color: #ff6d64; font-weight: 600; }
+
+/* ── SEER brand logo (light/dark mode swap) ── */
+.brand-logo, .brand-logo-sm { height: 32px; width: auto; object-fit: contain; }
+.brand-logo-sm { height: 22px; }
+.brand-logo.dark-only, .brand-logo-sm.dark-only { display: none; }
+:root[data-theme="dark"] .brand-logo:not(.dark-only), :root[data-theme="dark"] .brand-logo-sm:not(.dark-only) { display: none; }
+:root[data-theme="dark"] .brand-logo.dark-only, :root[data-theme="dark"] .brand-logo-sm.dark-only { display: inline; }
+

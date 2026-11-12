@@ -1254,3 +1254,11 @@ table.plan tbody th strong { font-weight: 600; }
 @media (max-width: 640px) {
   .att-table tr.idle-row td.num { display: none; }
 }
+
+/* ── SEER brand logo (light/dark mode swap) ── */
+.brand-logo, .brand-logo-sm { height: 32px; width: auto; object-fit: contain; }
+.brand-logo-sm { height: 22px; }
+.brand-logo.dark-only, .brand-logo-sm.dark-only { display: none; }
+:root[data-theme="dark"] .brand-logo:not(.dark-only), :root[data-theme="dark"] .brand-logo-sm:not(.dark-only) { display: none; }
+:root[data-theme="dark"] .brand-logo.dark-only, :root[data-theme="dark"] .brand-logo-sm.dark-only { display: inline; }
+

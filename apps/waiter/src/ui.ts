@@ -36,7 +36,7 @@ export function renderSignIn(): string {
   return `
   <main class="signin">
     <form class="signin-card" id="signIn" novalidate>
-      <div class="brand"><span class="mark">E</span><span><strong>Eirsha</strong><small>${t("Waiter")}</small></span></div>
+      <div class="brand"><img class="brand-logo" src="/logo-light.png" alt="SEER"><img class="brand-logo dark-only" src="/logo-dark.png" alt="SEER"><span><strong>SEER</strong><small>${t("Waiter")}</small></span></div>
       <h1>${t("Sign in")}</h1>
       <label class="field"><span>${t(pin ? "Staff code" : "Username")}</span>
         <input id="siFirst" value="${esc(signInUi.first)}" autocomplete="username" autocapitalize="${pin ? "characters" : "none"}" spellcheck="false" ${pin ? 'placeholder="W-101"' : ""}></label>

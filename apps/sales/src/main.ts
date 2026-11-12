@@ -1,5 +1,5 @@
 /* =========================================================
-   Bistro Ledger v3 — entry point.
+   SEER Sales v3 — entry point.
    Shows the sign-in screen until a staff member signs in, then the
    app shell. This app is for buying only. All events are delegated (data-action / data-bind),
    and each screen only opens for roles allowed to use it.
@@ -70,7 +70,7 @@ function render(focusSelector?: string): void {
       app.classList.add("signed-out");
       app.innerHTML = isLive ? renderSignIn(live) : renderSignIn();
     }
-    document.title = "Bistro Ledger";
+    document.title = "SEER · Sales";
     $<HTMLElement>(focusSelector ?? (isLive ? (live.message ? "#livePass" : "#liveUser") : state.signInFor ? "#pin" : ".staff-btn"))?.focus();
     return;
   }
@@ -83,7 +83,7 @@ function render(focusSelector?: string): void {
   view.innerHTML = def.render();
   def.mount?.();
   renderNav();
-  document.title = `${t(def.title)} · Bistro Ledger`;
+  document.title = `${t(def.title)} · SEER Sales`;
   if (focusSelector) $<HTMLElement>(focusSelector)?.focus();
 }
 

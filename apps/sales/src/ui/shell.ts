@@ -25,12 +25,12 @@ export function renderShell(): void {
   const u = currentUser();
   app.innerHTML = `
     <aside class="sidebar" aria-label="${t("Main navigation")}">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">BA</span><span><strong>Bistro Addis</strong><small>${t("Purchasing & inventory")}</small></span></div>
+      <div class="brand"><img class="brand-logo" src="/logo-light.png" alt="SEER"><img class="brand-logo dark-only" src="/logo-dark.png" alt="SEER"><span><strong>SEER</strong><small>${t("Purchasing & inventory")}</small></span></div>
       <nav id="sideNav" aria-label="${t("Sections")}"></nav>
     </aside>
     <div class="main">
       <header class="topbar">
-        <span class="top-brand" aria-hidden="true"><span class="brand-mark">BA</span></span>
+        <span class="top-brand" aria-hidden="true"><img class="brand-logo-sm" src="/logo-light.png" alt=""><img class="brand-logo-sm dark-only" src="/logo-dark.png" alt=""></span>
         ${u ? `<button type="button" class="user-badge" data-action="switch-user" aria-label="${t("Logged in as {name}, {role}. Switch user", { name: u.name, role: roleName(u.role) })}">
           <span class="avatar" aria-hidden="true">${u.initials}</span>
           <span class="who"><small>${t("Logged in as")}</small><strong>${esc(u.name)}</strong></span>
@@ -80,7 +80,7 @@ function renderLiveSignIn(message: string, busy: boolean, username: string): str
   return `
     <div class="signin">
       <div class="signin-card card">
-        <div class="brand"><span class="brand-mark" aria-hidden="true">BA</span><span><strong>Bistro Addis</strong><small>${t("Purchasing & inventory")}</small></span></div>
+        <div class="brand"><img class="brand-logo" src="/logo-light.png" alt="SEER"><img class="brand-logo dark-only" src="/logo-dark.png" alt="SEER"><span><strong>SEER</strong><small>${t("Purchasing & inventory")}</small></span></div>
         <h1>${t("Sign in")}</h1>
         <p class="meta">${t("Every purchase, expense and waste report is stamped with the person signed in.")}</p>
         <form id="liveSignIn" class="form" novalidate>
@@ -106,7 +106,7 @@ export function renderSignIn(live?: { message: string; busy: boolean; username: 
   return `
     <div class="signin">
       <div class="signin-card card">
-        <div class="brand"><span class="brand-mark" aria-hidden="true">BA</span><span><strong>Bistro Addis</strong><small>${t("Purchasing & inventory")}</small></span></div>
+        <div class="brand"><img class="brand-logo" src="/logo-light.png" alt="SEER"><img class="brand-logo dark-only" src="/logo-dark.png" alt="SEER"><span><strong>SEER</strong><small>${t("Purchasing & inventory")}</small></span></div>
         <h1>${chosen ? t("Enter PIN for {name}", { name: chosen.name }) : t("Who is working?")}</h1>
         <p class="meta">${t("Every purchase, expense and waste report is stamped with the person signed in.")}</p>
         ${chosen ? `

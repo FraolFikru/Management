@@ -27,7 +27,7 @@ export function renderSignIn(message: string, busy: boolean, username: string): 
   return `
     <div class="signin">
       <div class="signin-card card">
-        <div class="brand"><span class="brand-mark" aria-hidden="true">BA</span><span><strong>Bistro Addis</strong><small>${t("Branch manager")}</small></span></div>
+        <div class="brand"><img class="brand-logo" src="/logo-light.png" alt="SEER"><img class="brand-logo dark-only" src="/logo-dark.png" alt="SEER"><span><strong>SEER</strong><small>${t("Branch manager")}</small></span></div>
         <h1>${t("Sign in")}</h1>
         <p class="meta">${t("Every approval, rejection and log is stamped with the person signed in.")}</p>
         <form id="liveSignIn" class="form" novalidate>
@@ -52,7 +52,7 @@ export function renderShell(): void {
   if (!app) return;
   app.innerHTML = `
     <aside class="sidebar" aria-label="${t("Main navigation")}">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">BA</span><span><strong>Bistro Addis</strong><small>${esc(tk("branch.name"))}</small></span></div>
+      <div class="brand"><img class="brand-logo" src="/logo-light.png" alt="SEER"><img class="brand-logo dark-only" src="/logo-dark.png" alt="SEER"><span><strong>SEER</strong><small>${esc(tk("branch.name"))}</small></span></div>
       <nav id="sideNav" aria-label="${t("Sections")}"></nav>
     </aside>
     <div class="main">
@@ -81,7 +81,7 @@ export function renderTopbar(): void {
   const u = user();
   const others = STAFF.filter((s) => DASHBOARD_ROLES.includes(s.role) && s.userId !== u.userId);
   bar.innerHTML = `
-    <span class="top-brand" aria-hidden="true"><span class="brand-mark">BA</span></span>
+    <span class="top-brand" aria-hidden="true"><img class="brand-logo-sm" src="/logo-light.png" alt=""><img class="brand-logo-sm dark-only" src="/logo-dark.png" alt=""></span>
     <div class="user-wrap">
       <button type="button" class="user-badge" data-action="user-menu" aria-expanded="${state.userMenu}" aria-controls="userMenu">
         <span class="avatar" aria-hidden="true">${u.initials}</span>

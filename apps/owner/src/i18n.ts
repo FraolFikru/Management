@@ -316,9 +316,9 @@ const dict: Record<string, Entry> = {
   Generate: { am: "አዘጋጅ", om: "Qopheessi" },
 
   /* settings */
-  "Personalize Bistro OS for how you run your restaurant.": {
-    am: "Bistro OSን ምግብ ቤትዎን በሚያስተዳድሩበት መንገድ ያብጁ።",
-    om: "Bistro OS akkaataa mana nyaataa keessan itti bulchitaniin qindeessaa.",
+  "Personalize SEER for how you run your restaurant.": {
+    am: "SEERን ምግብ ቤትዎን በሚያስተዳድሩበት መንገድ ያብጁ።",
+    om: "SEER akkaataa mana nyaataa keessan itti bulchitaniin qindeessaa.",
   },
   Appearance: { am: "ገጽታ", om: "Bifa" },
   "Cursor glow": { am: "የጠቋሚ ብርሃን", om: "Ifa maawusii" },
@@ -356,7 +356,7 @@ const dict: Record<string, Entry> = {
   "Settings are saved on this device.": { am: "ቅንብሮች በዚህ መሣሪያ ላይ ይቀመጣሉ።", om: "Qindaa'inni meeshaa kana irratti kuufama." },
 
   /* help */
-  "How to use Bistro OS": { am: "Bistro OSን እንዴት መጠቀም እንደሚቻል", om: "Akkaataa Bistro OS itti fayyadamtan" },
+  "How to use SEER": { am: "SEERን እንዴት መጠቀም እንደሚቻል", om: "Akkaataa SEER itti fayyadamtan" },
   "Six habits that keep your numbers accurate and your restaurant profitable.": {
     am: "ቁጥሮችዎ ትክክል እንዲሆኑ እና ምግብ ቤትዎ ትርፋማ እንዲሆን የሚረዱ ስድስት ልማዶች።",
     om: "Amaloota ja'a lakkoofsota keessan sirrii, mana nyaataa keessan immoo bu'aa qabeessa taasisan.",

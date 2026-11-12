@@ -259,3 +259,11 @@ ul { list-style: none; }
 .banner.sync { padding: 4px 14px; } .banner.sync .conn { background: none; padding: 2px 0; }
 .course .seg button { min-width: 48px; }
 .ttotal small { font-weight: 600; color: var(--muted); font-size: 12.5px; }
+
+/* ── SEER brand logo (light/dark mode swap) ── */
+.brand-logo, .brand-logo-sm { height: 32px; width: auto; object-fit: contain; }
+.brand-logo-sm { height: 22px; }
+.brand-logo.dark-only, .brand-logo-sm.dark-only { display: none; }
+:root[data-theme="dark"] .brand-logo:not(.dark-only), :root[data-theme="dark"] .brand-logo-sm:not(.dark-only) { display: none; }
+:root[data-theme="dark"] .brand-logo.dark-only, :root[data-theme="dark"] .brand-logo-sm.dark-only { display: inline; }
+
