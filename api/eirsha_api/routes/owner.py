@@ -174,6 +174,20 @@ def owner_bootstrap(p: Principal = Depends(require_owner("owner.dashboard")), db
         weekly.append({"start": start.isoformat(), "revenue": round(sum(rev.get(d.isoformat(), 0) for d in days)),
                        "expenses": round(sum(day_cost(d) for d in days))})
 
+    # --- this month so far, against the same days of last month (the dashboard's headline cards)
+    def _span(first: date, last: date) -> list[date]:
+        return [first + timedelta(days=k) for k in range((last - first).days + 1)] if last >= first else []
+    last_m_end = this_m - timedelta(days=1)
+    mtd_days = _span(this_m, today)
+    prev_days = _span(last_m, min(last_m.replace(day=min(today.day, last_m_end.day)), last_m_end))
+    month_to_date = {"days": len(mtd_days),
+                     "revenue": round(sum(rev.get(d.isoformat(), 0) for d in mtd_days)),
+                     "expenses": round(sum(day_cost(d) for d in mtd_days)),
+                     "orders": sum(orders.get(d.isoformat(), 0) for d in mtd_days),
+                     "today": round(rev.get(today.isoformat(), 0)),
+                     "prevRevenue": round(sum(rev.get(d.isoformat(), 0) for d in prev_days)),
+                     "prevExpenses": round(sum(day_cost(d) for d in prev_days))}
+
     # --- money: Telebirr wallet, cash (safe, drawers, petty cash), CBE (bank + CBE Birr)
     card = {"TELEBIRR": "telebirr", "SAFE": "cash", "CASH_DRAWER": "cash", "PETTY_CASH": "cash", "BANK": "cbe", "CBE_BIRR": "cbe"}
     accts = {a["id"]: a for a in db.all("SELECT * FROM money_account WHERE org_id = ?", (org,))}
@@ -284,7 +298,7 @@ def owner_bootstrap(p: Principal = Depends(require_owner("owner.dashboard")), db
     ]
     return {"role": p.actor.role if p.actor.role in OWNER_ROLES else None,
             "user": {"name": me.get("full_name", ""), "email": me.get("email") or "", "restaurant": org_row.get("trade_name") or org_row.get("legal_name") or ""},
-            "cashFlow": cash_flow, "daily": daily, "weekly": weekly, "paymentMethods": payment_methods, "transactions": tx[:80],
+            "cashFlow": cash_flow, "daily": daily, "weekly": weekly, "monthToDate": month_to_date, "paymentMethods": payment_methods, "transactions": tx[:80],
             "topDishes": top, "peakHours": peak, "budgets": budgets, "goals": goals}
 
 

@@ -68,6 +68,11 @@ const dict: Record<string, Entry> = {
   "Profit Margin": { am: "የትርፍ ህዳግ", om: "Dhibbeentaa Bu'aa" },
   "across 3 accounts": { am: "በ3 ሂሳቦች", om: "herrega 3 irratti" },
   "this month": { am: "በዚህ ወር", om: "ji'a kana" },
+  "this month so far": { am: "በዚህ ወር እስካሁን", om: "ji'a kana hanga ammaa" },
+  "Compared with the same days last month": { am: "ካለፈው ወር ተመሳሳይ ቀናት ጋር ሲነጻጸር", om: "Guyyoota wal fakkaatan ji'a darbee wajjin wal bira qabamee" },
+  "Updated {x}": { am: "የተዘመነው {x}", om: "Kan haaromfame {x}" },
+  "just now": { am: "አሁን", om: "amma" },
+  "{n} min ago": { am: "ከ{n} ደቂቃ በፊት", om: "daqiiqaa {n} dura" },
   "target ≥ 35%": { am: "ዒላማ ≥ 35%", om: "galma ≥ 35%" },
 
   /* chart */
