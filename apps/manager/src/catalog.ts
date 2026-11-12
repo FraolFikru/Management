@@ -276,7 +276,7 @@ export const NOTE_REQUIRED: ReadonlySet<WasteReason> = new Set<WasteReason>(["IN
 
 export const ROLES = reg<UserRole>("role", {
   BRANCH_MANAGER: L("Branch Manager", "የቅርንጫፍ ሥራ አስኪያጅ", "Hoji Gaggeessaa Damee"),
-  SALES_STAFF: L("Sales Staff", "የሽያጭ ሰራተኛ", "Hojjetaa Gurgurtaa"),
+  SALES_STAFF: L("Cashier", "ገንዘብ ተቀባይ", "Kaffaltii fudhataa"),
   INVENTORY_CLERK: L("Inventory Clerk", "የክምችት ባለሙያ", "Ogeessa Kuusaa"),
   ADMIN: L("System Admin", "የሲስተም አስተዳዳሪ", "Bulchaa sirnaa"),
 });

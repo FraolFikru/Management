@@ -58,7 +58,7 @@ function history(): string {
   return `<div class="table-wrap"><table class="data">
     <caption class="sr">${t("Decided dispatches")}</caption>
     <thead><tr><th scope="col">${t("Item Name")}</th><th scope="col" class="num">${t("Requested Quantity")}</th><th scope="col">${t("Target/Destination")}</th>
-      <th scope="col">${t("Sales Staff ID")}</th><th scope="col">${t("Timestamp")}</th><th scope="col">${t("Status")}</th><th scope="col">${t("Decided by")}</th></tr></thead>
+      <th scope="col">${t("Cashier ID")}</th><th scope="col">${t("Timestamp")}</th><th scope="col">${t("Status")}</th><th scope="col">${t("Decided by")}</th></tr></thead>
     <tbody>${shown.map((d) => `<tr>
       <th scope="row">${esc(tk(d.itemName))}</th>
       <td class="num">${qtyUnit(d.quantity, d.unit)}</td>

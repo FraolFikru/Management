@@ -81,6 +81,9 @@ def rebrand(db: Db) -> None:
             db.execute(f"UPDATE {table} SET {col} = REPLACE({col}, 'Bistro Addis', 'SEER') WHERE {col} LIKE '%Bistro Addis%'")
     for lang, old, new in (("en", "Admin", "System Admin"), ("am", "አስተዳዳሪ", "የሲስተም አስተዳዳሪ"), ("om", "Bulchiinsa", "Bulchaa sirnaa")):
         db.execute("UPDATE i18n_text SET text = ? WHERE key = 'role.ADMIN' AND lang = ? AND text = ?", (new, lang, old))
+    # Sales Staff run the till: call them what they are.
+    for lang, old, new in (("en", "Sales Staff", "Cashier"), ("am", "የሽያጭ ሰራተኛ", "ገንዘብ ተቀባይ"), ("om", "Hojjetaa Gurgurtaa", "Kaffaltii fudhataa")):
+        db.execute("UPDATE i18n_text SET text = ? WHERE key = 'role.SALES_STAFF' AND lang = ? AND text = ?", (new, lang, old))
     if "email" in _columns(db, "app_user"):
         db.execute("UPDATE app_user SET email = REPLACE(email, '@bistroaddis.et', '@seer.et') WHERE email LIKE '%@bistroaddis.et'")
         db.execute("UPDATE app_user SET email = REPLACE(email, '@bistroaddis.com', '@seer.et') WHERE email LIKE '%@bistroaddis.com'")

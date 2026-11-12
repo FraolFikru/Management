@@ -401,7 +401,7 @@ export const UI_STRINGS: Record<string, Entry> = {
   "Reporting Staff ID": { am: "ሪፖርት ያደረገው ሰራተኛ መለያ", om: "Eenyummaa hojjetaa gabaasee" },
   "Requested Quantity": { am: "የተጠየቀ መጠን", om: "Hanga gaafatame" },
   "Requested by": { am: "የጠየቀው", om: "Kan gaafate" },
-  "Sales Staff ID": { am: "የሽያጭ ሰራተኛ መለያ", om: "Eenyummaa hojjetaa gurgurtaa" },
+  "Cashier ID": { am: "የገንዘብ ተቀባይ መለያ", om: "Eenyummaa kaffaltii fudhataa" },
   "Sales dispatch approval queue": { am: "የሽያጭ ማስተላለፍ ማጽደቂያ ወረፋ", om: "Tarree raggaasisa ergaa gurgurtaa" },
   "Sales overview": { am: "የሽያጭ አጠቃላይ እይታ", om: "Ilaalcha gurgurtaa" },
   "Sales − COGS − waste − expenses": { am: "ሽያጭ − የግብዓት ወጪ − ብክነት − ወጪዎች", om: "Gurgurtaa − COGS − badiinsa − baasii" },
