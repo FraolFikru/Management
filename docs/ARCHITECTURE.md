@@ -1,4 +1,4 @@
-# Eirsha Ops — unified backend architecture
+# SEER — unified backend architecture
 
 One PostgreSQL database (SQLite build for laptops and offline caches), one API, seven frontends.
 Everything here was checked against the code in the seven uploaded modules; the schema, seed import
@@ -318,14 +318,14 @@ role of their own.
 
 | Role (`role.code`) | Scope | Was called | Typical surfaces |
 |---|---|---|---|
-| `ADMIN` | ORG | `ADMIN` everywhere | everything |
+| `ADMIN` | ORG | `ADMIN` everywhere | System Admin: Admin app, every app except the Owner app; created only by the Owner |
 | `BRANCH_MANAGER` | BRANCH | `MANAGER` in sales-main | Manager, Sales, HR (own branch), reconciliation |
 | `SALES_STAFF` | BRANCH | same | POS, dispatch requests, own clock-in |
 | `KITCHEN_STAFF` | BRANCH | same (HR, Admin, KDS) | KDS, waste, dispatch requests |
 | `INVENTORY_CLERK` | BRANCH | same | Sales module, dispatch |
 | `ACCOUNTANT` *(new)* | ORG | Finance's "Accountant" (Mahlet Assefa) | Finance |
 | `HR_OFFICER` *(new)* | ORG | — | HR |
-| `OWNER` *(new)* | ORG | FFII owner | Owner dashboard, read-only Finance |
+| `OWNER` *(new)* | ORG | FFII owner | Owner app (Owner only), System Admin accounts, everything a System Admin can do |
 
 **Permissions.** 42 codes, `"<area>.<action>"`. Admin's nine matrix booleans are codes with a
 `legacy_flag`, so the Access screen keeps working unchanged:

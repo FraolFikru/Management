@@ -12,7 +12,7 @@ export interface LocalizedText {
   om: string;
 }
 
-export type ViewId = "store" | "branches" | "access" | "receipt" | "audit";
+export type ViewId = "store" | "branches" | "access" | "receipt" | "audit" | "help";
 
 export type UserRole = "ADMIN" | "BRANCH_MANAGER" | "SALES_STAFF" | "KITCHEN_STAFF" | "INVENTORY_CLERK"
   /** added with the SEER backend: office roles across all branches */

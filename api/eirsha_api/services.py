@@ -54,6 +54,10 @@ class Invalid(ServiceError):
     status = 422
 
 
+class Forbidden(ServiceError):
+    status = 403
+
+
 @dataclass(frozen=True)
 class Actor:
     """Who is acting: resolved from the JWT (person) or device + PIN."""

@@ -4,6 +4,7 @@
    data-action for clicks, data-bind="scope.key" for inputs.
    ========================================================= */
 
+import { renderHelp } from "./views/help";
 import "./style.css";
 import type { ViewId } from "./types";
 import { isLanguage, setLanguage, t } from "./i18n";
@@ -21,6 +22,7 @@ import { cashActions, renderCash } from "./views/cash";
 import { closeModal, modalActions, modalKeydown, onModalInput, renderModal, submitModal } from "./views/modals";
 
 const VIEWS: Record<ViewId, { title: string; render: () => string }> = {
+  help: { title: "Help & support", render: renderHelp },
   pnl: { title: "Profit & loss", render: renderPnl },
   payables: { title: "Accounts payable", render: renderPayables },
   tax: { title: "Tax & VAT", render: renderTax },

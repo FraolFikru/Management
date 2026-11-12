@@ -5,6 +5,7 @@
    Only roles with "System admin" permission see the settings.
    ========================================================= */
 
+import { renderHelp } from "./views/help";
 import "./style.css";
 import type { ViewId } from "./types";
 import { isLanguage, setLanguage, t, tk } from "./i18n";
@@ -23,6 +24,7 @@ import { auditActions, onAuditInput, renderAudit } from "./views/audit";
 import { closeModal, modalActions, modalKeydown, onModalInput, renderModal, submitModal } from "./views/modals";
 
 const VIEWS: Record<ViewId, { title: string; render: () => string }> = {
+  help: { title: "Help & support", render: renderHelp },
   store: { title: "Store & tax", render: renderStore },
   branches: { title: "Branches & prices", render: renderBranches },
   access: { title: "Users & roles", render: renderAccess },
@@ -47,7 +49,7 @@ function render(focusSelector?: string): void {
   if (!$("#view")) renderShell();
   const view = $("#view");
   if (!view) return;
-  view.innerHTML = isAdmin() ? VIEWS[state.view].render() : renderNoAccess();
+  view.innerHTML = isAdmin() || state.view === "help" ? VIEWS[state.view].render() : renderNoAccess();
   renderNav();
   document.title = `${t(VIEWS[state.view].title)} · SEER Admin`;
   if (focusSelector) $<HTMLElement>(focusSelector)?.focus();

@@ -23,7 +23,7 @@ export const ROLES = reg<UserRole>("role", {
   SALES_STAFF: L("Sales Staff", "የሽያጭ ሰራተኛ", "Hojjetaa Gurgurtaa"),
   KITCHEN_STAFF: L("Kitchen Crew", "የወጥ ቤት ሰራተኛ", "Hojjetaa Kushinaa"),
   INVENTORY_CLERK: L("Inventory Clerk", "የክምችት ባለሙያ", "Ogeessa Kuusaa"),
-  ADMIN: L("Admin", "አስተዳዳሪ", "Bulchaa"),
+  ADMIN: L("System Admin", "የሲስተም አስተዳዳሪ", "Bulchaa sirnaa"),
   ACCOUNTANT: L("Accountant", "የሂሳብ ባለሙያ", "Ogeessa herregaa"),
   HR_OFFICER: L("HR officer", "የሰው ሀብት ባለሙያ", "Ogeessa humna namaa"),
   WAITER: L("Waiter", "አስተናጋጅ", "Keessummeessaa"),

@@ -7,6 +7,7 @@ import { clock, duration } from "../format";
 import { audioReady } from "../sound";
 import { avgPrepMs, column, feedKind, lateCount, openCount, state } from "../store";
 import { esc, icon } from "./dom";
+import { helpButton } from "../support";
 import { ticketCard } from "./ticket";
 
 const CONN: Record<ConnectionState, string> = { connecting: "Connecting", live: "Live", reconnecting: "Reconnecting", offline: "Offline" };
@@ -43,7 +44,7 @@ export function header(): string {
   const last = state.recall[state.recall.length - 1];
   return `<header class="topbar">
     <div class="brand">
-      <span class="logo" aria-hidden="true">${icon("flame")}</span>
+      <span class="logo" aria-hidden="true"><img class="brand-logo" src="/logo-light.png" alt=""><img class="brand-logo dark-only" src="/logo-dark.png" alt=""></span>
       <div><strong>${esc(t("Kitchen Display"))}</strong><small>${esc(t("Bole Branch"))}${feedKind() === "demo" ? ` · ${esc(t("Demo feed"))}` : ""}</small></div>
     </div>
     ${stationChips()}
@@ -58,6 +59,7 @@ export function header(): string {
       <span class="conn c-${state.connection}" role="status"><i aria-hidden="true"></i>${esc(t(CONN[state.connection]))}</span>
       <button type="button" class="icon-btn" data-action="sound" aria-pressed="${state.sound}" aria-label="${esc(t(state.sound ? "Sound on" : "Sound off"))}" title="${esc(t(state.sound ? "Sound on" : "Sound off"))}">${icon(state.sound ? "bell" : "bellOff")}</button>
       <button type="button" class="icon-btn" data-action="theme" aria-label="${esc(t(state.theme === "dark" ? "Switch to light mode" : "Switch to dark mode"))}" title="${esc(t(state.theme === "dark" ? "Switch to light mode" : "Switch to dark mode"))}">${icon(state.theme === "dark" ? "sun" : "moon")}</button>
+      ${helpButton(t, "icon-btn")}
       <button type="button" class="icon-btn" data-action="fullscreen" aria-label="${esc(t("Full screen"))}" title="${esc(t("Full screen"))}">${icon("expand")}</button>
       ${langSeg()}
       <time class="clock" data-clock>${esc(clock(state.now))}</time>

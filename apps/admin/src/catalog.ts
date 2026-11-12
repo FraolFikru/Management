@@ -17,7 +17,7 @@ export const VAT_RATE = 15;
 /* ---------- roles ---------- */
 
 export const ROLES = reg<UserRole>("role", {
-  ADMIN: { en: "Admin", am: "አስተዳዳሪ", om: "Bulchiinsa" },
+  ADMIN: { en: "System Admin", am: "የሲስተም አስተዳዳሪ", om: "Bulchaa sirnaa" },
   BRANCH_MANAGER: { en: "Branch Manager", am: "የቅርንጫፍ ሥራ አስኪያጅ", om: "Hoji-gaggeessaa Damee" },
   SALES_STAFF: { en: "Sales Staff", am: "የሽያጭ ሰራተኛ", om: "Hojjetaa Gurgurtaa" },
   WAITER: { en: "Waiter", am: "አስተናጋጅ", om: "Keessummeessaa" },
@@ -41,6 +41,8 @@ export const ROLE_APPS: Record<UserRole, string> = {
   HR_OFFICER: "HR & staff",
   OWNER: "Owner dashboard",
 };
+/** Only the Owner creates or changes these accounts (the Owner app and the server enforce it too). */
+export const PROTECTED_ROLES: readonly UserRole[] = ["OWNER", "ADMIN"];
 export const isRole = (v: unknown): v is UserRole => typeof v === "string" && v in ROLES;
 
 /* ---------- permissions ---------- */
@@ -74,7 +76,7 @@ export const SALES_ALLOWED: readonly PermissionKey[] = ["canMakeSales", "canRequ
 /** Why a cell cannot be changed, or null when it can. The value of a locked cell is fixed (see lockedValue). */
 export function lockReason(role: UserRole, key: PermissionKey): string | null {
   if (role === "ADMIN") return "Admins always have every permission.";
-  if (key === "canAccessAdmin") return "Only Admins can open System admin.";
+  if (key === "canAccessAdmin") return "Only the Owner and System Admins can open System admin.";
   if (role === "SALES_STAFF" && !SALES_ALLOWED.includes(key)) return "Sales Staff can only make sales and request dispatch.";
   if (RESTRICTED.includes(key) && !TRUSTED.includes(role)) return "Only Branch Managers, Accountants, Owners and Admins.";
   return null;

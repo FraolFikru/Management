@@ -1,14 +1,16 @@
-"""Owner dashboard (ffii-main / "Restaurant Owner OS"): read-only roll-ups + budgets."""
+"""Owner dashboard (SEER Owner app): read-only roll-ups + budgets."""
 from __future__ import annotations
 
 from datetime import date, timedelta
 
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .. import services as s
-from ..db import new_id
-from . import Db, Depends, Principal, get_db, require
+from ..db import new_id, now_iso
+from ..auth import hash_secret
+from .admin import _check_username, _staff_code
+from . import PROTECTED_ROLES, Db, Depends, Principal, get_db, require, require_owner
 
 router = APIRouter(prefix="/owner", tags=["owner"])
 
@@ -20,7 +22,7 @@ class BudgetIn(BaseModel):
 
 
 @router.get("/cash-flow")
-def cash_flow(year: int, p: Principal = Depends(require("owner.dashboard")), db: Db = Depends(get_db)):
+def cash_flow(year: int, p: Principal = Depends(require_owner("owner.dashboard")), db: Db = Depends(get_db)):
     """ffii-main MonthPoint[]: {month, revenue, expenses} from the P&L view."""
     rows = db.all("""SELECT month, sum(CASE WHEN section = 'REVENUE' THEN amount ELSE 0 END) AS revenue,
                             sum(CASE WHEN section <> 'REVENUE' THEN amount ELSE 0 END) AS expenses
@@ -30,20 +32,20 @@ def cash_flow(year: int, p: Principal = Depends(require("owner.dashboard")), db:
 
 
 @router.get("/balances")
-def balances(p: Principal = Depends(require("owner.dashboard")), db: Db = Depends(get_db)):
+def balances(p: Principal = Depends(require_owner("owner.dashboard")), db: Db = Depends(get_db)):
     """ffii-main paymentMethods cards: Telebirr / Cash / CBE balances."""
     return db.all("SELECT kind, name, sum(balance) AS balance FROM v_account_balance WHERE org_id = ? GROUP BY kind, name", (p.actor.org_id,))
 
 
 @router.get("/top-dishes")
-def top_dishes(frm: str, to: str, p: Principal = Depends(require("owner.dashboard")), db: Db = Depends(get_db)):
+def top_dishes(frm: str, to: str, p: Principal = Depends(require_owner("owner.dashboard")), db: Db = Depends(get_db)):
     return db.all("""SELECT menu_item_id, sum(quantity) AS sold, sum(total) AS revenue FROM v_sale_line
                      WHERE org_id = ? AND business_date BETWEEN ? AND ? GROUP BY menu_item_id ORDER BY revenue DESC LIMIT 10""",
                   (p.actor.org_id, frm, to))
 
 
 @router.get("/peak-hours")
-def peak_hours(frm: str, to: str, p: Principal = Depends(require("owner.dashboard")), db: Db = Depends(get_db)):
+def peak_hours(frm: str, to: str, p: Principal = Depends(require_owner("owner.dashboard")), db: Db = Depends(get_db)):
     hour = "CAST(strftime('%H', datetime(created_at, '+3 hours')) AS integer)" if db.dialect == "sqlite" \
         else "extract(hour from created_at AT TIME ZONE 'Africa/Addis_Ababa')::int"
     return db.all(f"""SELECT {hour} AS hour, count(*) AS orders FROM customer_order
@@ -52,7 +54,7 @@ def peak_hours(frm: str, to: str, p: Principal = Depends(require("owner.dashboar
 
 
 @router.get("/budgets/{month}")
-def budgets(month: str, p: Principal = Depends(require("owner.dashboard")), db: Db = Depends(get_db)):
+def budgets(month: str, p: Principal = Depends(require_owner("owner.dashboard")), db: Db = Depends(get_db)):
     """ffii-main BudgetLine[]: allocated vs actual (from the P&L) vs last month."""
     first = f"{month}-01"
     rows = db.all("""SELECT b.cost_category_code AS category, b.allocated, b.fixed_commitment,
@@ -62,7 +64,7 @@ def budgets(month: str, p: Principal = Depends(require("owner.dashboard")), db: 
 
 
 @router.put("/budgets/{month}")
-def save_budget(month: str, body: BudgetIn, p: Principal = Depends(require("owner.budget_edit")), db: Db = Depends(get_db)):
+def save_budget(month: str, body: BudgetIn, p: Principal = Depends(require_owner("owner.budget_edit")), db: Db = Depends(get_db)):
     with db.tx():
         first = f"{month}-01"
         ex = db.one("SELECT id FROM budget_line WHERE org_id = ? AND period_month = ? AND cost_category_code = ? AND branch_id IS NULL",
@@ -89,7 +91,7 @@ GROUPS = {
     "Supplies": ["KITCHEN_CONSUMABLES", "PACKAGING_DISPOSABLES", "CLEANING_SANITATION", "REPAIRS", "FEES", "OTHER_OPEX"],
 }
 GROUP_OF = {c: g for g, cs in GROUPS.items() for c in cs}
-OWNER_ROLES = {"OWNER", "ADMIN"}
+OWNER_ROLES = {"OWNER"}
 
 
 def _f(v) -> float:
@@ -106,7 +108,7 @@ def _add_months(d: date, n: int) -> date:
 
 
 @router.get("/bootstrap")
-def owner_bootstrap(p: Principal = Depends(require("owner.dashboard")), db: Db = Depends(get_db)):
+def owner_bootstrap(p: Principal = Depends(require_owner("owner.dashboard")), db: Db = Depends(get_db)):
     org = p.actor.org_id
     today = date.fromisoformat(s.business_date())
     this_m, last_m = _month_start(today), _add_months(_month_start(today), -1)
@@ -292,7 +294,7 @@ class GroupBudgetIn(BaseModel):
 
 
 @router.put("/budget-groups/{month}")
-def save_group_budget(month: str, body: GroupBudgetIn, p: Principal = Depends(require("owner.budget_edit")), db: Db = Depends(get_db)):
+def save_group_budget(month: str, body: GroupBudgetIn, p: Principal = Depends(require_owner("owner.budget_edit")), db: Db = Depends(get_db)):
     """Set a dashboard group's monthly budget: kept on the group's main cost category, the others in the group cleared."""
     codes = GROUPS.get(body.group)
     if not codes:
@@ -315,3 +317,71 @@ def save_group_budget(month: str, body: GroupBudgetIn, p: Principal = Depends(re
         s.audit(db, p.actor, "OWNER", "budget_line.save", "budget_line", f"{month[:7]}:{body.group}", "Budget {group} set to {amount}",
                 {"group": body.group, "amount": body.allocated})
         return {"group": body.group, "allocated": body.allocated}
+
+
+# ---------------------------------------------------------------- System Admin accounts
+# The chain of trust: the Owner creates the System Admins; the System Admins create everyone else.
+
+class AdminIn(BaseModel):
+    fullName: str = Field(min_length=2, max_length=80)
+    username: str = Field(min_length=3, max_length=40, pattern=r"^[A-Za-z0-9._-]+$")
+    branchId: str
+    phone: str | None = None
+    isActive: bool = True
+    password: str | None = Field(default=None, min_length=8)
+
+
+def _admin_row(db: Db, uid: str) -> dict:
+    return db.one("""SELECT id, staff_code, full_name, username, home_branch_id, phone, is_active, last_login_at, created_at
+                     FROM app_user WHERE id = ?""", (uid,)) or {}
+
+
+@router.get("/admins")
+def list_admins(p: Principal = Depends(require_owner()), db: Db = Depends(get_db)):
+    org = p.actor.org_id
+    admins = db.all("""SELECT id, staff_code, full_name, username, home_branch_id, phone, is_active, last_login_at, created_at
+                       FROM app_user WHERE org_id = ? AND role_code = 'ADMIN' AND deleted_at IS NULL ORDER BY full_name""", (org,))
+    branches = db.all("SELECT id, name FROM branch WHERE org_id = ? ORDER BY name", (org,))
+    return {"admins": admins, "branches": branches}
+
+
+@router.post("/admins", status_code=201)
+def add_admin(body: AdminIn, p: Principal = Depends(require_owner()), db: Db = Depends(get_db)):
+    if not body.password:
+        raise s.Invalid("a new System Admin needs a password (at least 8 characters)")
+    with db.tx():
+        uid = new_id("usr")
+        _check_username(db, p.actor.org_id, body.username, uid)
+        if not db.scalar("SELECT 1 FROM branch WHERE org_id = ? AND id = ?", (p.actor.org_id, body.branchId)):
+            raise s.Invalid("unknown branch", branch=body.branchId)
+        db.insert("app_user", {"id": uid, "org_id": p.actor.org_id, "full_name": body.fullName.strip(), "username": body.username.lower(),
+                               "role_code": "ADMIN", "home_branch_id": body.branchId, "phone": body.phone, "is_active": body.isActive,
+                               "initials": "".join(w[0] for w in body.fullName.split()[:2]).upper(),
+                               "staff_code": _staff_code(db, p.actor.org_id, "ADMIN"), "password_hash": hash_secret(body.password)})
+        s.audit(db, p.actor, "OWNER", "app_user.create", "app_user", uid, "User {name} created as {role}",
+                {"name": body.fullName, "role": "ADMIN"})
+        return _admin_row(db, uid)
+
+
+@router.put("/admins/{uid}")
+def edit_admin(uid: str, body: AdminIn, p: Principal = Depends(require_owner()), db: Db = Depends(get_db)):
+    with db.tx():
+        u = db.one("SELECT * FROM app_user WHERE id = ? AND org_id = ? AND deleted_at IS NULL", (uid, p.actor.org_id))
+        if not u or u["role_code"] != "ADMIN":
+            raise s.NotFound("System Admin not found")
+        _check_username(db, p.actor.org_id, body.username, uid)
+        changes = {"full_name": body.fullName.strip(), "username": body.username.lower(), "home_branch_id": body.branchId,
+                   "phone": body.phone, "is_active": body.isActive}
+        if body.password:
+            changes.update(password_hash=hash_secret(body.password), failed_logins=0, locked_until=None)
+        db.update("app_user", {"id": uid}, changes)
+        if not body.isActive or body.password:      # sign them out everywhere
+            db.execute("UPDATE auth_session SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL", (now_iso(), uid))
+        what = ("app_user.password_reset" if body.password else
+                "app_user.deactivate" if u["is_active"] and not body.isActive else
+                "app_user.reactivate" if not u["is_active"] and body.isActive else "app_user.update")
+        text = {"app_user.password_reset": "Set a new password for {name}", "app_user.deactivate": "Deactivated {name}",
+                "app_user.reactivate": "Reactivated {name}"}.get(what, "Edited account {name}")
+        s.audit(db, p.actor, "OWNER", what, "app_user", uid, text, {"name": body.fullName},
+                before={"active": bool(u["is_active"])}, after={"active": body.isActive})
+        return _admin_row(db, uid)

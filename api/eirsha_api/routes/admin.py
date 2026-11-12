@@ -10,7 +10,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from .. import services as s
-from ..auth import hash_secret
+from ..auth import OWNER, PROTECTED_ROLES, hash_secret
 from ..db import new_id, now_iso
 from . import Db, Depends, Principal, get_db, require
 
@@ -247,6 +247,8 @@ def users(p: Principal = Depends(require("admin.users_manage", "admin.access")),
 
 @router.post("/users", status_code=201)
 def add_user(body: UserIn, p: Principal = Depends(require("admin.users_manage")), db: Db = Depends(get_db)):
+    if body.role in PROTECTED_ROLES and p.actor.role != OWNER:
+        raise s.Forbidden("only the Owner can create Owner or System Admin accounts")
     with db.tx():
         uid = body.id or new_id("usr")
         _check_username(db, p.actor.org_id, body.username, uid)
@@ -274,12 +276,17 @@ def edit_user(uid: str, body: UserIn, p: Principal = Depends(require("admin.user
         if not u:
             raise s.NotFound("user not found")
         _check_username(db, p.actor.org_id, body.username, uid)
-        losing_admin = u["role_code"] == "ADMIN" and u["is_active"] and (body.role != "ADMIN" or not body.isActive)
-        if losing_admin and uid == p.actor.user_id:
-            raise s.Conflict("you can't remove your own Admin access")
-        if losing_admin and int(db.scalar("SELECT count(*) FROM app_user WHERE org_id = ? AND role_code = 'ADMIN' AND is_active AND deleted_at IS NULL",
+        protected = u["role_code"] in PROTECTED_ROLES or body.role in PROTECTED_ROLES
+        if protected and p.actor.role != OWNER:
+            # a System Admin may only update their own name, phone or password here — never a role or status
+            if uid != p.actor.user_id or body.role != u["role_code"] or not body.isActive:
+                raise s.Forbidden("only the Owner can change Owner or System Admin accounts")
+        if uid == p.actor.user_id and (body.role != u["role_code"] or not body.isActive):
+            raise s.Conflict("you can't change your own role or deactivate yourself")
+        losing_owner = u["role_code"] == OWNER and u["is_active"] and (body.role != OWNER or not body.isActive)
+        if losing_owner and int(db.scalar("SELECT count(*) FROM app_user WHERE org_id = ? AND role_code = 'OWNER' AND is_active AND deleted_at IS NULL",
                                           (p.actor.org_id,))) <= 1:
-            raise s.Conflict("keep at least one active Admin")
+            raise s.Conflict("keep at least one active Owner")
         changes = {"full_name": body.fullName, "username": body.username.lower(), "role_code": body.role, "home_branch_id": body.assignedBranchId,
                    "phone": body.phone, "is_active": body.isActive}
         if body.password:
@@ -316,6 +323,10 @@ def permissions(p: Principal = Depends(require("admin.access")), db: Db = Depend
 
 @router.put("/permissions/{role}/{code}")
 def set_permission(role: str, code: str, granted: bool, p: Principal = Depends(require("admin.roles_manage")), db: Db = Depends(get_db)):
+    if role in PROTECTED_ROLES and p.actor.role != OWNER:
+        raise s.Forbidden("only the Owner can change what Owners and System Admins can do")
+    if granted and code.startswith("owner.") and role != OWNER:
+        raise s.Forbidden("the Owner app is for the Owner only")
     with db.tx():
         if granted:
             if not db.scalar("SELECT 1 FROM role_permission WHERE org_id = ? AND role_code = ? AND permission_code = ?", (p.actor.org_id, role, code)):

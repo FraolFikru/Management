@@ -278,7 +278,7 @@ export const ROLES = reg<UserRole>("role", {
   BRANCH_MANAGER: L("Branch Manager", "የቅርንጫፍ ሥራ አስኪያጅ", "Hoji Gaggeessaa Damee"),
   SALES_STAFF: L("Sales Staff", "የሽያጭ ሰራተኛ", "Hojjetaa Gurgurtaa"),
   INVENTORY_CLERK: L("Inventory Clerk", "የክምችት ባለሙያ", "Ogeessa Kuusaa"),
-  ADMIN: L("Admin", "አስተዳዳሪ", "Bulchaa"),
+  ADMIN: L("System Admin", "የሲስተም አስተዳዳሪ", "Bulchaa sirnaa"),
 });
 
 export const BRANCH = { id: "BR-BOLE-01", name: L("Bole Branch", "ቦሌ ቅርንጫፍ", "Damee Boolee") };

@@ -5,7 +5,7 @@ from datetime import date, timedelta
 
 from fastapi import Depends
 
-from ..auth import Principal, current, get_db, require  # noqa: F401  (re-exported for the routers)
+from ..auth import PROTECTED_ROLES, Principal, current, get_db, require, require_owner  # noqa: F401  (re-exported for the routers)
 from ..db import Db  # noqa: F401
 
 

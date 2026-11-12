@@ -104,3 +104,19 @@ def require(*codes: str) -> Callable[[Principal], Principal]:
             raise HTTPException(403, f"needs one of: {', '.join(codes)}")
         return p
     return guard
+
+
+OWNER = "OWNER"
+PROTECTED_ROLES = frozenset({"OWNER", "ADMIN"})     # only the Owner creates or changes these accounts
+
+
+def require_owner(*codes: str) -> Callable[[Principal], Principal]:
+    """The Owner app is the Owner's alone. Checked on the role, not on permissions,
+    so no permission change made in the Admin app can open it to anyone else."""
+    def guard(p: Principal = Depends(current)) -> Principal:
+        if p.actor.role != OWNER:
+            raise HTTPException(403, "only the Owner can open this")
+        if codes and not p.permissions.intersection(codes):
+            raise HTTPException(403, f"needs one of: {', '.join(codes)}")
+        return p
+    return guard

@@ -41,7 +41,7 @@ export interface LocalizedText {
   om: string;
 }
 
-export type ViewId = "today" | "staff" | "schedule" | "attendance" | "payroll" | "performance";
+export type ViewId = "today" | "staff" | "schedule" | "attendance" | "payroll" | "performance" | "help";
 
 /** Employee profile: spec fields + contact email, hire date and pay basis. */
 export interface EmployeeProfile extends Employee {

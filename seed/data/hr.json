@@ -332,7 +332,7 @@
    "monthlySalary": 28000,
    "branchId": "BR-BOLE-01",
    "status": "ACTIVE",
-   "email": "hanna@bistroaddis.et",
+   "email": "hanna@seer.et",
    "hireDate": "2021-09-15",
    "payType": "MONTHLY"
   },
@@ -345,7 +345,7 @@
    "monthlySalary": 32000,
    "branchId": "BR-BOLE-01",
    "status": "ACTIVE",
-   "email": "abebe@bistroaddis.et",
+   "email": "abebe@seer.et",
    "hireDate": "2020-01-10",
    "payType": "MONTHLY"
   },
@@ -358,7 +358,7 @@
    "monthlySalary": 12000,
    "branchId": "BR-BOLE-01",
    "status": "ACTIVE",
-   "email": "dawit@bistroaddis.et",
+   "email": "dawit@seer.et",
    "hireDate": "2023-02-01",
    "payType": "MONTHLY"
   },
@@ -370,7 +370,7 @@
    "hourlyRate": 42,
    "branchId": "BR-BOLE-01",
    "status": "ACTIVE",
-   "email": "meron@bistroaddis.et",
+   "email": "meron@seer.et",
    "hireDate": "2022-06-20",
    "payType": "HOURLY"
   },
@@ -382,7 +382,7 @@
    "hourlyRate": 42,
    "branchId": "BR-BOLE-01",
    "status": "ACTIVE",
-   "email": "chaltu@bistroaddis.et",
+   "email": "chaltu@seer.et",
    "hireDate": "2023-01-09",
    "payType": "HOURLY"
   },
@@ -394,7 +394,7 @@
    "hourlyRate": 38,
    "branchId": "BR-BOLE-01",
    "status": "ACTIVE",
-   "email": "yonas@bistroaddis.et",
+   "email": "yonas@seer.et",
    "hireDate": "2024-05-13",
    "payType": "HOURLY"
   },
@@ -406,7 +406,7 @@
    "hourlyRate": 36,
    "branchId": "BR-BOLE-01",
    "status": "ACTIVE",
-   "email": "selam@bistroaddis.et",
+   "email": "selam@seer.et",
    "hireDate": "2025-02-03",
    "payType": "HOURLY"
   },
@@ -418,7 +418,7 @@
    "hourlyRate": 36,
    "branchId": "BR-BOLE-01",
    "status": "ACTIVE",
-   "email": "lensa@bistroaddis.et",
+   "email": "lensa@seer.et",
    "hireDate": "2025-07-21",
    "payType": "HOURLY"
   },
@@ -431,7 +431,7 @@
    "monthlySalary": 16000,
    "branchId": "BR-BOLE-01",
    "status": "ACTIVE",
-   "email": "tigist@bistroaddis.et",
+   "email": "tigist@seer.et",
    "hireDate": "2021-11-01",
    "payType": "MONTHLY"
   },
@@ -443,7 +443,7 @@
    "hourlyRate": 48,
    "branchId": "BR-BOLE-01",
    "status": "ACTIVE",
-   "email": "biruk@bistroaddis.et",
+   "email": "biruk@seer.et",
    "hireDate": "2022-08-08",
    "payType": "HOURLY"
   },
@@ -455,7 +455,7 @@
    "hourlyRate": 45,
    "branchId": "BR-BOLE-01",
    "status": "ACTIVE",
-   "email": "kedir@bistroaddis.et",
+   "email": "kedir@seer.et",
    "hireDate": "2023-04-17",
    "payType": "HOURLY"
   },
@@ -467,7 +467,7 @@
    "hourlyRate": 40,
    "branchId": "BR-BOLE-01",
    "status": "ACTIVE",
-   "email": "hirut@bistroaddis.et",
+   "email": "hirut@seer.et",
    "hireDate": "2024-01-15",
    "payType": "HOURLY"
   },
@@ -479,7 +479,7 @@
    "hourlyRate": 40,
    "branchId": "BR-BOLE-01",
    "status": "ACTIVE",
-   "email": "gemechu@bistroaddis.et",
+   "email": "gemechu@seer.et",
    "hireDate": "2024-10-01",
    "payType": "HOURLY"
   },
@@ -491,7 +491,7 @@
    "hourlyRate": 32,
    "branchId": "BR-BOLE-01",
    "status": "ACTIVE",
-   "email": "mulu@bistroaddis.et",
+   "email": "mulu@seer.et",
    "hireDate": "2025-03-10",
    "payType": "HOURLY"
   },
@@ -503,7 +503,7 @@
    "hourlyRate": 36,
    "branchId": "BR-BOLE-01",
    "status": "INACTIVE",
-   "email": "samuel@bistroaddis.et",
+   "email": "samuel@seer.et",
    "hireDate": "2023-06-01",
    "payType": "HOURLY"
   },
@@ -516,7 +516,7 @@
    "monthlySalary": 27000,
    "branchId": "BR-PIASSA-02",
    "status": "ACTIVE",
-   "email": "rahel@bistroaddis.et",
+   "email": "rahel@seer.et",
    "hireDate": "2022-02-14",
    "payType": "MONTHLY"
   },
@@ -528,7 +528,7 @@
    "hourlyRate": 38,
    "branchId": "BR-PIASSA-02",
    "status": "ACTIVE",
-   "email": "tolosa@bistroaddis.et",
+   "email": "tolosa@seer.et",
    "hireDate": "2024-09-02",
    "payType": "HOURLY"
   },
@@ -540,7 +540,7 @@
    "hourlyRate": 38,
    "branchId": "BR-CMC-03",
    "status": "ACTIVE",
-   "email": "eden@bistroaddis.et",
+   "email": "eden@seer.et",
    "hireDate": "2025-01-20",
    "payType": "HOURLY"
   }
@@ -556,7 +556,7 @@
     "monthlySalary": 28000,
     "branchId": "BR-BOLE-01",
     "status": "ACTIVE",
-    "email": "hanna@bistroaddis.et",
+    "email": "hanna@seer.et",
     "hireDate": "2021-09-15",
     "payType": "MONTHLY"
    },
@@ -569,7 +569,7 @@
     "monthlySalary": 32000,
     "branchId": "BR-BOLE-01",
     "status": "ACTIVE",
-    "email": "abebe@bistroaddis.et",
+    "email": "abebe@seer.et",
     "hireDate": "2020-01-10",
     "payType": "MONTHLY"
    },
@@ -582,7 +582,7 @@
     "monthlySalary": 12000,
     "branchId": "BR-BOLE-01",
     "status": "ACTIVE",
-    "email": "dawit@bistroaddis.et",
+    "email": "dawit@seer.et",
     "hireDate": "2023-02-01",
     "payType": "MONTHLY"
    },
@@ -594,7 +594,7 @@
     "hourlyRate": 42,
     "branchId": "BR-BOLE-01",
     "status": "ACTIVE",
-    "email": "meron@bistroaddis.et",
+    "email": "meron@seer.et",
     "hireDate": "2022-06-20",
     "payType": "HOURLY"
    },
@@ -606,7 +606,7 @@
     "hourlyRate": 42,
     "branchId": "BR-BOLE-01",
     "status": "ACTIVE",
-    "email": "chaltu@bistroaddis.et",
+    "email": "chaltu@seer.et",
     "hireDate": "2023-01-09",
     "payType": "HOURLY"
    },
@@ -618,7 +618,7 @@
     "hourlyRate": 38,
     "branchId": "BR-BOLE-01",
     "status": "ACTIVE",
-    "email": "yonas@bistroaddis.et",
+    "email": "yonas@seer.et",
     "hireDate": "2024-05-13",
     "payType": "HOURLY"
    },
@@ -630,7 +630,7 @@
     "hourlyRate": 36,
     "branchId": "BR-BOLE-01",
     "status": "ACTIVE",
-    "email": "selam@bistroaddis.et",
+    "email": "selam@seer.et",
     "hireDate": "2025-02-03",
     "payType": "HOURLY"
    },
@@ -642,7 +642,7 @@
     "hourlyRate": 36,
     "branchId": "BR-BOLE-01",
     "status": "ACTIVE",
-    "email": "lensa@bistroaddis.et",
+    "email": "lensa@seer.et",
     "hireDate": "2025-07-21",
     "payType": "HOURLY"
    },
@@ -655,7 +655,7 @@
     "monthlySalary": 16000,
     "branchId": "BR-BOLE-01",
     "status": "ACTIVE",
-    "email": "tigist@bistroaddis.et",
+    "email": "tigist@seer.et",
     "hireDate": "2021-11-01",
     "payType": "MONTHLY"
    },
@@ -667,7 +667,7 @@
     "hourlyRate": 48,
     "branchId": "BR-BOLE-01",
     "status": "ACTIVE",
-    "email": "biruk@bistroaddis.et",
+    "email": "biruk@seer.et",
     "hireDate": "2022-08-08",
     "payType": "HOURLY"
    },
@@ -679,7 +679,7 @@
     "hourlyRate": 45,
     "branchId": "BR-BOLE-01",
     "status": "ACTIVE",
-    "email": "kedir@bistroaddis.et",
+    "email": "kedir@seer.et",
     "hireDate": "2023-04-17",
     "payType": "HOURLY"
    },
@@ -691,7 +691,7 @@
     "hourlyRate": 40,
     "branchId": "BR-BOLE-01",
     "status": "ACTIVE",
-    "email": "hirut@bistroaddis.et",
+    "email": "hirut@seer.et",
     "hireDate": "2024-01-15",
     "payType": "HOURLY"
    },
@@ -703,7 +703,7 @@
     "hourlyRate": 40,
     "branchId": "BR-BOLE-01",
     "status": "ACTIVE",
-    "email": "gemechu@bistroaddis.et",
+    "email": "gemechu@seer.et",
     "hireDate": "2024-10-01",
     "payType": "HOURLY"
    },
@@ -715,7 +715,7 @@
     "hourlyRate": 32,
     "branchId": "BR-BOLE-01",
     "status": "ACTIVE",
-    "email": "mulu@bistroaddis.et",
+    "email": "mulu@seer.et",
     "hireDate": "2025-03-10",
     "payType": "HOURLY"
    },
@@ -727,7 +727,7 @@
     "hourlyRate": 36,
     "branchId": "BR-BOLE-01",
     "status": "INACTIVE",
-    "email": "samuel@bistroaddis.et",
+    "email": "samuel@seer.et",
     "hireDate": "2023-06-01",
     "payType": "HOURLY"
    },
@@ -740,7 +740,7 @@
     "monthlySalary": 27000,
     "branchId": "BR-PIASSA-02",
     "status": "ACTIVE",
-    "email": "rahel@bistroaddis.et",
+    "email": "rahel@seer.et",
     "hireDate": "2022-02-14",
     "payType": "MONTHLY"
    },
@@ -752,7 +752,7 @@
     "hourlyRate": 38,
     "branchId": "BR-PIASSA-02",
     "status": "ACTIVE",
-    "email": "tolosa@bistroaddis.et",
+    "email": "tolosa@seer.et",
     "hireDate": "2024-09-02",
     "payType": "HOURLY"
    },
@@ -764,7 +764,7 @@
     "hourlyRate": 38,
     "branchId": "BR-CMC-03",
     "status": "ACTIVE",
-    "email": "eden@bistroaddis.et",
+    "email": "eden@seer.et",
     "hireDate": "2025-01-20",
     "payType": "HOURLY"
    }

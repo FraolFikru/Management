@@ -5,6 +5,8 @@ import {
 } from './data';
 import { t, getLang, setLang, langName, type Lang } from './i18n';
 import { icon } from './icons';
+import { helpButton, type Translate } from './support';
+import { initHelp } from './help';
 import {
   isLive, currentUser, signIn, signOut, loadMenu, createOrder, payOrder, sendToKitchen, cancelOrder, cartSignature,
   ApiError, type PayMethod, type PendingOrder, type SaleInput,
@@ -335,6 +337,7 @@ function renderTopbar(): void {
   }).format(new Date());
   $('#topbar').innerHTML = `
     <div class="brand">
+      <img class="brand-logo" src="/logo-light.png" alt=""><img class="brand-logo dark-only" src="/logo-dark.png" alt="">
       <span class="brand-name">${esc(t('app.name'))}</span>
       <span class="badge badge-role">${esc(t('app.role'))}</span>
     </div>
@@ -346,6 +349,7 @@ function renderTopbar(): void {
       <time class="clock mono" id="clock">${esc(now)}</time>
       <button class="btn btn-ghost btn-lang" data-action="lang"
         aria-label="${esc(t('top.langSwitch', { lang: langName(next) }))}">${esc(t('top.langShort'))}</button>
+      ${helpButton(helpT)}
       <button class="btn-icon" data-action="theme"
         aria-label="${esc(t(state.theme === 'dark' ? 'top.themeToLight' : 'top.themeToDark'))}">
         ${icon(state.theme === 'dark' ? 'sun' : 'moon')}
@@ -581,3 +585,7 @@ window.setInterval(() => {
 if (!isLive) renderShell();
 else if (currentUser()) void startLive();
 else renderSignIn();
+
+/* Help & support: the ? in the top bar opens it over the till. */
+const helpT: Translate = (k) => (k === 'Help & support' ? ({ en: 'Help & support', am: 'እገዛ እና ድጋፍ', om: 'Gargaarsa fi deeggarsa' } as Record<string, string>)[getLang()] ?? k : k);
+initHelp();
