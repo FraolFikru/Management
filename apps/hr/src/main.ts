@@ -6,6 +6,7 @@
    updates live hours on the clock board.
    ========================================================= */
 
+import { renderHelp } from "./views/help";
 import "./style.css";
 import type { ViewId } from "./types";
 import { isLanguage, setLanguage, t } from "./i18n";
@@ -26,6 +27,7 @@ import { performanceActions, renderPerformance } from "./views/performance";
 import { closeModal, modalActions, modalKeydown, onModalInput, renderModal, submitAbsent, submitEmployee, submitLog } from "./views/modals";
 
 const VIEWS: Record<ViewId, { title: string; render: () => string }> = {
+  help: { title: "Help & support", render: renderHelp },
   today: { title: "Today", render: renderToday },
   staff: { title: "Staff directory", render: renderStaff },
   schedule: { title: "Shift planner", render: renderSchedule },

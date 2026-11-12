@@ -4,6 +4,7 @@
    (data-action for clicks, data-bind="scope.key" for inputs).
    ========================================================= */
 
+import { renderHelp } from "./views/help";
 import "./style.css";
 import type { ViewId } from "./types";
 import { isLanguage, setLanguage, t } from "./i18n";
@@ -24,6 +25,7 @@ import { auditActions, onAuditInput, renderAudit } from "./views/audit";
 import { closeModal, modalActions, modalKeydown, onModalInput, renderModal, submitReason, submitWaste } from "./views/modals";
 
 const VIEWS: Record<ViewId, { title: string; render: () => string }> = {
+  help: { title: "Help & support", render: renderHelp },
   overview: { title: "Overview", render: renderOverview },
   sales: { title: "Sales", render: renderSales },
   dispatch: { title: "Dispatch", render: renderDispatch },

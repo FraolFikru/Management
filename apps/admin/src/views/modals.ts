@@ -6,8 +6,8 @@ import type { Branch, FieldErrors, UserAccount, UserRole } from "../types";
 import { isLive } from "../api";
 import { t, tk } from "../i18n";
 import { money, parseAmount, plain } from "../format";
-import { ROLE_APPS, ROLE_IDS, isRole } from "../catalog";
-import { activeAdmins, branchById, branchName, bulkPrice, db, priceAt, saveBranch, saveUser, setPrice, state, user } from "../store";
+import { PROTECTED_ROLES, ROLE_APPS, ROLE_IDS, isRole } from "../catalog";
+import { branchById, branchName, bulkPrice, db, isOwner, priceAt, saveBranch, saveUser, setPrice, state, user } from "../store";
 import { $, $$, esc, icon } from "../ui/dom";
 import { clearErrors, errText, invalid, setPressed, showErrors } from "../ui/shared";
 import { registerModalOpener } from "../ui/modal-bus";
@@ -108,6 +108,13 @@ function submitBranch(id: string | null): void {
 
 /* ---------- user ---------- */
 
+/** The roles this person may pick: an Admin never sees Owner or System Admin; your own role is fixed. */
+function roleChoices(id: string | null): UserRole[] {
+  const was = id ? db.users.find((u) => u.id === id) : undefined;
+  if (was && was.id === state.userId) return [was.role];
+  return isOwner() ? ROLE_IDS : ROLE_IDS.filter((r) => !PROTECTED_ROLES.includes(r));
+}
+
 function userForm(id: string | null): string {
   return `<form id="userForm" class="form" novalidate>
     <div class="row">
@@ -115,8 +122,9 @@ function userForm(id: string | null): string {
       ${input("uUser", "user.username", t("Username"), ud.username, "username", 'autocapitalize="off" placeholder="abebe.k"', true)}
     </div>
     <div class="field"><span class="label" id="roleLbl">${t("Role")}</span>
-      <div class="role-grid" role="group" aria-labelledby="roleLbl">${ROLE_IDS.map((r) => `<button type="button" class="pay-opt" data-action="user-role" data-value="${r}" aria-pressed="${ud.role === r}"><strong>${esc(tk(`role.${r}`))}</strong><small>${esc(t(ROLE_APPS[r]))}</small></button>`).join("")}</div>
-      ${errText(state.errors, "role")}</div>
+      <div class="role-grid" role="group" aria-labelledby="roleLbl">${roleChoices(id).map((r) => `<button type="button" class="pay-opt" data-action="user-role" data-value="${r}" aria-pressed="${ud.role === r}"><strong>${esc(tk(`role.${r}`))}</strong><small>${esc(t(ROLE_APPS[r]))}</small></button>`).join("")}</div>
+      ${errText(state.errors, "role")}
+      ${isOwner() ? "" : `<small class="hint">${t("Owner and System Admin accounts are created by the Owner in the Owner app.")}</small>`}</div>
     <div class="row">
       <div class="field"><label for="uBranch">${t("Branch")}</label><select id="uBranch" class="input" data-bind="user.assignedBranchId">${db.branches.map((b) =>
         `<option value="${b.id}" ${ud.assignedBranchId === b.id ? "selected" : ""}>${esc(b.name)}</option>`).join("")}</select></div>
@@ -128,7 +136,7 @@ function userForm(id: string | null): string {
     ${isLive && PIN_ROLES.includes(ud.role) ? `<div class="field"><label for="uPin">${ud.hasPin ? t("New Waiter app PIN (leave empty to keep the current one)") : t("Waiter app PIN (4–6 digits)")}</label>
       <input id="uPin" class="input" inputmode="numeric" maxlength="6" autocomplete="off" value="${esc(pin)}" data-bind="user.pin" ${invalid(state.errors, "pin")}>
       ${errText(state.errors, "pin")}<small class="hint">${ud.staffCode ? t("Signs in to the Waiter app with staff code {code} and this PIN.", { code: ud.staffCode }) : t("Signs in to the Waiter app with a staff code and this PIN. The staff code appears in the user list after saving.")}</small></div>` : ""}
-    ${id ? `<label class="check-line"><input type="checkbox" data-bind="user.isActive" ${ud.isActive ? "checked" : ""}> ${t("Account can sign in")}</label>` : isLive ? "" : `<p class="hint">${t("A temporary password is sent to the phone number by SMS.")}</p>`}
+    ${id && id !== state.userId ? `<label class="check-line"><input type="checkbox" data-bind="user.isActive" ${ud.isActive ? "checked" : ""}> ${t("Account can sign in")}</label>` : isLive ? "" : `<p class="hint">${t("A temporary password is sent to the phone number by SMS.")}</p>`}
     ${foot(id ? t("Save user") : t("Create user"))}
   </form>`;
 }
@@ -141,8 +149,9 @@ function submitUser(id: string | null): void {
   if (!/^[a-z][a-z0-9._]{2,19}$/.test(username)) e.username = t("3–20 letters, numbers, dots or underscores.");
   else if (db.users.some((u) => u.id !== id && u.username === username)) e.username = t("Username already taken.");
   if (!/^(\+251|0)\s?[79]\d{2}\s?\d{3}\s?\d{3}$/.test(ud.phone.trim())) e.phone = t("Use an Ethiopian number, e.g. +251 911 234 567.");
-  if (was && was.role === "ADMIN" && was.isActive && (ud.role !== "ADMIN" || !ud.isActive) && activeAdmins().length <= 1) e.role = t("Keep at least one active Admin.");
-  if (was && was.id === state.userId && (ud.role !== "ADMIN" || !ud.isActive)) e.role = t("You can't remove your own Admin access.");
+  if (was && was.id === state.userId && (ud.role !== was.role || !ud.isActive)) e.role = t("You can't change your own role or deactivate yourself.");
+  if (!isOwner() && PROTECTED_ROLES.includes(ud.role) && (!was || was.role !== ud.role)) e.role = t("Only the Owner can create Owner or System Admin accounts.");
+  if (!isOwner() && was && PROTECTED_ROLES.includes(was.role) && was.id !== state.userId) e.role = t("Only the Owner can change Owner or System Admin accounts.");
   if (isLive && ((!id && pw.length < 8) || (id && pw && pw.length < 8))) e.password = t("At least 8 characters.");
   const newPin = PIN_ROLES.includes(ud.role) ? pin.trim() : "";
   if (newPin && !/^\d{4,6}$/.test(newPin)) e.pin = t("Use 4 to 6 digits.");

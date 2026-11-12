@@ -3,9 +3,9 @@
  "exportedAt": "2026-11-08T19:27:15.773Z",
  "i18n": {
   "role.ADMIN": {
-   "en": "Admin",
-   "am": "አስተዳዳሪ",
-   "om": "Bulchiinsa"
+   "en": "System Admin",
+   "am": "የሲስተም አስተዳዳሪ",
+   "om": "Bulchaa sirnaa"
   },
   "role.BRANCH_MANAGER": {
    "en": "Branch Manager",
@@ -293,9 +293,9 @@
  ],
  "ROLES": {
   "ADMIN": {
-   "en": "Admin",
-   "am": "አስተዳዳሪ",
-   "om": "Bulchiinsa"
+   "en": "System Admin",
+   "am": "የሲስተም አስተዳዳሪ",
+   "om": "Bulchaa sirnaa"
   },
   "BRANCH_MANAGER": {
    "en": "Branch Manager",
@@ -496,7 +496,7 @@
  ],
  "PROFILE": {
   "id": "STORE-01",
-  "businessName": "Bistro Addis Restaurant PLC",
+  "businessName": "SEER Restaurant PLC",
   "branchName": "Bole Branch",
   "tinNumber": "0045871236",
   "vatNumber": "VAT-1187654",
@@ -510,7 +510,7 @@
  },
  "RECEIPT": {
   "paperWidthMm": 80,
-  "headerMessage": "Welcome to Bistro Addis\nእንኳን ደህና መጡ",
+  "headerMessage": "Welcome to SEER\nእንኳን ደህና መጡ",
   "footerMessage": "Thank you for dining with us!\nAmesegenalehu! / Galatoomaa!",
   "showTinOnReceipt": true,
   "showVatBreakdown": true,

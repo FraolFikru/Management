@@ -1,4 +1,5 @@
 import "./style.css";
+import { initHelp } from "./help";
 import * as api from "./api";
 import { setLang, t } from "./i18n";
 import * as S from "./store";
@@ -268,3 +269,5 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape" && state.sh
 
 if (api.isConfigured && api.sessionUser()) start();
 render();
+
+initHelp();

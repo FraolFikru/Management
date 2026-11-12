@@ -6,6 +6,7 @@ import type { ViewId } from "../types";
 import { LANGUAGES, getLanguage, t } from "../i18n";
 import { STAFF } from "../catalog";
 import { canView, canApproveWaste, currentUser, db, state } from "../store";
+import { HELP_ICON } from "../support";
 import { $, esc, icon, type IconName } from "./dom";
 import { roleName } from "./shared";
 
@@ -17,7 +18,7 @@ export const NAV: readonly { id: ViewId; label: string; icon: IconName }[] = [
   { id: "audit", label: "Audit trail", icon: "clipboard" },
 ];
 
-export const VIEW_IDS: readonly ViewId[] = NAV.map((n) => n.id);
+export const VIEW_IDS: readonly ViewId[] = [...NAV.map((n) => n.id), "help"];
 
 export function renderShell(): void {
   const app = $("#app");
@@ -37,6 +38,7 @@ export function renderShell(): void {
           <span class="role-tag role-${u.role.toLowerCase()}">${esc(roleName(u.role))}</span>
         </button>` : ""}
         <div class="top-actions">
+      <a href="#help" class="sh-help-btn" aria-label="${t("Help & support")}" title="${t("Help & support")}">${HELP_ICON}</a>
           <div class="seg lang" role="group" aria-label="${t("Language")}">
             ${LANGUAGES.map((l) => `<button type="button" data-action="lang" data-value="${l.code}" lang="${l.code}" title="${l.name}" aria-pressed="${getLanguage() === l.code}">${l.short}</button>`).join("")}
           </div>
@@ -66,7 +68,7 @@ export function renderNav(): void {
   const link = (n: (typeof NAV)[number], cls: string): string =>
     `<a href="#${n.id}" class="${cls}" ${state.view === n.id ? 'aria-current="page"' : ""}>${icon(n.icon)}<span>${t(n.label)}</span>${
       n.id === "waste" && pending ? `<span class="count" aria-label="${t("{n} awaiting approval", { n: pending })}">${pending}</span>` : ""}</a>`;
-  if (side) side.innerHTML = items.map((n) => link(n, "nav-link")).join("");
+  if (side) side.innerHTML = items.map((n) => link(n, "nav-link")).join("") + `<p class="nav-heading sh-nav-heading">${t("Support")}</p><a href="#help" class="nav-link" ${state.view === "help" ? 'aria-current="page"' : ""}>${HELP_ICON}<span>${t("Help & support")}</span></a>`;
   if (bottom) {
     bottom.style.setProperty("--tabs", String(items.length));
     bottom.innerHTML = items.map((n) => link(n, "")).join("");

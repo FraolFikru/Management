@@ -51,7 +51,7 @@ END $$;
 -- platform later hosts many organisations in the same database.
 CREATE TABLE organization (
   id               text PRIMARY KEY DEFAULT gen_random_uuid()::text,
-  legal_name       text NOT NULL,                       -- "Bistro Addis Restaurant PLC"
+  legal_name       text NOT NULL,                       -- "SEER Restaurant PLC"
   trade_name       text,
   tin_number       text NOT NULL,                       -- 10-digit ERCA/MoR TIN
   vat_number       text,

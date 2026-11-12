@@ -5,6 +5,7 @@
    and each screen only opens for roles allowed to use it.
    ========================================================= */
 
+import { renderHelp } from "./views/help";
 import "./style.css";
 import type { ViewId } from "./types";
 import { isLanguage, setLanguage, t } from "./i18n";
@@ -21,6 +22,7 @@ import { expenseActions, onExpenseInput, renderExpenses, submitExpense } from ".
 import { auditActions, renderAudit } from "./views/audit";
 
 const VIEWS: Record<ViewId, { title: string; render: () => string; mount?: () => void }> = {
+  help: { title: "Help & support", render: renderHelp },
   dashboard: { title: "Dashboard", render: renderDashboard },
   purchases: { title: "Purchases", render: renderPurchases, mount: mountPurchases },
   waste: { title: "Waste", render: renderWaste, mount: mountWaste },

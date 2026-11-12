@@ -7,7 +7,7 @@
 import type {
   AuditEntry, AuditKind, Branch, FieldErrors, MenuPrice, PermissionKey, ReceiptConfig, RolePermissions, StoreProfile, SupportedLanguage, Transaction, UserAccount, UserRole, ViewId,
 } from "./types";
-import { lockReason, lockedValue } from "./catalog";
+import { PROTECTED_ROLES, lockReason, lockedValue } from "./catalog";
 import { BRANCHES, MENU_PRICES, PERMISSIONS_SEED, PROFILE, RECEIPT, USERS, generateAudit, generateTransactions, newId } from "./seed";
 import { setCurrencySymbol } from "./format";
 import { isLive, loadAll, remote, sessionUser, setFlagCodes } from "./api";
@@ -117,6 +117,9 @@ export const permsOf = (role: UserRole): RolePermissions => db.permissions.find(
 export const can = (key: PermissionKey, u: UserAccount = user()): boolean => u.isActive && permsOf(u.role)[key];
 /** Users who can open this module (the "Logged in as" switcher shows everyone, for the demo). */
 export const isAdmin = (): boolean => can("canAccessAdmin");
+/** The Owner sits above the System Admins: only the Owner may change Owner or System Admin accounts. */
+export const isOwner = (): boolean => user().role === "OWNER";
+export const canManageUser = (u: UserAccount): boolean => isOwner() || !PROTECTED_ROLES.includes(u.role);
 
 /* ---------- activity log ---------- */
 

@@ -8,6 +8,7 @@ import "./style.css";
 import type { KDSOrderStatus, KitchenTicket, OrderTypeFilter, StationFilter } from "./types";
 import { createFeed, liveConfigured } from "./feed";
 import { currentUser, signInScreen } from "./auth";
+import { initHelp } from "./help";
 import { isLanguage, t } from "./i18n";
 import { clock } from "./format";
 import { audioReady, chime, unlockAudio } from "./sound";
@@ -176,3 +177,5 @@ void (async () => {
   if (liveConfigured() && !currentUser()) await signInScreen();
   attachFeed(createFeed());
 })();
+
+initHelp();

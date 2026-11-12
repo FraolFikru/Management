@@ -145,7 +145,7 @@ def build(src: str, dst: str) -> None:
     # ---------- organisation ----------
     P = A["PROFILE"]
     ref.add("organization", [{
-        "id": P["id"], "legal_name": P["businessName"], "trade_name": "Bistro Addis",
+        "id": P["id"], "legal_name": P["businessName"], "trade_name": "SEER",
         "tin_number": P["tinNumber"], "vat_number": P["vatNumber"], "license_number": P["licenseNumber"],
         "address": P["address"], "phone": P["phone"], "currency_code": P["currency"],
         "currency_symbol": P["currencySymbol"], "is_vat_enabled": P["isVatEnabled"],

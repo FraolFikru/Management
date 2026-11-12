@@ -6,6 +6,7 @@ import type { ViewId } from "../types";
 import { LANGUAGES, getLanguage, t, tk } from "../i18n";
 import { DASHBOARD_ROLES, STAFF } from "../catalog";
 import { db, lowStock, pendingDispatches, state, user } from "../store";
+import { HELP_ICON } from "../support";
 import { $, esc, icon, type IconName } from "./dom";
 import { isLive } from "../api";
 import { roleName } from "./shared";
@@ -20,7 +21,7 @@ export const NAV: readonly { id: ViewId; label: string; short: string; icon: Ico
   { id: "audit", label: "Audit trail", short: "Audit", icon: "clipboard" },
 ];
 
-export const VIEW_IDS: readonly ViewId[] = NAV.map((n) => n.id);
+export const VIEW_IDS: readonly ViewId[] = [...NAV.map((n) => n.id), "help"];
 
 /** Live mode: real account sign-in (username + password). */
 export function renderSignIn(message: string, busy: boolean, username: string): string {
@@ -95,6 +96,7 @@ export function renderTopbar(): void {
     </div>
     ${lowChip()}
     <div class="top-actions">
+      <a href="#help" class="sh-help-btn" aria-label="${t("Help & support")}" title="${t("Help & support")}">${HELP_ICON}</a>
       <div class="seg lang" role="group" aria-label="${t("Language")}">
         ${LANGUAGES.map((l) => `<button type="button" data-action="lang" data-value="${l.code}" lang="${l.code}" title="${l.name}" aria-pressed="${getLanguage() === l.code}">${l.short}</button>`).join("")}
       </div>
@@ -125,7 +127,7 @@ export function renderNav(): void {
     return `<a href="#${n.id}" class="${cls}" ${state.view === n.id ? 'aria-current="page"' : ""}>${icon(n.icon)}<span>${t(short ? n.short : n.label)}</span>${
       c ? `<span class="count" aria-label="${t("{n} waiting", { n: c })}">${c}</span>` : ""}</a>`;
   };
-  if (side) side.innerHTML = NAV.map((n) => link(n, "nav-link", false)).join("");
+  if (side) side.innerHTML = NAV.map((n) => link(n, "nav-link", false)).join("") + `<p class="nav-heading sh-nav-heading">${t("Support")}</p><a href="#help" class="nav-link" ${state.view === "help" ? 'aria-current="page"' : ""}>${HELP_ICON}<span>${t("Help & support")}</span></a>`;
   if (bottom) {
     bottom.style.setProperty("--tabs", String(NAV.length));
     bottom.innerHTML = NAV.map((n) => link(n, "", true)).join("");

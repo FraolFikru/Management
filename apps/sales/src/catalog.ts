@@ -224,7 +224,7 @@ export const ROLES = reg<Role>("role", {
   SALES_STAFF: L("Sales staff", "የሽያጭ ሰራተኛ", "Hojjetaa gurgurtaa"),
   INVENTORY_CLERK: L("Inventory clerk", "የክምችት ባለሙያ", "Ogeessa kuusaa"),
   MANAGER: L("Manager", "ሥራ አስኪያጅ", "Hoji gaggeessaa"),
-  ADMIN: L("Admin", "አስተዳዳሪ", "Bulchaa"),
+  ADMIN: L("System Admin", "የሲስተም አስተዳዳሪ", "Bulchaa sirnaa"),
 });
 
 /** Which roles may open each screen. This app is for buying only; sales are not tracked here. */
@@ -234,6 +234,7 @@ export const VIEW_ACCESS: Record<ViewId, readonly Role[]> = {
   waste: ["INVENTORY_CLERK", "MANAGER", "ADMIN"],
   expenses: ["INVENTORY_CLERK", "MANAGER", "ADMIN"],
   audit: ["MANAGER", "ADMIN"],
+  help: ["SALES_STAFF", "INVENTORY_CLERK", "MANAGER", "ADMIN"],
 };
 export const CAN_APPROVE_WASTE: readonly Role[] = ["MANAGER", "ADMIN"];
 /** Deleting a saved record needs a manager; staff can only undo right after saving. */

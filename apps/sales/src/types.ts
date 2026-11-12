@@ -63,7 +63,7 @@ export type Role = UserSession["role"];
 /** How a purchase or expense was paid. */
 export type ExpensePaymentMethod = "CASH" | "TELEBIRR" | "CBE_BIRR";
 export type ThemeMode = "dark" | "light";
-export type ViewId = "dashboard" | "purchases" | "waste" | "expenses" | "audit";
+export type ViewId = "dashboard" | "purchases" | "waste" | "expenses" | "audit" | "help";
 export type PeriodId = "today" | "7d" | "30d";
 export type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
 /** What staff pick first when recording a purchase (e.g. Vegetables → Onion). Each maps to one COGS category. */

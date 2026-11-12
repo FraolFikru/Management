@@ -78,7 +78,7 @@ export interface LocalizedText {
   om: string;
 }
 
-export type ViewId = "overview" | "sales" | "dispatch" | "cogs" | "waste" | "expenses" | "audit";
+export type ViewId = "overview" | "sales" | "dispatch" | "cogs" | "waste" | "expenses" | "audit" | "help";
 export type PeriodId = "today" | "7d" | "30d";
 export type Shift = "MORNING" | "EVENING";
 

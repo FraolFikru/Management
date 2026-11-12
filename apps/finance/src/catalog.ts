@@ -81,7 +81,7 @@ export const USERS: { id: string; name: string; role: LocalizedText }[] = [   //
 /** Role names for live accounts. */
 export const ROLE_LABEL: Record<string, LocalizedText> = {
   ACCOUNTANT: L("Accountant", "የሂሳብ ባለሙያ", "Ogeessa herregaa"),
-  ADMIN: L("Admin", "አስተዳዳሪ", "Bulchaa"),
+  ADMIN: L("System Admin", "የሲስተም አስተዳዳሪ", "Bulchaa sirnaa"),
   OWNER: L("Owner", "ባለቤት", "Abbaa qabeenyaa"),
   BRANCH_MANAGER: L("Branch Manager", "የቅርንጫፍ ሥራ አስኪያጅ", "Hoji Gaggeessaa Damee"),
   INVENTORY_CLERK: L("Inventory clerk", "የክምችት ሰራተኛ", "Hojjetaa kuusaa"),

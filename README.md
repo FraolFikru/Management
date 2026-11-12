@@ -1,8 +1,13 @@
-# Eirsha Ops
+# SEER
 
-One shared database and API for the seven Bistro Addis frontends: Sales/Inventory Clerk, Branch Manager,
-Finance, HR, System Admin, Kitchen Display, and the Owner dashboard (ffii-main). The schema includes POS
-tables for the order-taking screen the KDS needs.
+One shared database and API for the SEER restaurant apps: Cashier, Waiter, Kitchen Display, Purchasing &
+inventory, Branch Manager, Finance, HR, System Admin and the Owner dashboard.
+
+**Who can do what.** Access runs in one chain: the **Owner** creates the **System Admins** (Owner app →
+System Admins), and the System Admins create everyone else (Admin app → Users & roles). The Owner app is
+the Owner's alone; System Admins can't open it, and can't create or change Owner or System Admin accounts.
+The server enforces this on the role itself, so no permission change can work around it. Every app has a
+Help & support page written for its role (`apps/shared/support.ts` is the master copy of the engine).
 
 **Start with [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)**. It covers the schema by module, the ER
 diagrams, the cross-module flows, the API surface, the migration plan and the auth model.
@@ -10,7 +15,7 @@ diagrams, the cross-module flows, the API surface, the migration plan and the au
 resolved.
 
 ```
-apps/                           the 8 frontends: sales, manager, finance, hr, admin, kds, owner (ffii), cashier
+apps/                           the 9 frontends: cashier, waiter, kds, sales, manager, finance, hr, admin, owner
 db/postgres/001_schema.sql      66 tables (source of truth; ownership notes on every table)
 db/postgres/002_views.sql       12 read models (P&L, bill status, manager queue, permissions…)
 db/sqlite/                      generated SQLite build (make sqlite-schema)

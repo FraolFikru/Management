@@ -8,6 +8,11 @@ database (db_init) and a live one end up identical.
       customer_order          + table_id, waiter_id, bill_requested_at, note
       order_line              + served_at
       role WAITER             pos.sell, kds.view, hr.attendance_self
+  M2  SEER rebrand: stored text that still says "Bistro Addis"
+  M3  Chain of trust: Owner → System Admin → everyone else
+      the Owner app is the Owner's alone (owner.* removed from every other role)
+      the Owner gets every System Admin permission too (the Owner is above the Admin)
+      an organization with no Owner: its oldest active System Admin becomes the Owner
 """
 from __future__ import annotations
 
@@ -15,7 +20,7 @@ import logging
 
 from .db import Db
 
-log = logging.getLogger("eirsha.migrate")
+log = logging.getLogger("seer.migrate")
 
 
 def _columns(db: Db, table: str) -> set[str]:
@@ -67,13 +72,46 @@ def table_service(db: Db) -> None:
                 db.execute("INSERT INTO role_permission (org_id, role_code, permission_code) VALUES (?, 'WAITER', ?)", (org["id"], perm))
 
 
+def rebrand(db: Db) -> None:
+    """M2: the restaurant is SEER. Rename any stored text still carrying the demo name."""
+    for table, col in (("organization", "legal_name"), ("organization", "trade_name"),
+                       ("receipt_config", "header_message"), ("receipt_config", "footer_message"),
+                       ("branch", "name")):
+        if col in _columns(db, table):
+            db.execute(f"UPDATE {table} SET {col} = REPLACE({col}, 'Bistro Addis', 'SEER') WHERE {col} LIKE '%Bistro Addis%'")
+    for lang, old, new in (("en", "Admin", "System Admin"), ("am", "አስተዳዳሪ", "የሲስተም አስተዳዳሪ"), ("om", "Bulchiinsa", "Bulchaa sirnaa")):
+        db.execute("UPDATE i18n_text SET text = ? WHERE key = 'role.ADMIN' AND lang = ? AND text = ?", (new, lang, old))
+    if "email" in _columns(db, "app_user"):
+        db.execute("UPDATE app_user SET email = REPLACE(email, '@bistroaddis.et', '@seer.et') WHERE email LIKE '%@bistroaddis.et'")
+        db.execute("UPDATE app_user SET email = REPLACE(email, '@bistroaddis.com', '@seer.et') WHERE email LIKE '%@bistroaddis.com'")
+
+
+def owner_chain(db: Db) -> None:
+    db.execute("DELETE FROM role_permission WHERE role_code <> 'OWNER' AND permission_code LIKE 'owner.%'")
+    for org in db.all("SELECT id FROM organization"):
+        oid = org["id"]
+        for r in db.all("SELECT permission_code FROM role_permission WHERE org_id = ? AND role_code = 'ADMIN'", (oid,)):
+            if not db.scalar("SELECT 1 FROM role_permission WHERE org_id = ? AND role_code = 'OWNER' AND permission_code = ?",
+                             (oid, r["permission_code"])):
+                db.execute("INSERT INTO role_permission (org_id, role_code, permission_code) VALUES (?, 'OWNER', ?)", (oid, r["permission_code"]))
+        if db.scalar("SELECT 1 FROM app_user WHERE org_id = ? AND role_code = 'OWNER' AND is_active AND deleted_at IS NULL", (oid,)):
+            continue
+        first = db.one("""SELECT id, username FROM app_user WHERE org_id = ? AND role_code = 'ADMIN' AND is_active AND deleted_at IS NULL
+                          ORDER BY created_at, id LIMIT 1""", (oid,))
+        if first:
+            db.execute("UPDATE app_user SET role_code = 'OWNER' WHERE id = ?", (first["id"],))
+            log.warning("seer: %s is now the Owner of %s (there was no Owner account)", first["username"], oid)
+
+
 def migrate() -> None:
     db = Db.from_env()
     try:
         with db.tx():
             table_service(db)
+            rebrand(db)
+            owner_chain(db)
     except Exception:
-        log.exception("eirsha: migration failed")
+        log.exception("seer: migration failed")
         raise
     finally:
         db.conn.close()

@@ -1,5 +1,6 @@
 /* What each screen looks like. Pure functions of the store: state in, HTML out. */
 
+import { helpButton } from "./support";
 import { isConfigured, sessionUser } from "./api";
 import { LANGS, money, nm, since, t } from "./i18n";
 import { canEdit, draftTotal, draftsOf, isOpen, item, me, order, orders, sending, state, tableOf } from "./store";
@@ -91,6 +92,7 @@ export function renderFloor(): string {
         <span class="who-text"><strong>${esc(u?.name ?? "")}</strong><small>${esc(f?.branch.name ?? "")} · ${clock()}</small></span>
       </button>
       ${conn()}
+      ${helpButton(t, "icon-btn")}
     </header>`;
   if (state.floorError === "no-access") return `${head}<main class="empty"><h2>${t("This account can't take tables.")}</h2><button class="btn" data-act="sign-out">${t("Sign out")}</button></main>`;
   if (!f) return `${head}<main class="empty">${state.offline || state.floorError

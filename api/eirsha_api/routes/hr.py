@@ -54,9 +54,9 @@ TRUSTED = {"ADMIN", "OWNER"}
 
 
 def _guard_role(p: Principal, role: str) -> None:
-    """Only an admin or owner can give someone admin / owner rights (same rule as the Admin app)."""
-    if role in TRUSTED and p.actor.role not in TRUSTED:
-        raise s.ServiceError("only an admin or owner can give someone the admin or owner role")
+    """Only the Owner can give someone System Admin or Owner rights (same rule as the Admin app)."""
+    if role in TRUSTED and p.actor.role != "OWNER":
+        raise s.Forbidden("only the Owner can give someone the System Admin or Owner role")
 
 
 @router.get("/employees")
@@ -189,8 +189,8 @@ def edit_employee(uid: str, body: EmployeeIn, p: Principal = Depends(require("hr
         u = s._get(db, "app_user", uid, p.actor.org_id)
         if body.role != u["role_code"]:
             _guard_role(p, body.role)
-            if u["role_code"] in TRUSTED and p.actor.role not in TRUSTED:
-                raise s.ServiceError("only an admin or owner can change an admin's or owner's role")
+            if u["role_code"] in TRUSTED and p.actor.role != "OWNER":
+                raise s.Forbidden("only the Owner can change a System Admin's or Owner's role")
         db.update("app_user", {"id": uid}, {"full_name": body.fullName, "role_code": body.role, "phone": body.phone, "email": body.email,
                                             "home_branch_id": body.branchId})
         pay = {"hire_date": body.hireDate, "pay_type": body.payType, "hourly_rate": body.hourlyRate,
@@ -213,8 +213,8 @@ def set_status(uid: str, body: StatusIn, p: Principal = Depends(require("hr.staf
         u = s._get(db, "app_user", uid, p.actor.org_id)
         if uid == p.actor.user_id:
             raise s.ServiceError("you can't deactivate yourself")
-        if u["role_code"] in TRUSTED and p.actor.role not in TRUSTED:
-            raise s.ServiceError("only an admin or owner can deactivate an admin or owner")
+        if u["role_code"] in TRUSTED and p.actor.role != "OWNER":
+            raise s.Forbidden("only the Owner can deactivate a System Admin or Owner")
         active = body.status == "ACTIVE"
         db.update("app_user", {"id": uid}, {"is_active": active})
         if db.scalar("SELECT 1 FROM employee WHERE user_id = ?", (uid,)):

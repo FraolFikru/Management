@@ -14,7 +14,7 @@ export interface LocalizedText {
   om: string;
 }
 
-export type ViewId = "pnl" | "payables" | "tax" | "cash";
+export type ViewId = "pnl" | "payables" | "tax" | "cash" | "help";
 export type PaymentMethod = "CASH" | "TELEBIRR" | "CBE_BIRR";
 
 /** Where money sits. Card / bank transfers land in the CBE bank account. */

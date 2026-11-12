@@ -108,3 +108,16 @@ export const loadAll = (): Promise<Bootstrap> => api<Bootstrap>("/owner/bootstra
 /** This month's budget for one spending group. */
 export const saveBudget = (month: string, group: Category, allocated: number) =>
   api(`/owner/budget-groups/${encodeURIComponent(month)}`, { method: "PUT", body: JSON.stringify({ group, allocated }) });
+
+/* ---------- System Admin accounts (Owner only) ---------- */
+
+export interface AdminAccount {
+  id: string; staff_code: string | null; full_name: string; username: string; home_branch_id: string;
+  phone: string | null; is_active: boolean | number; last_login_at: string | null; created_at: string;
+}
+export interface AdminInput { fullName: string; username: string; branchId: string; phone?: string | null; isActive: boolean; password?: string }
+
+export const listAdmins = () => api<{ admins: AdminAccount[]; branches: { id: string; name: string }[] }>("/owner/admins");
+export const createAdmin = (body: AdminInput) => api<AdminAccount>("/owner/admins", { method: "POST", body: JSON.stringify(body) });
+export const updateAdmin = (id: string, body: AdminInput) =>
+  api<AdminAccount>(`/owner/admins/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(body) });

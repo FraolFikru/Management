@@ -21,6 +21,8 @@ import {
 } from "./data";
 import { icon } from "./icons";
 import { getLiveSeries, loadLive } from "./live";
+import { adminsClick, adminsSubmit, renderAdmins } from "./admins";
+import { renderSupport } from "./help";
 import { isLive, saveBudget as apiSaveBudget, sessionUser, signIn as apiSignIn, signOut as apiSignOut } from "./api";
 import { LANGS, dayLong, dayShort, monthShort, translate, type Lang } from "./i18n";
 
@@ -49,6 +51,7 @@ type Page =
   | "Investments"
   | "Goals"
   | "Reports"
+  | "System Admins"
   | "Settings"
   | "Help & Support";
 
@@ -200,6 +203,7 @@ const mainNav: { label: Page; icon: string }[] = [
   { label: "Investments", icon: "trend-up" },
   { label: "Goals", icon: "target" },
   { label: "Reports", icon: "file" },
+  { label: "System Admins", icon: "users" },
 ];
 
 const supportNav: { label: Page; icon: string }[] = [
@@ -970,60 +974,10 @@ function renderSettings(): string {
 
 /* ---------- Help & Support ---------- */
 
-const helpSteps: { icon: string; title: string; body: string }[] = [
-  {
-    icon: "home",
-    title: "Check your day at a glance",
-    body: "Open the Dashboard each morning. The four cards show your Total Balance across Telebirr, Cash and CBE, this month's revenue and expenses, and your profit margin against the 35% target.",
-  },
-  {
-    icon: "trend-up",
-    title: "Read the revenue chart",
-    body: "Switch between Daily, Weekly and Monthly. Hover over the chart to see revenue, expenses and net for any point. The green line is revenue, the red dashed line is expenses; the gap between them is your profit.",
-  },
-  {
-    icon: "wallet",
-    title: "Reconcile payments at closing",
-    body: "In Payment Methods, pick Telebirr, Cash or CBE and compare the balance with the Telebirr app, the cash drawer count and your bank statement. Find any difference the same day.",
-  },
-  {
-    icon: "receipt",
-    title: "Follow up on transactions",
-    body: "On Transactions, search by ID, supplier or category and filter by status. Check Pending and Failed payments daily so suppliers and staff are paid on time.",
-  },
-  {
-    icon: "target",
-    title: "Keep costs inside budget",
-    body: "Budgets ranks categories worst first and projects month-end spend from today's pace. Orange means on pace to go over (or past your warning level in Settings); red means already over. Tap the pencil to change a budget.",
-  },
-  {
-    icon: "file",
-    title: "Plan with Goals and Reports",
-    body: "Track monthly targets on Goals. Generate the Weekly P&L every Monday and the Monthly Tax Summary at month end for your accountant.",
-  },
-];
 
 function renderHelp(): string {
   return `
-    <div class="help-intro">
-      <h2>${t("How to use SEER")}</h2>
-      <p>${t("Six habits that keep your numbers accurate and your restaurant profitable.")}</p>
-    </div>
-    <ol class="help-grid">
-      ${helpSteps
-        .map(
-          (s, i) => `
-        <li class="panel help-step">
-          <div class="help-step-head">
-            <span class="step-num">${i + 1}</span>
-            <span class="stat-icon">${icon(s.icon)}</span>
-          </div>
-          <h3>${escapeHtml(t(s.title))}</h3>
-          <p>${escapeHtml(t(s.body))}</p>
-        </li>`,
-        )
-        .join("")}
-    </ol>
+    ${renderSupport(t)}
     <article class="panel help-shortcuts">
       <div class="panel-head"><h2>${icon("keyboard")} ${t("Keyboard shortcuts")}</h2></div>
       <div class="shortcut"><span><kbd>${modKey}</kbd> + <kbd>K</kbd></span>${t("Search transactions")}</div>
@@ -1067,6 +1021,9 @@ function renderPage(): void {
       break;
     case "Reports":
       content.innerHTML = renderReports();
+      break;
+    case "System Admins":
+      content.innerHTML = renderAdmins(t, () => { if (state.activeNav === "System Admins") renderPage(); });
       break;
     case "Settings":
       content.innerHTML = renderSettings();
@@ -1529,6 +1486,8 @@ function onClick(e: MouseEvent): void {
     return;
   }
 
+  if (state.activeNav === "System Admins" && adminsClick(el, t)) return;
+
   const themeBtn = hit("[data-theme-btn]");
   if (themeBtn) return setSetting("theme", themeBtn.dataset.themeBtn as ThemePref);
 
@@ -1709,7 +1668,7 @@ const liveUi = { message: "", busy: false, username: "" };
 function liveMessage(err: unknown): string {
   const m = err instanceof Error ? err.message : String(err);
   if (m === "wrong") return t("Wrong username or password.");
-  if (m === "no-access") return t("This account can't open the owner dashboard.");
+  if (m === "no-access") return t("Only the Owner can open this app. System Admins sign in to the Admin app.");
   if (m.includes("Failed to fetch") || m.includes("NetworkError") || m.includes("Load failed")) return t("Cannot reach the server. It may be waking up — try again in a minute.");
   return m;
 }
@@ -1721,7 +1680,7 @@ function renderSignIn(): void {
     <form class="panel signin-card" id="liveSignIn" novalidate>
       <div class="brand"><img class="brand-logo" src="/logo-light.png" alt="SEER"><img class="brand-logo dark-only" src="/logo-dark.png" alt="SEER"><span><strong>SEER</strong></span></div>
       <h1>${t("Sign in")}</h1>
-      <p class="muted-note">${t("Owner and admin accounts only.")}</p>
+      <p class="muted-note">${t("For the restaurant Owner only.")}</p>
       <label class="signin-field"><span>${t("Username")}</span>
         <input id="liveUser" autocomplete="username" autocapitalize="none" spellcheck="false" value="${escapeHtml(liveUi.username)}"></label>
       <label class="signin-field"><span>${t("Password")}</span>
@@ -1766,6 +1725,11 @@ function onSignInSubmit(e: Event): void {
   liveUi.busy = true; liveUi.message = ""; renderSignIn();
   apiSignIn(u, p).then(startLive, (err) => { liveUi.busy = false; liveUi.message = liveMessage(err); renderSignIn(); });
 }
+
+document.addEventListener("submit", (e) => {
+  const form = e.target as HTMLFormElement;
+  if (form.id === "adminForm") { e.preventDefault(); adminsSubmit(form, t); }
+});
 
 if (isLive) {
   document.addEventListener("submit", onSignInSubmit);
