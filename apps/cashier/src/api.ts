@@ -217,3 +217,65 @@ export async function sendToKitchen(order: PendingOrder): Promise<void> {
 export async function cancelOrder(order: PendingOrder): Promise<void> {
   await api(`/orders/${encodeURIComponent(order.id)}/cancel`, { method: 'POST' });
 }
+
+// ───────── table bills (the Waiter app's floor) ─────────
+
+/** BILL = the waiter pressed "request bill"; other non-FREE statuses are open tables. */
+export interface FloorTable {
+  id: string;
+  name: string;
+  status: string;
+  order?: {
+    id: string;
+    orderNumber: string;
+    guests: number;
+    openedAt: string;
+    total: number;
+    due: number;
+    waiterName: string | null;
+    billRequestedAt: string | null;
+  };
+}
+
+export interface CheckLine {
+  id: string;
+  menuItemId: string;
+  name: string;
+  quantity: number;
+  total: number;
+  state: string;
+}
+
+export interface Check {
+  id: string;
+  orderNumber: string;
+  tableName: string | null;
+  waiterName: string | null;
+  billRequestedAt: string | null;
+  orderStatus: string;
+  total: number;
+  vat: number;
+  paid: number;
+  due: number;
+  receiptNo: string | null;
+  lines: CheckLine[];
+}
+
+export async function loadFloor(): Promise<FloorTable[]> {
+  return (await api<{ tables: FloorTable[] }>('/floor')).tables;
+}
+
+export async function loadCheck(orderId: string): Promise<Check> {
+  return api<Check>(`/floor/orders/${encodeURIComponent(orderId)}`);
+}
+
+/** Pay what the table owes. The key makes a retry on a bad connection safe: it never charges twice. */
+export async function payCheck(
+  orderId: string, method: PayMethod, amount: number, key: string, reference?: string, tendered?: number,
+): Promise<Check> {
+  return api<Check>(`/floor/orders/${encodeURIComponent(orderId)}/payments`, {
+    method: 'POST',
+    headers: { 'Idempotency-Key': key },
+    body: JSON.stringify([{ method, amount, reference: reference || null, tendered: tendered ?? null }]),
+  });
+}
