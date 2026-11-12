@@ -1,5 +1,5 @@
 /* =========================================================
-   Domain types for Bistro Ledger v3.
+   Domain types for SEER v3.
    The first block is the specification, unchanged; the second
    extends it for purchasing, custom expenses, approval and auditing.
    This app is for BUYING only: no sales are recorded here.

@@ -1,5 +1,5 @@
 /* =========================================================
-   Connection to the Eirsha Ops backend.
+   Connection to the SEER backend.
 
    VITE_API_URL set   → sign in with a real account; the books show the real
                         sales, bills, payroll and money, and every bill,
@@ -19,7 +19,7 @@ export class ApiError extends Error {
   constructor(message: string, readonly status: number) { super(message); }
 }
 
-const KEY = "eirsha.finance.session";
+const KEY = "seer.finance.session";
 let session: Session | null = (() => {
   try { return JSON.parse(localStorage.getItem(KEY) ?? "null") as Session | null; } catch { return null; }
 })();

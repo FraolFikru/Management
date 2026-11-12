@@ -1,5 +1,5 @@
 /* =========================================================
-   Connection to the Eirsha Ops backend.
+   Connection to the SEER backend.
 
    VITE_API_URL set   → sign in with an owner or admin account; every figure
                         comes from the real books, and budgets are saved.
@@ -18,7 +18,7 @@ export class ApiError extends Error {
   constructor(message: string, readonly status: number) { super(message); }
 }
 
-const KEY = "eirsha.owner.session";
+const KEY = "seer.owner.session";
 let session: Session | null = (() => {
   try { return JSON.parse(localStorage.getItem(KEY) ?? "null") as Session | null; } catch { return null; }
 })();

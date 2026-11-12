@@ -12,7 +12,7 @@
      POST {api}/kds/tickets/{id}/bump     { at, by }
      POST {api}/kds/tickets/{id}/recall   { at, by }
    Each request carries an Idempotency-Key so a retry never applies twice.
-   Auth (Eirsha Ops): Authorization: Bearer <token> on REST, ?token= on the
+   Auth (SEER): Authorization: Bearer <token> on REST, ?token= on the
    WebSocket (browsers cannot set WebSocket headers).
    The server echoes the result as an "upsert" to every screen in the branch.
    ========================================================= */

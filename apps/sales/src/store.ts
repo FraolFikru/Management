@@ -24,7 +24,7 @@ interface Prefs {
   userId: string | null;
 }
 
-const PREFS_KEY = "bistro-ledger-v3";
+const PREFS_KEY = "seer-ledger-v3";
 
 function loadPrefs(): Prefs {
   const fallback: Prefs = { lang: "en", theme: "dark", userId: "u-hanna" };

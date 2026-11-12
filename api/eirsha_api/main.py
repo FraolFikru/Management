@@ -38,10 +38,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="SEER API", version="1.0.0", lifespan=lifespan)
 # Which websites may call the API from a browser. Auth is a Bearer token, not cookies.
-# Built in, so a hand-edited Render variable can't drop an app: the eight eirsha-* Vercel
+# Built in, so a hand-edited Render variable can't drop an app: the seer-* Vercel
 # projects, every deployment of the team's Vercel account (…-f-27f3.vercel.app) and localhost.
 # EIRSHA_CORS (exact addresses) and EIRSHA_CORS_REGEX can add more.
-BUILT_IN_ORIGINS = (r"https://eirsha-(demo|cashier|kds|sales|manager|finance|hr|admin|owner|waiter)\.vercel\.app"
+BUILT_IN_ORIGINS = (r"https://(eirsha|seer)-(demo|cashier|kds|sales|manager|finance|hr|admin|owner|waiter)\.vercel\.app"
                     r"|https://[a-z0-9-]+-f-27f3\.vercel\.app"
                     r"|http://(localhost|127\.0\.0\.1):\d+")
 _extra = os.environ.get("EIRSHA_CORS_REGEX", "").strip().lstrip("^").rstrip("$")

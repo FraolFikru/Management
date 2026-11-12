@@ -27,17 +27,17 @@ export type Sheet =
   | { kind: "setup"; count: string; name: string; error: string; busy: boolean };
 
 interface Prefs { lang: Lang; dark: boolean; filter: Filter }
-const prefs = api.cache.read<Prefs>("eirsha.waiter.prefs") ?? { lang: "en", dark: false, filter: "mine" };
+const prefs = api.cache.read<Prefs>("seer.waiter.prefs") ?? { lang: "en", dark: false, filter: "mine" };
 
 export const state = {
   lang: prefs.lang,
   dark: prefs.dark,
   filter: prefs.filter as Filter,
   search: "",
-  floor: api.cache.read<Floor>("eirsha.waiter.floor"),
+  floor: api.cache.read<Floor>("seer.waiter.floor"),
   floorError: "",
   loading: false,
-  menu: api.cache.read<Menu>("eirsha.waiter.menu"),
+  menu: api.cache.read<Menu>("seer.waiter.menu"),
   branches: [] as { id: string; name: string }[],
   /** floor, or one table's check */
   orderId: null as string | null,
@@ -55,14 +55,14 @@ export const state = {
 
 export const orders: Record<string, Order> = {};
 /** picked, not yet saved */
-export const drafts: Record<string, Draft[]> = api.cache.read("eirsha.waiter.drafts") ?? {};
+export const drafts: Record<string, Draft[]> = api.cache.read("seer.waiter.drafts") ?? {};
 /** saved by the waiter, still on their way to the server */
-export const sending: Record<string, Draft[]> = api.cache.read("eirsha.waiter.sending") ?? {};
+export const sending: Record<string, Draft[]> = api.cache.read("seer.waiter.sending") ?? {};
 
 let render: () => void = () => {};
 export function onChange(fn: () => void): void { render = fn; }
-const persist = (): void => { api.cache.write("eirsha.waiter.drafts", drafts); api.cache.write("eirsha.waiter.sending", sending); };
-export function savePrefs(): void { api.cache.write("eirsha.waiter.prefs", { lang: state.lang, dark: state.dark, filter: state.filter }); }
+const persist = (): void => { api.cache.write("seer.waiter.drafts", drafts); api.cache.write("seer.waiter.sending", sending); };
+export function savePrefs(): void { api.cache.write("seer.waiter.prefs", { lang: state.lang, dark: state.dark, filter: state.filter }); }
 
 const newId = (p: string): string => `${p}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 export const me = () => state.floor?.me ?? null;
@@ -100,7 +100,7 @@ export async function loadFloor(): Promise<void> {
     state.floor = f;
     state.floorError = "";
     state.offline = false;
-    api.cache.write("eirsha.waiter.floor", f);
+    api.cache.write("seer.waiter.floor", f);
   } catch (err) {
     if (err instanceof api.Offline) state.offline = true;
     else if (err instanceof api.ApiError && err.status === 403) state.floorError = "no-access";
@@ -115,7 +115,7 @@ export async function loadFloor(): Promise<void> {
 export async function loadMenu(): Promise<void> {
   try {
     state.menu = await api.getMenu();
-    api.cache.write("eirsha.waiter.menu", state.menu);
+    api.cache.write("seer.waiter.menu", state.menu);
     render();
   } catch { /* keep the menu saved on the phone */ }
 }

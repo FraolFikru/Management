@@ -1,5 +1,5 @@
 /* =========================================================
-   Live mode: the dashboard filled from the Eirsha Ops backend.
+   Live mode: the dashboard filled from the SEER backend.
    The figures in data.ts are replaced in place, so every page
    reads the real numbers without knowing where they came from.
    ========================================================= */

@@ -490,7 +490,7 @@ export const UI_STRINGS: Record<string, Entry> = {
   "Decision history": { am: "የውሳኔ ታሪክ", om: "Seenaa murtii" },
   "Who approved or rejected, and when": { am: "ማን አጸደቀ ወይም ውድቅ አደረገ፣ መቼ", om: "Eenyu raggaasise ykn dide, yoom" },
   "now low stock": { am: "አሁን ዝቅተኛ ክምችት", om: "amma kuusaa gadi aanaa" },
-  /* live mode (Eirsha Ops backend) */
+  /* live mode (SEER backend) */
   "Branch manager": { am: "የቅርንጫፍ ሥራ አስኪያጅ", om: "Hoogganaa damee" },
   "Every approval, rejection and log is stamped with the person signed in.": { am: "እያንዳንዱ ማጽደቅ፣ ውድቅ ማድረግ እና መዝገብ በገባው ሰው ስም ይመዘገባል።", om: "Raggaasisni, didiinsi fi galmeen hundi maqaa nama seeneen galmaa'a." },
   Username: { am: "የተጠቃሚ ስም", om: "Maqaa fayyadamaa" },

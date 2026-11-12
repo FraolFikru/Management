@@ -17,7 +17,7 @@ export const UI_STRINGS: Record<string, Entry> = {
   "HR & staff": { am: "የሰው ኃይል እና ሠራተኞች", om: "Humna namaa fi hojjettoota" },
   "Owner dashboard": { am: "የባለቤት ዳሽቦርድ", om: "Daashboordii abbaa qabeenyaa" },
 
-  /* live mode (Eirsha Ops backend) */
+  /* live mode (SEER backend) */
   "Sign in to System admin": { am: "ወደ ሲስተም አስተዳደር ይግቡ", om: "Bulchiinsa sirnaatti seeni" },
   Username: { am: "የተጠቃሚ ስም", om: "Maqaa fayyadamaa" },
   Password: { am: "የይለፍ ቃል", om: "Jecha icciitii" },

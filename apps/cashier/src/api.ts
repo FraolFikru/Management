@@ -1,7 +1,7 @@
 /* ─────────────────────────────────────────────────────────────
-   Connection to the Eirsha Ops backend.
+   Connection to the SEER backend.
 
-   Set VITE_API_URL (e.g. https://eirsha-api.onrender.com) to go live:
+   Set VITE_API_URL (e.g. https://seer-api.onrender.com) to go live:
    sign-in, menu and prices come from the backend, and every charged order
    is saved, sent to the kitchen display, and counted in Finance.
    Leave it empty to run the built-in demo (nothing is saved).
@@ -34,7 +34,7 @@ export class ApiError extends Error {
   }
 }
 
-const KEY = 'eirsha.cashier.session';
+const KEY = 'seer.cashier.session';
 
 function load(): Session | null {
   try {

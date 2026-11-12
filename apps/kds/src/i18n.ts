@@ -4,7 +4,7 @@
      missing translation falls back to readable English.
    - Catalog names: tk(key), resolved from a registry that the
      catalog fills with LocalizedText (dishes, modifiers, stations).
-   Same pattern as the other Restaurant Owner OS modules.
+   Same pattern as the other SEER modules.
    ========================================================= */
 
 import type { LocalizedText, SupportedLanguage } from "./types";

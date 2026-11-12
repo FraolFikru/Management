@@ -750,7 +750,7 @@ export const UI_STRINGS: Record<string, Entry> = {
   "{n} staff · avg {x}": { am: "{n} ሰራተኞች · አማካይ {x}", om: "hojjettoota {n} · giddugala {x}" },
   "{n} void incidents": { am: "{n} የመሰረዝ ክስተቶች", om: "taatee haquu {n}" },
   "{type} logged for {name} · by {by}": { am: "{type} ለ{name} ተመዝግቧል · በ{by}", om: "{type} {name}f galmaa'eera · {by}n" },
-  /* live mode (Eirsha Ops backend) */
+  /* live mode (SEER backend) */
   "HR & staff": { am: "የሰው ሀብት እና ሰራተኞች", om: "Humna namaa fi hojjettoota" },
   "Every change to staff, shifts, attendance and payroll is stamped with the person signed in.": { am: "በሰራተኞች፣ በፈረቃ፣ በመገኘት እና በደመወዝ ላይ የሚደረግ እያንዳንዱ ለውጥ በገባው ሰው ስም ይመዘገባል።", om: "Jijjiiramni hojjettoota, shiftii, argamuu fi mindaa irratti godhamu hundi maqaa nama seeneen galmaa'a." },
   Username: { am: "የተጠቃሚ ስም", om: "Maqaa fayyadamaa" },

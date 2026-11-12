@@ -994,7 +994,7 @@ export const UI_STRINGS: Record<string, Entry> = {
   "{x} overdue": { am: "{x} ጊዜው ያለፈ", om: "{x} yeroon darbe" },
   "{x} withheld": { am: "{x} ተቀንሷል", om: "{x} qabame" },
   "{x} withheld for tax": { am: "{x} ለግብር ተቀንሷል", om: "{x} gibiraaf qabame" },
-  /* live mode (Eirsha Ops backend) */
+  /* live mode (SEER backend) */
   "Every bill, payment, filing and reconciliation is stamped with the person signed in.": { am: "እያንዳንዱ ደረሰኝ፣ ክፍያ፣ የግብር ማስታወቂያ እና ማስታረቅ በገባው ሰው ስም ይመዘገባል።", om: "Nagahee, kaffaltii, ibsa gibiraa fi walsimsiisni hundi maqaa nama seeneen galmaa'a." },
   Username: { am: "የተጠቃሚ ስም", om: "Maqaa fayyadamaa" },
   Password: { am: "የይለፍ ቃል", om: "Jecha icciitii" },

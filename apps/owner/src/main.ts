@@ -78,7 +78,7 @@ const DEFAULTS: Settings = {
   budgetWarn: 90,
 };
 
-const STORE_KEY = "bistro-settings";
+const STORE_KEY = "seer-settings";
 const RANGES: Range[] = ["Daily", "Weekly", "Monthly"];
 const PAYMENTS: PaymentMethod[] = ["telebirr", "cash", "cbe"];
 
@@ -88,7 +88,7 @@ function loadSettings(): Settings {
     const raw = localStorage.getItem(STORE_KEY);
     if (raw) s = { ...DEFAULTS, ...(JSON.parse(raw) as Partial<Settings>) };
     else {
-      const legacy = localStorage.getItem("bistro-theme"); // from the previous version
+      const legacy = localStorage.getItem("seer-theme"); // from the previous version
       if (legacy === "light" || legacy === "dark") s.theme = legacy;
     }
   } catch {

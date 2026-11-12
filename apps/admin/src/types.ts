@@ -15,7 +15,7 @@ export interface LocalizedText {
 export type ViewId = "store" | "branches" | "access" | "receipt" | "audit";
 
 export type UserRole = "ADMIN" | "BRANCH_MANAGER" | "SALES_STAFF" | "KITCHEN_STAFF" | "INVENTORY_CLERK"
-  /** added with the Eirsha Ops backend: office roles across all branches */
+  /** added with the SEER backend: office roles across all branches */
   | "ACCOUNTANT" | "HR_OFFICER" | "OWNER"
   /** added with table service: takes tables in the Waiter app */
   | "WAITER";

@@ -39,7 +39,7 @@ export interface KDSTicket {
   /** Server snapshot only. The UI always recomputes elapsed time from createdAt. */
   elapsedMinutes: number;
   submittedBy: string; // Sales Staff ID / Name
-  submittedByName?: string; // display name sent by the Eirsha Ops backend
+  submittedByName?: string; // display name sent by the SEER backend
 }
 
 /* ---------- 2. Extensions ---------- */

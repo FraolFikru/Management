@@ -1,5 +1,5 @@
 /* =========================================================
-   Sign-in for live mode (Eirsha Ops backend).
+   Sign-in for live mode (SEER backend).
    The kitchen signs in once per screen; the session survives reloads.
    Access tokens last 15 minutes and are refreshed automatically.
    ========================================================= */
@@ -9,7 +9,7 @@ import { t } from "./i18n";
 export interface KdsUser { id: string; name: string; role: string; branchId: string }
 interface Session { accessToken: string; refreshToken: string; user: KdsUser }
 
-const KEY = "eirsha.kds.session";
+const KEY = "seer.kds.session";
 let session: Session | null = (() => {
   try { return JSON.parse(localStorage.getItem(KEY) ?? "null") as Session | null; } catch { return null; }
 })();

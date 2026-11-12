@@ -1,5 +1,5 @@
 /* =========================================================
-   Connection to the Eirsha Ops backend.
+   Connection to the SEER backend.
 
    Reads go straight to the server. Writes go through a small
    queue kept on the phone: when the network drops on the floor
@@ -24,7 +24,7 @@ export class Offline extends Error {
   constructor(message: string, readonly serverError = false) { super(message); }
 }
 
-const KEY = "eirsha.waiter.session";
+const KEY = "seer.waiter.session";
 const read = <T>(k: string): T | null => { try { const v = localStorage.getItem(k); return v ? (JSON.parse(v) as T) : null; } catch { return null; } };
 const write = (k: string, v: unknown): void => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } };
 
@@ -123,7 +123,7 @@ export interface Action {
   label: string;
 }
 
-const QKEY = "eirsha.waiter.queue";
+const QKEY = "seer.waiter.queue";
 let queue: Action[] = read<Action[]>(QKEY) ?? [];
 let running = false;
 let timer: number | undefined;

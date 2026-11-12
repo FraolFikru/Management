@@ -1,6 +1,6 @@
 /* =========================================================
    Generated sample purchasing history (~8 weeks, relative to today)
-   for Bistro Addis. Deterministic, so numbers are stable on reload.
+   for SEER. Deterministic, so numbers are stable on reload.
    Every record is stamped with the staff member who made it,
    and each one has a matching audit entry.
    ========================================================= */

@@ -43,7 +43,7 @@ function emp(id: string, fullName: string, role: EmployeeProfile["role"], phone:
   const first = fullName.split(" ")[0].toLowerCase();
   return {
     id, fullName, role, phone, hourlyRate: hourly, monthlySalary: monthly, branchId, status: "ACTIVE",
-    email: `${first}@bistroaddis.et`, hireDate: "2024-03-01", payType, ...extra,
+    email: `${first}@seer.et`, hireDate: "2024-03-01", payType, ...extra,
   };
 }
 

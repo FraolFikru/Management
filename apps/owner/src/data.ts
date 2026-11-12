@@ -43,7 +43,7 @@ export interface Stat {
 
 export const user = {   // live mode: the signed-in owner
   name: "Abebe Kebede",
-  email: "owner@bistroaddis.com",
+  email: "owner@seer.et",
   restaurant: "SEER",
 };
 

@@ -55,7 +55,7 @@ function stop(): void {
   stopLive?.(); stopLive = null;
   window.clearInterval(poll);
   state.floor = null; state.orderId = null; state.sheet = null; state.branches = [];
-  api.cache.write("eirsha.waiter.floor", null);
+  api.cache.write("seer.waiter.floor", null);
 }
 api.onSessionLost(() => { stop(); render(); });
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && api.sessionUser()) { S.refreshSoon(); void api.drain(); } });

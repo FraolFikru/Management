@@ -15,7 +15,7 @@ export const LANGS: { code: Lang; short: string; name: string }[] = [
 type Entry = { am: string; om: string };
 
 const dict: Record<string, Entry> = {
-  /* live mode (Eirsha Ops backend) */
+  /* live mode (SEER backend) */
   "Sign in": { am: "ግባ", om: "Seeni" },
   "Sign out": { am: "ውጣ", om: "Ba'i" },
   "Username": { am: "የተጠቃሚ ስም", om: "Maqaa fayyadamaa" },
