@@ -221,7 +221,7 @@ export const TAG_IDS = Object.keys(EXPENSE_TAGS) as ExpenseTag[];
 /* ---------- roles, permissions, staff ---------- */
 
 export const ROLES = reg<Role>("role", {
-  SALES_STAFF: L("Sales staff", "የሽያጭ ሰራተኛ", "Hojjetaa gurgurtaa"),
+  SALES_STAFF: L("Cashier", "ገንዘብ ተቀባይ", "Kaffaltii fudhataa"),
   INVENTORY_CLERK: L("Inventory clerk", "የክምችት ባለሙያ", "Ogeessa kuusaa"),
   MANAGER: L("Manager", "ሥራ አስኪያጅ", "Hoji gaggeessaa"),
   ADMIN: L("System Admin", "የሲስተም አስተዳዳሪ", "Bulchaa sirnaa"),

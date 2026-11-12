@@ -20,7 +20,7 @@ function reg<K extends string>(prefix: string, map: Record<K, LocalizedText>): R
 
 export const ROLES = reg<UserRole>("role", {
   BRANCH_MANAGER: L("Branch Manager", "የቅርንጫፍ ሥራ አስኪያጅ", "Hoji Gaggeessaa Damee"),
-  SALES_STAFF: L("Sales Staff", "የሽያጭ ሰራተኛ", "Hojjetaa Gurgurtaa"),
+  SALES_STAFF: L("Cashier", "ገንዘብ ተቀባይ", "Kaffaltii fudhataa"),
   KITCHEN_STAFF: L("Kitchen Crew", "የወጥ ቤት ሰራተኛ", "Hojjetaa Kushinaa"),
   INVENTORY_CLERK: L("Inventory Clerk", "የክምችት ባለሙያ", "Ogeessa Kuusaa"),
   ADMIN: L("System Admin", "የሲስተም አስተዳዳሪ", "Bulchaa sirnaa"),

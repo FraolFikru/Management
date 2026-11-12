@@ -19,7 +19,7 @@ export const VAT_RATE = 15;
 export const ROLES = reg<UserRole>("role", {
   ADMIN: { en: "System Admin", am: "የሲስተም አስተዳዳሪ", om: "Bulchaa sirnaa" },
   BRANCH_MANAGER: { en: "Branch Manager", am: "የቅርንጫፍ ሥራ አስኪያጅ", om: "Hoji-gaggeessaa Damee" },
-  SALES_STAFF: { en: "Sales Staff", am: "የሽያጭ ሰራተኛ", om: "Hojjetaa Gurgurtaa" },
+  SALES_STAFF: { en: "Cashier", am: "ገንዘብ ተቀባይ", om: "Kaffaltii fudhataa" },
   WAITER: { en: "Waiter", am: "አስተናጋጅ", om: "Keessummeessaa" },
   KITCHEN_STAFF: { en: "Kitchen Staff", am: "የወጥ ቤት ሰራተኛ", om: "Hojjetaa Kushinaa" },
   INVENTORY_CLERK: { en: "Inventory Clerk", am: "የንብረት ጸሐፊ", om: "Barreessaa Kuusaa" },
@@ -33,7 +33,7 @@ export const ROLE_IDS = Object.keys(ROLES) as UserRole[];
 export const ROLE_APPS: Record<UserRole, string> = {
   ADMIN: "All apps",
   BRANCH_MANAGER: "Manager · Cashier · Waiter · Kitchen display",
-  SALES_STAFF: "Cashier · takes table payments",
+  SALES_STAFF: "Cashier app · takes table payments",
   WAITER: "Waiter app (tables, no cash)",
   KITCHEN_STAFF: "Kitchen display",
   INVENTORY_CLERK: "Purchases & stock",
@@ -70,14 +70,14 @@ export const PERMISSIONS: readonly PermissionMeta[] = [
 export const RESTRICTED: readonly PermissionKey[] = ["canViewReports", "canLogExpenses", "canEditPrices", "canOverrideInventory"];
 /** Roles that may hold RESTRICTED permissions (besides Admin). */
 const TRUSTED: readonly UserRole[] = ["BRANCH_MANAGER", "ACCOUNTANT", "OWNER"];
-/** What Sales Staff may ever have. */
+/** What a Cashier may ever have. */
 export const SALES_ALLOWED: readonly PermissionKey[] = ["canMakeSales", "canRequestDispatch"];
 
 /** Why a cell cannot be changed, or null when it can. The value of a locked cell is fixed (see lockedValue). */
 export function lockReason(role: UserRole, key: PermissionKey): string | null {
   if (role === "ADMIN") return "Admins always have every permission.";
   if (key === "canAccessAdmin") return "Only the Owner and System Admins can open System admin.";
-  if (role === "SALES_STAFF" && !SALES_ALLOWED.includes(key)) return "Sales Staff can only make sales and request dispatch.";
+  if (role === "SALES_STAFF" && !SALES_ALLOWED.includes(key)) return "Cashiers can only make sales and request dispatch.";
   if (RESTRICTED.includes(key) && !TRUSTED.includes(role)) return "Only Branch Managers, Accountants, Owners and Admins.";
   return null;
 }

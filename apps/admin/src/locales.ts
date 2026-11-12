@@ -425,7 +425,7 @@ export const UI_STRINGS: Record<string, Entry> = {
   "Reporting Staff ID": { am: "ሪፖርት ያደረገው ሰራተኛ መለያ", om: "Eenyummaa hojjetaa gabaasee" },
   "Requested Quantity": { am: "የተጠየቀ መጠን", om: "Hanga gaafatame" },
   "Requested by": { am: "የጠየቀው", om: "Kan gaafate" },
-  "Sales Staff ID": { am: "የሽያጭ ሰራተኛ መለያ", om: "Eenyummaa hojjetaa gurgurtaa" },
+  "Cashier ID": { am: "የገንዘብ ተቀባይ መለያ", om: "Eenyummaa kaffaltii fudhataa" },
   "Sales dispatch approval queue": { am: "የሽያጭ ማስተላለፍ ማጽደቂያ ወረፋ", om: "Tarree raggaasisa ergaa gurgurtaa" },
   "Sales overview": { am: "የሽያጭ አጠቃላይ እይታ", om: "Ilaalcha gurgurtaa" },
   "Sales − COGS − waste − expenses": { am: "ሽያጭ − የግብዓት ወጪ − ብክነት − ወጪዎች", om: "Gurgurtaa − COGS − badiinsa − baasii" },
@@ -1021,6 +1021,7 @@ export const UI_STRINGS: Record<string, Entry> = {
   /* table service (Waiter app) */
   "Manager · Cashier · Waiter · Kitchen display": { am: "ሥራ አስኪያጅ · ገንዘብ ተቀባይ · አስተናጋጅ · የወጥ ቤት ማሳያ", om: "Hoogganaa · Kaffaltii fudhataa · Keessummeessaa · Agarsiisa kushinaa" },
   "Cashier · takes table payments": { am: "ገንዘብ ተቀባይ · የጠረጴዛ ክፍያ ይቀበላል", om: "Kaffaltii fudhataa · kaffaltii minjaalaa fudhata" },
+  "Cashier app · takes table payments": { am: "የገንዘብ ተቀባይ መተግበሪያ · የጠረጴዛ ክፍያ ይቀበላል", om: "Appii kaffaltii fudhataa · kaffaltii minjaalaa fudhata" },
   "Waiter app (tables, no cash)": { am: "የአስተናጋጅ መተግበሪያ (ጠረጴዛዎች፣ ጥሬ ገንዘብ የለም)", om: "Appii keessummeessaa (minjaalota, maallaqa callaa malee)" },
   "Waiter app PIN (4–6 digits)": { am: "የአስተናጋጅ መተግበሪያ ፒን (4–6 አሃዝ)", om: "PIN appii keessummeessaa (lakkoofsa 4–6)" },
   "New Waiter app PIN (leave empty to keep the current one)": { am: "አዲስ የአስተናጋጅ መተግበሪያ ፒን (ያለውን ለማቆየት ባዶ ይተዉ)", om: "PIN haaraa appii keessummeessaa (kan jiru eeguuf duwwaa dhiisi)" },

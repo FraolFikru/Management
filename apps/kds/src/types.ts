@@ -38,7 +38,7 @@ export interface KDSTicket {
   createdAt: string; // ISO Timestamp
   /** Server snapshot only. The UI always recomputes elapsed time from createdAt. */
   elapsedMinutes: number;
-  submittedBy: string; // Sales Staff ID / Name
+  submittedBy: string; // Cashier ID / Name
   submittedByName?: string; // display name sent by the SEER backend
 }
 

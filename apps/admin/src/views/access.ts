@@ -75,7 +75,7 @@ export function renderAccess(): string {
     </section>
     <section class="card" aria-labelledby="pmTitle">
       <div class="card-head"><div><h2 id="pmTitle">${t("Permissions by role")}</h2>
-        <p>${t("Sales Staff can only make sales and request dispatch. Reports, expenses, prices and stock overrides are for Branch Managers and Admins.")}</p></div>
+        <p>${t("Cashiers can only make sales and request dispatch. Reports, expenses, prices and stock overrides are for Branch Managers and Admins.")}</p></div>
         <span class="legend"><span>${icon("lock")} ${t("Fixed by policy")}</span></span></div>
       ${matrix()}
     </section>`;

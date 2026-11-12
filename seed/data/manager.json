@@ -653,9 +653,9 @@
    "om": "Hoji Gaggeessaa Damee"
   },
   "role.SALES_STAFF": {
-   "en": "Sales Staff",
-   "am": "የሽያጭ ሰራተኛ",
-   "om": "Hojjetaa Gurgurtaa"
+   "en": "Cashier",
+   "am": "ገንዘብ ተቀባይ",
+   "om": "Kaffaltii fudhataa"
   },
   "role.INVENTORY_CLERK": {
    "en": "Inventory Clerk",
@@ -1935,9 +1935,9 @@
    "om": "Hoji Gaggeessaa Damee"
   },
   "SALES_STAFF": {
-   "en": "Sales Staff",
-   "am": "የሽያጭ ሰራተኛ",
-   "om": "Hojjetaa Gurgurtaa"
+   "en": "Cashier",
+   "am": "ገንዘብ ተቀባይ",
+   "om": "Kaffaltii fudhataa"
   },
   "INVENTORY_CLERK": {
    "en": "Inventory Clerk",

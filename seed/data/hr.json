@@ -8,9 +8,9 @@
    "om": "Hoji Gaggeessaa Damee"
   },
   "role.SALES_STAFF": {
-   "en": "Sales Staff",
-   "am": "የሽያጭ ሰራተኛ",
-   "om": "Hojjetaa Gurgurtaa"
+   "en": "Cashier",
+   "am": "ገንዘብ ተቀባይ",
+   "om": "Kaffaltii fudhataa"
   },
   "role.KITCHEN_STAFF": {
    "en": "Kitchen Crew",
@@ -224,9 +224,9 @@
    "om": "Hoji Gaggeessaa Damee"
   },
   "SALES_STAFF": {
-   "en": "Sales Staff",
-   "am": "የሽያጭ ሰራተኛ",
-   "om": "Hojjetaa Gurgurtaa"
+   "en": "Cashier",
+   "am": "ገንዘብ ተቀባይ",
+   "om": "Kaffaltii fudhataa"
   },
   "KITCHEN_STAFF": {
    "en": "Kitchen Crew",

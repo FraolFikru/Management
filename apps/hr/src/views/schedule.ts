@@ -71,7 +71,7 @@ export function renderSchedule(): string {
         <span class="trash-drop" data-drop-remove="1">${icon("trash")} ${t("Drop here to remove")}</span>
       </div>
       <div class="planner-meta">
-        ${seg("plan-group", group, [["ALL", t("All")], ["SALES", t("Sales")], ["KITCHEN", t("Kitchen")], ["OTHER", t("Management & stock")]], t("Show"), "small")}
+        ${seg("plan-group", group, [["ALL", t("All")], ["SALES", t("Cashiers")], ["KITCHEN", t("Kitchen")], ["OTHER", t("Management & stock")]], t("Show"), "small")}
         <span class="meta">${t("{h} planned hours", { h: totalHours })}${over ? ` · <strong class="warn-text">${t("{n} over 48 h", { n: over })}</strong>` : ""}</span>
       </div>
     </div>

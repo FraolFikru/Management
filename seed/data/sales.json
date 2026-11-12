@@ -533,9 +533,9 @@
    "om": "Kan biraa"
   },
   "role.SALES_STAFF": {
-   "en": "Sales staff",
-   "am": "የሽያጭ ሰራተኛ",
-   "om": "Hojjetaa gurgurtaa"
+   "en": "Cashier",
+   "am": "ገንዘብ ተቀባይ",
+   "om": "Kaffaltii fudhataa"
   },
   "role.INVENTORY_CLERK": {
    "en": "Inventory clerk",
@@ -1481,9 +1481,9 @@
  },
  "ROLES": {
   "SALES_STAFF": {
-   "en": "Sales staff",
-   "am": "የሽያጭ ሰራተኛ",
-   "om": "Hojjetaa gurgurtaa"
+   "en": "Cashier",
+   "am": "ገንዘብ ተቀባይ",
+   "om": "Kaffaltii fudhataa"
   },
   "INVENTORY_CLERK": {
    "en": "Inventory clerk",

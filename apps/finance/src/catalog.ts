@@ -86,7 +86,7 @@ export const ROLE_LABEL: Record<string, LocalizedText> = {
   BRANCH_MANAGER: L("Branch Manager", "የቅርንጫፍ ሥራ አስኪያጅ", "Hoji Gaggeessaa Damee"),
   INVENTORY_CLERK: L("Inventory clerk", "የክምችት ሰራተኛ", "Hojjetaa kuusaa"),
   HR_OFFICER: L("HR officer", "የሰው ሀብት ባለሙያ", "Ogeessa humna namaa"),
-  SALES_STAFF: L("Sales staff", "የሽያጭ ሰራተኛ", "Hojjetaa gurgurtaa"),
+  SALES_STAFF: L("Cashier", "ገንዘብ ተቀባይ", "Kaffaltii fudhataa"),
   CASHIER: L("Cashier", "ገንዘብ ተቀባይ", "Kaffaltii fudhataa"),
   WAITER: L("Waiter", "አስተናጋጅ", "Tajaajilaa"),
   KITCHEN_STAFF: L("Kitchen staff", "የወጥ ቤት ሰራተኛ", "Hojjetaa kushinaa"),
