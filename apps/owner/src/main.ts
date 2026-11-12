@@ -245,7 +245,7 @@ function renderShell(): void {
     <main class="main">
       <header class="topbar">
         <button class="icon-btn menu-btn" id="menuBtn" aria-label="${t("Open menu")}">${icon("menu")}</button>
-        <h1 id="pageTitle"></h1>
+        <div class="title-wrap"><h1 id="pageTitle"></h1>${isLive ? `<span class="live-stamp" id="liveStamp" title="${t("Compared with the same days last month")}"></span>` : ""}</div>
         <div class="topbar-right">
           <label class="search">
             ${icon("search")}
@@ -995,6 +995,7 @@ function renderHelp(): string {
 function renderPage(): void {
   const content = $("#pageContent");
   $("#pageTitle").textContent = t(state.activeNav);
+  stampLive();
 
   switch (state.activeNav) {
     case "Dashboard":
@@ -1144,11 +1145,13 @@ function renderPayment(): void {
 
 /* ---------- counters ---------- */
 
+let quietRedraw = false;
+
 function animateCounters(): void {
   document.querySelectorAll<HTMLElement>("[data-count]").forEach((el) => {
     const target = Number(el.dataset.count);
     const fmt = (v: number): string => (el.dataset.unit === "%" ? `${v.toFixed(1)}%` : money(v));
-    if (motionOff()) {
+    if (motionOff() || quietRedraw) {
       el.textContent = fmt(target);
       return;
     }
@@ -1696,11 +1699,66 @@ function renderSignIn(): void {
 }
 
 let started = false;
+/* ---------- keep the numbers live: every minute, and when the owner comes back to the tab ---------- */
+
+const REFRESH_MS = 60_000;
+const LIVE_PAGES: readonly string[] = ["Dashboard", "Analytics", "Transactions", "Budgets", "Goals", "Investments"];
+let lastLoaded = 0;
+let refreshing = false;
+let redrawWaiting = false;
+
+function stampLive(): void {
+  const el = document.getElementById("liveStamp");
+  if (!el || !lastLoaded) return;
+  const mins = Math.floor((Date.now() - lastLoaded) / 60_000);
+  el.textContent = t("Updated {x}", { x: mins < 1 ? t("just now") : t("{n} min ago", { n: mins }) });
+}
+
+const typing = (): boolean => {
+  const a = document.activeElement as HTMLElement | null;
+  return !!a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.tagName === "SELECT" || a.isContentEditable);
+};
+
+function redraw(): void {
+  if (!LIVE_PAGES.includes(state.activeNav) || document.querySelector("dialog[open], .modal.open")) return;
+  const y = window.scrollY;
+  quietRedraw = true;
+  try { renderPage(); } finally { quietRedraw = false; }
+  window.scrollTo(0, y);
+  stampLive();
+}
+
+async function refreshLive(): Promise<void> {
+  if (!isLive || !started || refreshing || document.hidden || !sessionUser()) return;
+  refreshing = true;
+  try {
+    await loadLive();
+    lastLoaded = Date.now();
+  } catch {
+    return;                       // offline or asleep: keep showing the last numbers
+  } finally {
+    refreshing = false;
+  }
+  if (typing()) redrawWaiting = true;
+  else redraw();
+}
+
+if (isLive) {
+  window.setInterval(() => { void refreshLive(); stampLive(); }, REFRESH_MS);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && Date.now() - lastLoaded > 15_000) void refreshLive();
+  });
+  document.addEventListener("focusout", () => {
+    window.setTimeout(() => { if (redrawWaiting && !typing()) { redrawWaiting = false; redraw(); } }, 0);
+  });
+}
+
 async function startLive(): Promise<void> {
   liveUi.busy = true;
   renderSignIn();
   try {
     await loadLive();
+    lastLoaded = Date.now();
     liveUi.message = "";
     liveUi.busy = false;
     if (started) { renderShell(); applyAppearance(); renderPage(); }

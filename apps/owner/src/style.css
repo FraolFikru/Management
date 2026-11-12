@@ -1017,3 +1017,8 @@ body.sh-open { overflow: hidden; }
   .sh-card { padding: 14px; }
 }
 .sh-nav-heading { margin: 20px 12px 6px; font-size: 11.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+
+/* live data stamp under the page title */
+.title-wrap { display: grid; gap: 2px; min-width: 0; }
+.live-stamp { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+.live-stamp:not(:empty)::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--revenue, #22c55e); box-shadow: 0 0 0 3px color-mix(in srgb, var(--revenue, #22c55e) 25%, transparent); }

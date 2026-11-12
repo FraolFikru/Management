@@ -90,6 +90,8 @@ export interface Bootstrap {
   cashFlow: MonthPoint[];
   daily: { date: string; revenue: number; expenses: number }[];
   weekly: { start: string; revenue: number; expenses: number }[];
+  /** this month so far and the same days of last month (missing on an older backend) */
+  monthToDate?: { days: number; revenue: number; expenses: number; orders: number; today: number; prevRevenue: number; prevExpenses: number };
   paymentMethods: Record<PaymentMethod, {
     id: PaymentMethod; name: string; balance: number; change: number; account: string; spent: number; limit: number; moneyIn: number;
     activity: { label: string; date: string; amount: number }[];

@@ -54,13 +54,20 @@ export async function loadLive(): Promise<void> {
     ...(x.fixed ? { fixed: { committed: x.fixed.committed, paidOn: x.fixed.paidOn ? day(x.fixed.paidOn) : null } } : {}),
   })));
   goals.splice(0, goals.length, ...b.goals.map((g) => ({ ...g, deadline: g.deadline ? day(g.deadline) : null })));
-  // headline cards: the last full month against the one before it
-  const m = new Date().getMonth();
-  const empty: MonthPoint = { month: "", revenue: 0, expenses: 0 };
-  const cur = cashFlow[Math.max(0, m - 1)] ?? empty, prev = m >= 2 ? cashFlow[m - 2] : empty;
+  // headline cards: this month so far against the same days of last month, so today's sales show up
   const before = Object.values(paymentMethods).reduce((s, p) => s + p.balance / (1 + p.change / 100), 0);
   const now = Object.values(paymentMethods).reduce((s, p) => s + p.balance, 0);
   const change = before ? Math.round(((now - before) / Math.abs(before)) * 1000) / 10 : 0;
-  stats.splice(0, stats.length, ...buildStats(cur, prev, change, m === 0 ? "this month" : "last month"));
+  const mtd = b.monthToDate;
+  if (mtd) {
+    const cur: MonthPoint = { month: "", revenue: mtd.revenue, expenses: mtd.expenses };
+    const prev: MonthPoint = { month: "", revenue: mtd.prevRevenue, expenses: mtd.prevExpenses };
+    stats.splice(0, stats.length, ...buildStats(cur, prev, change, "this month so far"));
+  } else {                                   // older backend: the last full month against the one before it
+    const m = new Date().getMonth();
+    const empty: MonthPoint = { month: "", revenue: 0, expenses: 0 };
+    const cur = cashFlow[Math.max(0, m - 1)] ?? empty, prev = m >= 2 ? cashFlow[m - 2] : empty;
+    stats.splice(0, stats.length, ...buildStats(cur, prev, change, m === 0 ? "this month" : "last month"));
+  }
 }
 
