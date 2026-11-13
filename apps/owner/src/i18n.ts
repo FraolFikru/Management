@@ -319,6 +319,14 @@ const dict: Record<string, Entry> = {
     om: "Bu'aa fi jaallatamummaa nyaata hundaa.",
   },
   Generate: { am: "አዘጋጅ", om: "Qopheessi" },
+  "Download CSV": { am: "CSV አውርድ", om: "CSV buufadhu" },
+  "Open in {app}": { am: "በ{app} ይከፈት", om: "{app} keessatti bani" },
+  "Open in the {app} app": { am: "በ{app} መተግበሪያ ውስጥ ይከፈት", om: "Appii {app} keessatti bani" },
+  "Target {x}": { am: "ዒላማ {x}", om: "Galma {x}" },
+  "Peak hour": { am: "የተጨናነቀ ሰዓት", om: "Yeroo iddoo guddaa" },
+  "{n} orders in your busiest hour": { am: "በጣም በተጨናነቀው ሰዓት {n} ትዕዛዞች", om: "Yeroo iddoo guddaa keessan {n} ajajoota" },
+  "Best seller": { am: "ከፍተኛ ሽያጭ", om: "Kan baay'ee gurguramu" },
+  "{n} sold · {x}": { am: "{n} ተሽጧል · {x}", om: "{n} gurguramee · {x}" },
 
   /* settings */
   "Personalize SEER for how you run your restaurant.": {

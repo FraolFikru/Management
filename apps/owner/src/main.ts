@@ -403,25 +403,36 @@ function renderAnalytics(): string {
       <article class="panel">
         <div class="panel-head"><h2>${t("Quick Insights")}</h2></div>
         <div class="insight-list">
-          <div class="report-card">
-            <h3>${t("Average Order Value")}</h3>
-            <strong class="insight-value">${money(420)}</strong>
-            <p>${t("+8% vs last month")}</p>
-          </div>
-          <div class="report-card">
-            <h3>${t("Table Turnover")}</h3>
-            <strong class="insight-value">2.4×</strong>
-            <p>${t("Per table during dinner")}</p>
-          </div>
-          <div class="report-card">
-            <h3>${t("Waste Rate")}</h3>
-            <strong class="insight-value bad">4.1%</strong>
-            <p>${t("Target: under 3%")}</p>
-          </div>
+          ${quickInsightCards()}
         </div>
       </article>
     </div>
   `;
+}
+
+function quickInsightCards(): string {
+  const aov = goals.find((g) => g.title === "Average Order Value");
+  const aovCard = aov ? `
+          <div class="report-card">
+            <h3>${t("Average Order Value")}</h3>
+            <strong class="insight-value">${money(aov.current)}</strong>
+            <p>${t("Target {x}", { x: money(aov.target) })}</p>
+          </div>` : "";
+  const topHour = peakHours.reduce((a, b) => (b.orders > a.orders ? b : a), peakHours[0] ?? { hour: "", orders: 0 });
+  const peakCard = topHour.orders ? `
+          <div class="report-card">
+            <h3>${t("Peak hour")}</h3>
+            <strong class="insight-value">${escapeHtml(topHour.hour)}</strong>
+            <p>${t("{n} orders in your busiest hour", { n: topHour.orders })}</p>
+          </div>` : "";
+  const bestDish = topDishes[0];
+  const dishCard = bestDish ? `
+          <div class="report-card">
+            <h3>${t("Best seller")}</h3>
+            <strong class="insight-value">${escapeHtml(t(bestDish.name))}</strong>
+            <p>${t("{n} sold · {x}", { n: bestDish.sold, x: money(bestDish.revenue) })}</p>
+          </div>` : "";
+  return aovCard + peakCard + dishCard;
 }
 
 /* ---------- Transactions ---------- */
@@ -883,30 +894,70 @@ function renderGoals(): string {
 
 /* ---------- Reports ---------- */
 
-const reports: [string, string][] = [
-  ["Daily Sales Report", "Revenue, orders, average ticket, payment mix for any day."],
-  ["Weekly P&L", "Profit & loss with food cost, labor and overhead breakdown."],
-  ["Monthly Tax Summary", "VAT, withholding and income tax ready for accountant."],
-  ["Inventory Valuation", "Current stock value and variance vs last count."],
-  ["Staff Hours & Cost", "Hours worked, overtime and labor cost % of sales."],
-  ["Menu Performance", "Contribution margin and popularity of every dish."],
+type ReportKey = "daily-sales" | "weekly-pnl" | "monthly-tax" | "inventory" | "staff" | "menu";
+const reports: { key: ReportKey; title: string; desc: string; where?: string }[] = [
+  { key: "daily-sales", title: "Daily Sales Report", desc: "Revenue, orders, average ticket, payment mix for any day." },
+  { key: "weekly-pnl",  title: "Weekly P&L",          desc: "Profit & loss with food cost, labor and overhead breakdown." },
+  { key: "monthly-tax", title: "Monthly Tax Summary", desc: "VAT, withholding and income tax ready for accountant.", where: "Finance" },
+  { key: "inventory",   title: "Inventory Valuation", desc: "Current stock value and variance vs last count.",         where: "Purchasing" },
+  { key: "staff",       title: "Staff Hours & Cost",  desc: "Hours worked, overtime and labor cost % of sales.",       where: "HR" },
+  { key: "menu",        title: "Menu Performance",    desc: "Contribution margin and popularity of every dish." },
 ];
 
 function renderReports(): string {
   return `
     <div class="page-grid">
       ${reports
-        .map(
-          ([title, desc]) => `
+        .map((r) => {
+          const action = r.where
+            ? `<button class="btn" disabled title="${t("Open in the {app} app", { app: r.where })}">${t("Open in {app}", { app: r.where })}</button>`
+            : `<button class="btn" data-report="${r.key}">${t("Download CSV")} ${icon("arrow-right")}</button>`;
+          return `
         <div class="report-card">
-          <h3>${escapeHtml(t(title))}</h3>
-          <p>${escapeHtml(t(desc))}</p>
-          <button class="btn">${t("Generate")} ${icon("arrow-right")}</button>
-        </div>`,
-        )
+          <h3>${escapeHtml(t(r.title))}</h3>
+          <p>${escapeHtml(t(r.desc))}</p>
+          ${action}
+        </div>`;
+        })
         .join("")}
     </div>
   `;
+}
+
+/** Make a CSV file in the browser and trigger a download. */
+function downloadCsv(filename: string, rows: (string | number)[][]): void {
+  const esc = (v: string | number): string => {
+    const s = String(v ?? "");
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const text = rows.map((r) => r.map(esc).join(",")).join("\n");
+  const blob = new Blob(["\ufeff" + text], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.style.display = "none";
+  document.body.append(a); a.click(); a.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function generateReport(key: ReportKey): void {
+  const stamp = new Date().toISOString().slice(0, 10);
+  if (key === "daily-sales") {
+    const live = getLiveSeries();
+    const days = live?.daily ?? [];
+    const rows: (string | number)[][] = [["Date", "Revenue (ex-VAT)", "Expenses"]];
+    for (const d of days) rows.push([d.date, d.revenue, d.expenses]);
+    downloadCsv(`seer-daily-sales-${stamp}.csv`, rows);
+  } else if (key === "weekly-pnl") {
+    const live = getLiveSeries();
+    const weeks = live?.weekly ?? [];
+    const rows: (string | number)[][] = [["Week starting", "Revenue (ex-VAT)", "Expenses", "Profit"]];
+    for (const w of weeks) rows.push([w.start, w.revenue, w.expenses, w.revenue - w.expenses]);
+    downloadCsv(`seer-weekly-pnl-${stamp}.csv`, rows);
+  } else if (key === "menu") {
+    const rows: (string | number)[][] = [["Dish", "Units sold", "Revenue (ETB)", "Share %"]];
+    for (const d of topDishes) rows.push([t(d.name), d.sold, d.revenue, d.pct]);
+    downloadCsv(`seer-menu-performance-${stamp}.csv`, rows);
+  }
 }
 
 /* ---------- Settings ---------- */
@@ -1570,6 +1621,8 @@ function onClick(e: MouseEvent): void {
     state.page++;
     return renderTable();
   }
+  const report = hit("[data-report]");
+  if (report) return generateReport(report.dataset.report as ReportKey);
   if (hit("#resetSettings")) return resetSettings();
   if (hit("#menuBtn")) return void document.body.classList.add("nav-open");
   if (hit("#scrim")) return void document.body.classList.remove("nav-open");
