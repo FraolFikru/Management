@@ -257,6 +257,27 @@ const dict: Record<string, [am: string, om: string]> = {
   "A new PIN or password.": ["አዲስ ፒን ወይም የይለፍ ቃል።", "PIN ykn jecha icciitii haaraa."],
   "Cash payments and the cash drawer — the cashier.": ["የጥሬ ገንዘብ ክፍያዎች እና የገንዘብ መሳቢያው — ገንዘብ ተቀባዩ።", "Kaffaltii callaa fi saanduqa callaa — kaffaltii fudhataa."],
   "Closing the day, stock and reports.": ["ቀኑን መዝጋት፣ ክምችት እና ሪፖርቶች።", "Guyyaa cufuu, kuusaa fi gabaasa."],
+  // Floor plan, waiting list and order review
+  "Add note": ["ማስታወሻ ጨምር", "Yaadannoo dabali"],
+  "Add one {item}": ["አንድ {item} ጨምር", "{item} tokko dabali"],
+  "All tables": ["ሁሉም ጠረጴዛዎች", "Minjaalota hunda"],
+  "Asked for the bill": ["ሂሳብ የጠየቁ", "Herrega gaafatan"],
+  "Course": ["ዙር", "Marsaa"],
+  "Main room": ["ዋና አዳራሽ", "Kutaa ijoo"],
+  "Nothing is waiting": ["የሚጠብቅ ነገር የለም", "Wanti eeggatu hin jiru"],
+  "Open tables show here, with food that is ready and bills on top.": ["ክፍት ጠረጴዛዎች እዚህ ይታያሉ፤ ዝግጁ ምግብ እና ሂሳቦች ከላይ ይሆናሉ።", "Minjaalonni banaa asitti mul'atu; nyaanni qophaa'e fi herregni gubbaa jiraatu."],
+  "Order": ["ትዕዛዝ", "Ajaja"],
+  "Remove one {item}": ["አንድ {item} ቀንስ", "{item} tokko hir'isi"],
+  "Review order": ["ትዕዛዙን ይመልከቱ", "Ajaja ilaali"],
+  "Screens": ["ገጾች", "Fuulota"],
+  "Select a free table": ["ነጻ ጠረጴዛ ይምረጡ", "Minjaala bilisaa filadhu"],
+  "Tables": ["ጠረጴዛዎች", "Minjaalota"],
+  "Tap a free table to start a new order.": ["አዲስ ትዕዛዝ ለመጀመር ነጻ ጠረጴዛ ይንኩ።", "Ajaja haaraa jalqabuuf minjaala bilisaa tuqi."],
+  "Waiting list": ["የመጠባበቂያ ዝርዝር", "Tarree eegumsaa"],
+  "Which tables": ["የትኞቹ ጠረጴዛዎች", "Minjaalota kamfaa"],
+  "{n} in order": ["{n} በትዕዛዝ ውስጥ", "{n} ajaja keessa"],
+  "New order": ["አዲስ ትዕዛዝ", "Ajaja haaraa"],
+  "Table {n}": ["ጠረጴዛ {n}", "Minjaala {n}"],
 };
 
 let lang: Lang = "en";

@@ -14,14 +14,15 @@ const $ = <T extends HTMLElement = HTMLInputElement>(sel: string): T | null => d
 
 function render(): void {
   const scroll = new Map<string, number>();
-  document.querySelectorAll<HTMLElement>("[data-scroll]").forEach((el) => scroll.set(el.dataset.scroll!, el.dataset.scroll === "cats" ? el.scrollLeft : el.scrollTop));
+  const sideways = (k: string): boolean => k === "cats" || k === "areas";
+  document.querySelectorAll<HTMLElement>("[data-scroll]").forEach((el) => scroll.set(el.dataset.scroll!, sideways(el.dataset.scroll!) ? el.scrollLeft : el.scrollTop));
   const active = document.activeElement as HTMLInputElement | null;
   const focusId = active?.id, caret = active && "selectionStart" in active ? active.selectionStart : null;
   document.documentElement.dataset.theme = state.dark ? "dark" : "light";
   app.innerHTML = renderApp();
   document.querySelectorAll<HTMLElement>("[data-scroll]").forEach((el) => {
     const v = scroll.get(el.dataset.scroll!);
-    if (v) { if (el.dataset.scroll === "cats") el.scrollLeft = v; else el.scrollTop = v; }
+    if (v) { if (sideways(el.dataset.scroll!)) el.scrollLeft = v; else el.scrollTop = v; }
   });
   if (focusId) {
     const el = document.getElementById(focusId) as HTMLInputElement | null;
@@ -88,8 +89,7 @@ document.addEventListener("submit", (e) => {
 document.addEventListener("input", (e) => {
   const el = e.target as HTMLInputElement;
   const s = state.sheet;
-  if (el.id === "floorSearch") { state.search = el.value; render(); }
-  else if (el.id === "menuSearch") { state.menuSearch = el.value; render(); }
+  if (el.id === "menuSearch") { state.menuSearch = el.value; render(); }
   else if (el.id === "payAmount" && s?.kind === "pay") s.amount = el.value;
   else if (el.id === "payRef" && s?.kind === "pay") s.reference = el.value;
   else if (el.id === "voidOther" && s?.kind === "void") { s.other = el.value; if (el.value) s.reason = ""; }
@@ -120,16 +120,24 @@ const acts: Record<string, (id: string) => void> = {
   profile: () => { state.sheet = { kind: "profile" }; render(); },
   "sign-out": () => { void api.signOut().then(() => { stop(); render(); }); },
   reload: () => { state.loading = true; state.floorError = ""; render(); void S.loadFloor(); },
-  filter: (id) => { state.filter = id as S.Filter; state.search = ""; S.savePrefs(); render(); },
+  filter: (id) => { state.filter = id as S.Filter; state.picking = false; S.savePrefs(); render(); },
+  view: (id) => { state.view = id as S.View; state.picking = false; state.picked = null; S.savePrefs(); render(); },
+  "new-order": () => { state.view = "tables"; state.picking = true; state.picked = null; render(); },
+  area: (id) => { state.area = id; render(); },
+  "open-picked": () => {
+    const tb = state.picked ? S.tableOf(state.picked) : undefined;
+    if (!tb || tb.order) { state.picked = null; render(); return; }
+    state.sheet = { kind: "guests", tableId: tb.id, guests: Math.min(2, tb.seats || 2) }; render();
+  },
   "sheet-close": () => { syncDraftNote(); state.sheet = null; render(); },
-  back: () => { state.orderId = null; state.sheet = null; render(); S.refreshSoon(); },
+  back: () => { state.orderId = null; state.sheet = null; state.picked = null; state.picking = false; render(); S.refreshSoon(); },
 
   // floor
   table: (id) => {
     const tb = S.tableOf(id);
     if (!tb) return;
-    if (tb.order) S.showOrder(tb.order.id);
-    else { state.sheet = { kind: "guests", tableId: id, guests: 2 }; render(); }
+    if (tb.order) { state.picked = null; state.picking = false; S.showOrder(tb.order.id); }
+    else { state.picked = state.picked === id ? null : id; render(); }        // a free table: choose it, then confirm below
   },
   "table-menu": (id) => { state.sheet = { kind: "table", tableId: id }; render(); },
   "tm-bill": (id) => { const tb = S.tableOf(id); if (tb) S.requestBillFor(tb); },
@@ -142,7 +150,7 @@ const acts: Record<string, (id: string) => void> = {
     if (s?.kind !== "guests") return;
     const o = s.orderId ? S.orders[s.orderId] : null;
     if (o) S.updateCheck(o, { guests: s.guests });
-    else S.openTable(s.tableId, s.guests);
+    else { state.picked = null; state.picking = false; S.openTable(s.tableId, s.guests); }
   },
 
   // order: menu
@@ -261,7 +269,9 @@ document.addEventListener("click", (e) => {
 
 // long-press (or right-click) on a table = its menu
 document.addEventListener("contextmenu", (e) => {
-  const el = (e.target as HTMLElement).closest<HTMLElement>(".tcard");
+  const el = (e.target as HTMLElement).closest<HTMLElement>(".wcard, .tbl");
+  const tb = el?.classList.contains("tbl") ? S.tableOf(el.dataset.id ?? "") : undefined;
+  if (tb?.order && (tb.order.waiterId === S.me()?.id || S.me()?.canManage)) { e.preventDefault(); acts["table-menu"](tb.id); return; }
   const more = el?.querySelector<HTMLElement>(".tmore");
   if (more) { e.preventDefault(); acts["table-menu"](more.dataset.id ?? ""); }
 });
