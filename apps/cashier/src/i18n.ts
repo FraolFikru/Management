@@ -1,5 +1,5 @@
-export type Lang = 'en' | 'am';
-export const LANGS: Lang[] = ['en', 'am'];
+export type Lang = 'en' | 'am' | 'om';
+export const LANGS: Lang[] = ['en', 'am', 'om'];
 
 const en = {
   'app.name': 'SEER · Cashier',
@@ -120,7 +120,7 @@ const am: Record<Key, string> = {
 
   'top.cashier': 'የገባው፦ {name}',
   'top.langSwitch': 'ቋንቋውን ወደ {lang} ቀይር',
-  'top.langShort': 'EN',
+  'top.langShort': 'OM',
   'top.themeToLight': 'ወደ ብሩህ ገጽታ ቀይር',
   'top.themeToDark': 'ወደ ጨለማ ገጽታ ቀይር',
 
@@ -221,13 +221,125 @@ const am: Record<Key, string> = {
   'signin.language': 'ቋንቋ',
 };
 
-const dict: Record<Lang, Record<Key, string>> = { en, am };
-const LANG_NAMES: Record<Lang, string> = { en: 'English', am: 'አማርኛ' };
+const om: Record<Key, string> = {
+  'app.name': 'SEER · Kaffaltii',
+  'app.role': 'Kaffaltii fudhataa',
+  'banner.title': 'Haala agarsiisaa',
+  'banner.text': 'Kaffaltiin hin raawwatamu',
+
+  'top.cashier': 'Akka {name}tti seeneera',
+  'top.langSwitch': 'Afaan gara {lang}tti jijjiiri',
+  'top.langShort': 'EN',
+  'top.themeToLight': 'Bifa ifaa jijjiiri',
+  'top.themeToDark': 'Bifa dukkanaa jijjiiri',
+
+  'menu.label': 'Baafata nyaataa',
+  'menu.search': 'Baafata nyaataa barbaadi',
+  'menu.clearSearch': 'Barbaacha haqi',
+  'menu.categories': 'Gosoota baafata nyaataa',
+  'menu.results': 'Bu’aa “{q}”',
+  'menu.noResults': 'Nyaanni “{q}” wajjin walsimu hin jiru',
+  'menu.addItem': '{item} dabali, {price}',
+  'menu.inOrder': '{n} ajaja keessa',
+
+  'cat.mains': 'Nyaata ijoo',
+  'cat.breakfast': 'Ciree',
+  'cat.drinks': 'Dhugaatii',
+  'cat.sides': 'Dabalataa',
+
+  'order.label': 'Ajaja amma',
+  'order.check': 'Herrega #{n}',
+  'order.dineIn': 'Asitti nyaachuu',
+  'order.takeaway': 'Fudhatanii deemuu',
+  'order.type': 'Gosa ajajaa',
+  'order.table': 'Minjaala',
+  'order.tableN': 'Minjaala {n}',
+  'order.items': 'Meeshaa {n}',
+  'order.item': 'Meeshaa 1',
+  'order.emptyTitle': 'Ammaaf meeshaan hin jiru',
+  'order.emptyHint': 'Jalqabuuf nyaata tuqi',
+  'order.each': '@ {price}',
+  'order.increase': '{item} tokko dabali',
+  'order.decrease': '{item} tokko hir’isi',
+  'order.remove': '{item} ajaja keessaa baasi',
+  'order.qty': 'Baay’ina',
+  'order.added': '{item} dabalameera, {n} ajaja keessa',
+  'order.removed': '{item} baafameera',
+  'order.cleared': 'Ajajni haqameera',
+
+  'totals.subtotal': 'Ida’ama xiqqaa',
+  'totals.vat': 'VAT (15%)',
+  'totals.total': 'Waliigala',
+
+  'action.clear': 'Haqi',
+  'action.clearConfirm': 'Haquuf irra deebi’ii tuqi',
+  'action.charge': '{amount} kaffalchiisi',
+
+  'money': 'Birrii {amount}',
+  'mobile.menu': 'Baafata',
+  'mobile.order': 'Ajaja ({n})',
+
+  'pay.title': 'Kaffaltii',
+  'pay.method': 'Mala kaffaltii',
+  'pay.CASH': 'Callaa',
+  'pay.TELEBIRR': 'Telebirr',
+  'pay.CBE_BIRR': 'CBE Birr',
+  'pay.reference': 'Lakkoofsa daldalaa (Transaction ID)',
+  'pay.referenceHint': 'SMS mirkaneessaa maamilaa irraa',
+  'pay.confirm': '{amount} mirkaneessi',
+  'pay.cancel': 'Dhiisi',
+  'pay.sending': 'Ergaa jira…',
+  'pay.done': 'Ajajni #{n} kaffalamee kushinaatti ergameera',
+  'pay.doneDemo': 'Agarsiisa: ajajni #{n} hin olkaa’amne',
+  'pay.failed': 'Ajaja xumuruun hin danda’amne: {error}',
+  'pay.needRef': 'Lakkoofsa daldalaa galchi',
+
+  'signin.title': 'Seeni',
+  'signin.username': 'Maqaa fayyadamaa',
+  'signin.password': 'Jecha icciitii',
+  'signin.submit': 'Seeni',
+  'signin.wrong': 'Maqaan fayyadamaa ykn jechi icciitii dogoggora',
+  'signin.offline': 'Sarvarii qaqqabuun hin danda’amu. Dammaqaa jiraachuu mala — daqiiqaa tokko booda irra deebi’ii yaali.',
+  'top.signOut': 'Ba’i',
+  'menu.loading': 'Baafata fe’aa jira…',
+  'totals.net': 'VAT dura',
+  'totals.vatIncluded': 'VAT of keessaa qaba (15%)',
+
+  'bills.button': 'Herrega minjaalaa',
+  'bills.title': 'Herrega minjaalaa',
+  'bills.asked': 'Herrega gaafatan',
+  'bills.open': 'Minjaalota banaa biroo',
+  'bills.none': 'Minjaalli kaffaluuf eegu hin jiru.',
+  'bills.table': 'Minjaala {name}',
+  'bills.waiter': 'Tajaajilaa: {name}',
+  'bills.minAgo': 'Daqiiqaa {n} dura',
+  'bills.justNow': 'amma',
+  'bills.back': 'Minjaalota hunda',
+  'bills.close': 'Cufi',
+  'bills.loading': 'Fe’aa jira…',
+  'bills.failed': 'Minjaalota fe’uun hin danda’amne: {error}',
+  'bills.notAsked': 'Tajaajilaan herrega kana ammaaf hin gaafanne. Garuu kaffaltii fudhachuu ni dandeessa.',
+  'bills.paidAlready': 'Duraan kaffalameera',
+  'bills.amountDue': 'Hanga kaffalamuu qabu',
+  'bills.paid': 'Minjaalli {name} kaffaleera · nagahee {receipt}',
+  'bills.count': 'Minjaalli {n} herrega gaafataniiru',
+  'bills.newRequest': 'Minjaalli {name} herrega gaafateera',
+  'pay.received': 'Callaa fudhatame (filannoo)',
+  'pay.change': 'Jijjiirraa: {amount}',
+  'pay.short': 'Kun hanga kaffalamuu qabu gadi',
+  'signin.note': 'Kaffaltii fudhattootaaf, hoggantoota damee fi bulchitoota sirnaatiif.',
+  'signin.busy': 'Seenaa jira…',
+  'signin.language': 'Afaan',
+};
+
+const dict: Record<Lang, Record<Key, string>> = { en, am, om };
+const LANG_NAMES: Record<Lang, string> = { en: 'English', am: 'አማርኛ', om: 'Afaan Oromoo' };
 
 const LANG_KEY = 'seer.cashier.lang';
 function savedLang(): Lang {
   try {
-    return localStorage.getItem(LANG_KEY) === 'am' ? 'am' : 'en';
+    const v = localStorage.getItem(LANG_KEY);
+    return v === 'am' || v === 'om' ? v : 'en';
   } catch {
     return 'en';
   }
@@ -248,6 +360,11 @@ export function setLang(lang: Lang): void {
   } catch {
     /* private mode: this visit only */
   }
+}
+
+/** en → am → om → en, the order the top-bar button steps through. */
+export function nextLang(lang: Lang = current): Lang {
+  return LANGS[(LANGS.indexOf(lang) + 1) % LANGS.length];
 }
 
 export function langName(lang: Lang): string {

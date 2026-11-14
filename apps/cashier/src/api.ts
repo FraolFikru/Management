@@ -135,15 +135,16 @@ const TAB: Record<string, CategoryId> = {
 };
 
 export async function loadMenu(): Promise<MenuItem[]> {
-  const [rows, en, am] = await Promise.all([
+  const [rows, en, am, om] = await Promise.all([
     api<BranchMenuRow[]>('/pos/menu'),
     api<Record<string, string>>('/ref/i18n/en'),
     api<Record<string, string>>('/ref/i18n/am'),
+    api<Record<string, string>>('/ref/i18n/om').catch(() => ({} as Record<string, string>)),
   ]);
   return rows.map((r) => ({
     id: r.menu_item_id,
     category: TAB[r.category_code] ?? 'mains',
-    name: { en: en[r.name_key] ?? r.menu_item_id, am: am[r.name_key] ?? en[r.name_key] ?? r.menu_item_id },
+    name: { en: en[r.name_key] ?? r.menu_item_id, am: am[r.name_key] ?? en[r.name_key] ?? r.menu_item_id, om: om[r.name_key] ?? en[r.name_key] ?? r.menu_item_id },
     price: Number(r.price),                                 // VAT-inclusive, branch price
   }));
 }

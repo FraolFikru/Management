@@ -1,0 +1,72 @@
+/* Free-text translations for Help & support (keys are the English text).
+   The till's own screens use the typed keys in i18n.ts. */
+import { getLang } from './i18n';
+
+const TEXT: Record<string, { am: string; om: string }> = {
+  "This device is offline. Check the Wi-Fi or mobile data.": { am: "ይህ መሣሪያ ከመስመር ውጭ ነው። ዋይፋዩን ወይም የሞባይል ዳታውን ያረጋግጡ።", om: "Meeshaan kun toora ala jira. Wi-Fi ykn daataa mobaayilaa mirkaneessi." },
+  "Not checked yet.": { am: "ገና አልተረጋገጠም።", om: "Ammaaf hin mirkanoofne." },
+  "Help & support": { am: "እገዛ እና ድጋፍ", om: "Gargaarsa fi deeggarsa" },
+  "Signed in as {name} · {role} · {branch}": { am: "የገቡት እንደ {name} · {role} · {branch}", om: "Akka {name} · {role} · {branch} seentee jirta" },
+  "Signed in as {name} · {role}": { am: "የገቡት እንደ {name} · {role}", om: "Akka {name} · {role} seentee jirta" },
+  "How to use this app": { am: "ይህን መተግበሪያ እንዴት መጠቀም እንደሚቻል", om: "Appii kana akkamitti akka itti fayyadamtu" },
+  "Common problems": { am: "የተለመዱ ችግሮች", om: "Rakkoolee baramoo" },
+  "Who to ask": { am: "ማንን መጠየቅ", om: "Eenyu gaafachuu" },
+  "Not in this app": { am: "በዚህ መተግበሪያ ውስጥ የሌለ", om: "Appii kana keessa hin jiru" },
+  "Report a problem": { am: "ችግር ሪፖርት ያድርጉ", om: "Rakkoo gabaasi" },
+  "First check the connection. If it still doesn't work, copy the details below and send them, with what you were doing, to the person in \"Who to ask\".": { am: "መጀመሪያ ግንኙነቱን ያረጋግጡ። አሁንም ካልሰራ ከታች ያለውን ዝርዝር ይቅዱና ምን እየሰሩ እንደነበር ጨምረው \"ማንን መጠየቅ\" ውስጥ ላለው ሰው ይላኩ።", om: "Dura walqunnamtii mirkaneessi. Ammallee yoo hin hojjenne, bal'ina armaan gadii garagalchiitii waan hojjechaa turte waliin nama \"Eenyu gaafachuu\" keessa jiruuf ergi." },
+  "Checking…": { am: "በማረጋገጥ ላይ…", om: "Mirkaneessaa jira…" },
+  "Check connection": { am: "ግንኙነቱን ያረጋግጡ", om: "Walqunnamtii mirkaneessi" },
+  "Copy details for support": { am: "ለድጋፍ ዝርዝሩን ይቅዱ", om: "Bal'ina deeggarsaaf garagalchi" },
+  "What happened:": { am: "ምን ተፈጠረ፦", om: "Maaltu uumame:" },
+  "Demo mode: this app isn't connected to a server.": { am: "የማሳያ ሁነታ፦ ይህ መተግበሪያ ከሰርቨር ጋር አልተገናኘም።", om: "Haala agarsiisaa: appiin kun sarvarii wajjin hin walqabanne." },
+  "Checking the server… it can take up to a minute if it was asleep.": { am: "ሰርቨሩን በማረጋገጥ ላይ… ተኝቶ ከነበረ እስከ አንድ ደቂቃ ሊወስድ ይችላል።", om: "Sarvarii mirkaneessaa jira… yoo rafee ture hanga daqiiqaa tokkoo fudhachuu danda'a." },
+  "Server OK — it was asleep and took {s} s to wake up. Try again now.": { am: "ሰርቨሩ ደህና ነው — ተኝቶ ነበር፣ ለመነሳት {s} ሰከንድ ወስዷል። አሁን እንደገና ይሞክሩ።", om: "Sarvariin gaarii dha — rafee ture, dammaquuf sekondii {s} fudhate. Amma irra deebi'ii yaali." },
+  "Server OK ({ms} ms).": { am: "ሰርቨሩ ደህና ነው ({ms} ሚሴ)።", om: "Sarvariin gaarii dha ({ms} ms)." },
+  "The server answered with an error ({code}). Tell support.": { am: "ሰርቨሩ በስህተት መለሰ ({code})። ለድጋፍ ያሳውቁ።", om: "Sarvariin dogoggoraan deebise ({code}). Deeggarsaaf himi." },
+  "Can't reach the server. Wait a minute and check again; if it keeps failing, tell support.": { am: "ከሰርቨሩ ጋር መገናኘት አልተቻለም። አንድ ደቂቃ ቆይተው እንደገና ያረጋግጡ፤ መሳካቱ ከቀጠለ ለድጋፍ ያሳውቁ።", om: "Sarvarii qaqqabuu hin dandeenye. Daqiiqaa tokko eegiitii irra deebi'ii mirkaneessi; yoo itti fufe deeggarsaaf himi." },
+  "Copied. Paste it in a message to support and add what you were doing.": { am: "ተቀድቷል። በመልእክት ውስጥ ለድጋፍ ይለጥፉና ምን እየሰሩ እንደነበር ይጨምሩ።", om: "Garagalfameera. Ergaa deeggarsaaf keessatti maxxansiitii waan hojjechaa turte itti dabali." },
+  "Close": { am: "ዝጋ", om: "Cufi" },
+  "Owner": { am: "ባለቤት", om: "Abbaa qabeenyaa" },
+  "System Admin": { am: "የሲስተም አስተዳዳሪ", om: "Bulchaa sirnaa" },
+  "Branch manager": { am: "የቅርንጫፍ ሥራ አስኪያጅ", om: "Hogganaa damee" },
+  "Accountant": { am: "ሂሳብ ሹም", om: "Herregaa" },
+  "HR officer": { am: "የሰው ኃይል ባለሙያ", om: "Ogeessa humna namaa" },
+  "Inventory clerk": { am: "የክምችት ጸሐፊ", om: "Barreessaa kuusaa" },
+  "Cashier": { am: "ገንዘብ ተቀባይ", om: "Kaashiyeera" },
+  "Kitchen staff": { am: "የኩሽና ሠራተኛ", om: "Hojjetaa kushinaa" },
+  "Waiter": { am: "አስተናጋጅ", om: "Keessummeessaa" },
+  "For cashiers: take orders at the counter, send them to the kitchen, take payment, and collect the bills waiters send from the tables.": { am: "ለገንዘብ ተቀባዮች፦ በቆጣሪው ትዕዛዝ ይቀበሉ፣ ወደ ኩሽና ይላኩ፣ ክፍያ ይቀበሉ፣ እና አስተናጋጆች ከጠረጴዛዎች የሚልኩትን ሂሳብ ይሰብስቡ።", om: "Kaffaltii fudhattootaaf: ajaja kaawuntaraa irratti fudhadhu, gara kushinaatti ergi, kaffaltii fudhadhu, akkasumas herrega keessummeessitoonni minjaala irraa ergan walitti qabi." },
+  "Choose dine-in or takeaway": { am: "እዚህ መብላት ወይም መውሰድ ይምረጡ", om: "Asitti nyaachuu ykn fudhatanii deemuu filadhu" },
+  "Add the items": { am: "እቃዎቹን ይጨምሩ", om: "Meeshaalee dabali" },
+  "Charge": { am: "ክፍያ ይቀበሉ", om: "Kaffalchiisi" },
+  "Hand over the receipt": { am: "ደረሰኙን ይስጡ", om: "Nagahee kenni" },
+  "Collect table bills": { am: "የጠረጴዛ ሂሳቦችን ይሰብስቡ", om: "Herrega minjaalaa walitti qabi" },
+  "For dine-in, pick the table number too.": { am: "እዚህ ለሚበሉ፣ የጠረጴዛ ቁጥሩንም ይምረጡ።", om: "Asitti nyaattootaaf, lakkoofsa minjaalaas filadhu." },
+  "Tap items on the menu or search by name. Use + and – to change how many.": { am: "በምናሌው ላይ ያሉ እቃዎችን ይንኩ ወይም በስም ይፈልጉ። ብዛቱን ለመቀየር + እና – ይጠቀሙ።", om: "Meeshaalee baafata nyaataa irra jiran tuqi ykn maqaan barbaadi. Baay'ina jijjiiruuf + fi – fayyadami." },
+  "Tap Charge and choose cash, telebirr or CBE Birr. For telebirr and CBE Birr, type the transaction reference from the customer's phone.": { am: "«ክፍያ»ን ይንኩና ጥሬ ገንዘብ፣ ቴሌብር ወይም ሲቢኢ ብር ይምረጡ። ለቴሌብር እና ለሲቢኢ ብር የግብይት መለያ ቁጥሩን ከደንበኛው ስልክ ላይ ይጻፉ።", om: "«Kaffalchiisi» tuqiitii callaa, telebirr ykn CBE Birr filadhu. telebirr fi CBE Birr'f, lakkoofsa daldalaa bilbila maamilaa irraa barreessi." },
+  "The order is saved with your name and goes to the kitchen screen.": { am: "ትዕዛዙ በስምዎ ይቀመጣል፣ ወደ ኩሽና ማሳያው ይሄዳል።", om: "Ajajni maqaa keetiin olkaa'amee gara iskiriinii kushinaa deema." },
+  "When a waiter requests the bill, Table bills at the top turns blue with a count. Open it, pick the table, check the items and take cash, telebirr or CBE Birr. Type the cash received to see the change.": { am: "አስተናጋጅ ሂሳብ ሲጠይቅ፣ ከላይ ያለው «የጠረጴዛ ሂሳቦች» ከቁጥር ጋር ሰማያዊ ይሆናል። ይክፈቱት፣ ጠረጴዛውን ይምረጡ፣ እቃዎቹን ያረጋግጡ እና ጥሬ ገንዘብ፣ ቴሌብር ወይም ሲቢኢ ብር ይቀበሉ። መልሱን ለማየት የተቀበሉትን ጥሬ ገንዘብ ይጻፉ።", om: "Keessummeessaan herrega yoo gaafate, «Herrega minjaalaa» gubbaa jiru lakkoofsa wajjin cuquliisa ta'a. Bani, minjaala filadhu, meeshaalee mirkaneessi, callaa, telebirr ykn CBE Birr fudhadhu. Jijjiirama arguuf callaa fudhatte barreessi." },
+  "The payment failed.": { am: "ክፍያው አልተሳካም።", om: "Kaffaltiin hin milkoofne." },
+  "I added the wrong item.": { am: "የተሳሳተ እቃ ጨመርኩ።", om: "Meeshaa dogoggoraa dabale." },
+  "A waiter's table wants to pay in cash.": { am: "የአንድ አስተናጋጅ ጠረጴዛ በጥሬ ገንዘብ መክፈል ይፈልጋል።", om: "Minjaalli keessummeessaa tokkoo callaan kaffaluu barbaada." },
+  "Table bills turned blue with a number.": { am: "«የጠረጴዛ ሂሳቦች» ከቁጥር ጋር ሰማያዊ ሆነ።", om: "«Herrega minjaalaa» lakkoofsa wajjin cuquliisa ta'e." },
+  "A price looks old.": { am: "አንድ ዋጋ የቆየ ይመስላል።", om: "Gatiin tokko kan durii fakkaata." },
+  "I can't sign in.": { am: "መግባት አልችልም።", om: "Seenuu hin danda'u." },
+  "Nothing was charged in SEER. Check the connection below and try again. For telebirr or CBE Birr, check the reference was typed correctly.": { am: "በSEER ምንም አልተከፈለም። ከታች ያለውን ግንኙነት ያረጋግጡና እንደገና ይሞክሩ። ለቴሌብር ወይም ለሲቢኢ ብር፣ መለያ ቁጥሩ በትክክል መጻፉን ያረጋግጡ።", om: "SEER keessatti homtuu hin kaffalamne. Walqunnamtii armaan gadii mirkaneessiitii irra deebi'ii yaali. telebirr ykn CBE Birr'f, lakkoofsi daldalaa sirriitti barreeffamuu mirkaneessi." },
+  "Before charging, remove it with – or the remove button. After payment, ask your branch manager.": { am: "ክፍያ ከመቀበልዎ በፊት በ– ወይም በማስወገጃ አዝራሩ ያስወግዱት። ከክፍያ በኋላ የቅርንጫፍ ሥራ አስኪያጅዎን ይጠይቁ።", om: "Kaffalchiisuu dura – ykn qabduu haquutiin balleessi. Kaffaltii booda hogganaa damee kee gaafadhu." },
+  "Waiters can't take cash, so the cashier does. Tap Table bills at the top: tables that asked for the bill are listed first. Open the table, take the payment, and the table is freed for the waiter.": { am: "አስተናጋጆች ጥሬ ገንዘብ መቀበል ስለማይችሉ ገንዘብ ተቀባዩ ይቀበላል። ከላይ «የጠረጴዛ ሂሳቦች»ን ይንኩ፦ ሂሳብ የጠየቁ ጠረጴዛዎች መጀመሪያ ይዘረዘራሉ። ጠረጴዛውን ይክፈቱ፣ ክፍያውን ይቀበሉ፣ ጠረጴዛውም ለአስተናጋጁ ነጻ ይሆናል።", om: "Keessummeessitoonni callaa fudhachuu waan hin dandeenyeef kaffaltii fudhataan fudhata. Gubbaatti «Herrega minjaalaa» tuqi: minjaalonni herrega gaafatan dursanii tarreeffamu. Minjaala bani, kaffaltii fudhadhu, minjaalli keessummeessaaf bilisa ta'a." },
+  "That many tables have asked for the bill. It updates by itself every 15 seconds.": { am: "ያን ያህል ጠረጴዛዎች ሂሳብ ጠይቀዋል። በየ15 ሰከንዱ በራሱ ይዘምናል።", om: "Minjaalonni hammana herrega gaafataniiru. Sekondii 15 hundaatti ofumaan haaromfama." },
+  "Sign out and back in to load the latest menu and prices.": { am: "የቅርብ ጊዜውን ምናሌ እና ዋጋዎች ለመጫን ወጥተው እንደገና ይግቡ።", om: "Baafata nyaataa fi gatii haaraa fe'uuf ba'iitii irra deebi'ii seeni." },
+  "Check the connection below. If the password is wrong, ask a System Admin to set a new one.": { am: "ከታች ያለውን ግንኙነት ያረጋግጡ። የይለፍ ቃሉ ትክክል ካልሆነ የሲስተም አስተዳዳሪ አዲስ እንዲያስቀምጥ ይጠይቁ።", om: "Walqunnamtii armaan gadii mirkaneessi. Jechi icciitii yoo dogoggora ta'e, Bulchaa sirnaa akka haaraa kaa'u gaafadhu." },
+  "Refunds, cancelled payments and cash differences.": { am: "ተመላሽ ገንዘብ፣ የተሰረዙ ክፍያዎች እና የጥሬ ገንዘብ ልዩነቶች።", om: "Maallaqa deebi'u, kaffaltii haqame fi garaagarummaa callaa." },
+  "Your password, and menu items or prices.": { am: "የይለፍ ቃልዎ፣ እና የምናሌ እቃዎች ወይም ዋጋዎች።", om: "Jecha icciitii kee, akkasumas meeshaalee baafata nyaataa ykn gatii." },
+  "Counting the cash and reconciling the day — Finance.": { am: "ጥሬ ገንዘብ መቁጠር እና የቀኑን ሂሳብ ማስታረቅ — ፋይናንስ።", om: "Callaa lakkaa'uu fi herrega guyyaa walsimsiisuu — Faayinaansii." },
+  "Changing menu prices — the Admin app.": { am: "የምናሌ ዋጋዎችን መቀየር — የአስተዳዳሪ መተግበሪያ።", om: "Gatii baafata nyaataa jijjiiruu — appii Bulchiinsaa." },
+};
+
+export function tx(key: string, vars?: Record<string, string | number>): string {
+  const l = getLang();
+  let s = (l === 'en' ? undefined : TEXT[key]?.[l]) ?? key;
+  for (const [k, v] of Object.entries(vars ?? {})) s = s.split(`{${k}}`).join(String(v));
+  return s;
+}

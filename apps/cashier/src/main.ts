@@ -3,9 +3,10 @@ import {
   CATEGORIES, MENU, VAT_RATE, CASHIER_NAME, TABLE_COUNT, FIRST_CHECK_NO,
   findItem, formatMoney, round2, type CategoryId, type MenuItem,
 } from './data';
-import { t, getLang, setLang, langName, LANGS, type Lang } from './i18n';
+import { t, getLang, setLang, langName, nextLang, LANGS, type Lang } from './i18n';
+import { tx } from './text';
 import { icon } from './icons';
-import { helpButton, type Translate } from './support';
+import { helpButton } from './support';
 import { initHelp } from './help';
 import {
   isLive, currentUser, signIn, signOut, loadMenu, createOrder, payOrder, sendToKitchen, cancelOrder, cartSignature,
@@ -85,7 +86,7 @@ function esc(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 }
 
-const name = (item: MenuItem): string => item.name[getLang()];
+const name = (item: MenuItem): string => item.name[getLang()] || item.name.en;
 const money = (n: number): string => t('money', { amount: formatMoney(n) });
 
 function qtyOf(itemId: string): number {
@@ -110,7 +111,7 @@ const cashierName = (): string => currentUser()?.name ?? CASHIER_NAME;
 function visibleItems(): MenuItem[] {
   const q = state.query.trim().toLowerCase();
   if (!q) return MENU.filter((m) => m.category === state.category);
-  return MENU.filter((m) => m.name.en.toLowerCase().includes(q) || m.name.am.includes(q));
+  return MENU.filter((m) => m.name.en.toLowerCase().includes(q) || m.name.am.includes(q) || m.name.om.toLowerCase().includes(q));
 }
 
 function announce(msg: string): void {
@@ -587,7 +588,7 @@ function renderShell(): void {
 }
 
 function renderTopbar(): void {
-  const next: Lang = getLang() === 'en' ? 'am' : 'en';
+  const next: Lang = nextLang();
   const now = new Intl.DateTimeFormat(getLang() === 'am' ? 'am-ET' : 'en-US', {
     hour: 'numeric', minute: '2-digit',
   }).format(new Date());
@@ -806,7 +807,7 @@ document.addEventListener('click', (e) => {
       renderTopbar();
       return;
     case 'lang':
-      setLang(getLang() === 'en' ? 'am' : 'en');
+      setLang(nextLang());
       renderShell();
       return;
     default: return;
@@ -887,5 +888,5 @@ else if (currentUser()) void startLive();
 else renderSignIn();
 
 /* Help & support: the ? in the top bar opens it over the till. */
-const helpT: Translate = (k) => (k === 'Help & support' ? ({ en: 'Help & support', am: 'እገዛ እና ድጋፍ', om: 'Gargaarsa fi deeggarsa' } as Record<string, string>)[getLang()] ?? k : k);
+function helpT(k: string, vars?: Record<string, string | number>): string { return tx(k, vars); }
 initHelp();
