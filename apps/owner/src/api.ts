@@ -6,7 +6,7 @@
    VITE_API_URL empty → the built-in demo (nothing is saved).
    ========================================================= */
 
-import type { Category, MonthPoint, PaymentMethod, Status } from "./data";
+import type { Category, GoalKey, InvestmentKind, MonthPoint, PaymentMethod, Status, TxCategory } from "./data";
 
 const BASE = ((import.meta.env ?? {}).VITE_API_URL ?? "").trim().replace(/\/$/, "");
 export const isLive = BASE.length > 0;
@@ -96,14 +96,31 @@ export interface Bootstrap {
     id: PaymentMethod; name: string; balance: number; change: number; account: string; spent: number; limit: number; moneyIn: number;
     activity: { label: string; date: string; amount: number }[];
   }>;
-  transactions: { id: string; description: string; category: Category; date: string; amount: number; status: Status }[];
+  transactions: { id: string; description: string; category: TxCategory; date: string; amount: number; status: Status }[];
   topDishes: { name: string; sold: number; revenue: number; pct: number }[];
   peakHours: { hour: string; orders: number }[];
   budgets: { category: Category; allocated: number; spent: number; lastMonth: number; fixed?: { committed: number; paidOn: string | null } }[];
-  goals: { title: string; current: number; target: number; unit: "ETB" | "%" | "★"; deadline: string | null; lowerIsBetter?: boolean }[];
+  goals: { key?: GoalKey; title: string; current: number; target: number; unit: "ETB" | "%" | "★"; deadline: string | null; lowerIsBetter?: boolean; custom?: boolean }[];
+  /** missing on an older backend */
+  investments?: InvestmentOut[];
 }
 
+export interface InvestmentOut { id: string; title: string; kind: InvestmentKind; target: number; saved: number; targetDate: string | null; note: string }
+export interface InvestmentInput { title: string; kind: InvestmentKind; target: number; saved: number; targetDate: string | null; note: string }
+export interface ReportOut { key: string; title: string; filename: string; columns: string[]; rows: (string | number)[][] }
+
 export const loadAll = (): Promise<Bootstrap> => api<Bootstrap>("/owner/bootstrap");
+
+/* ---------- goals, investments, reports ---------- */
+
+export const setGoal = (key: GoalKey, target: number) => api(`/owner/goals/${key}`, { method: "PUT", body: JSON.stringify({ target }) });
+export const resetGoal = (key: GoalKey) => api(`/owner/goals/${key}`, { method: "DELETE" });
+export const addInvestment = (body: InvestmentInput) => api<InvestmentOut>("/owner/investments", { method: "POST", body: JSON.stringify(body) });
+export const updateInvestment = (id: string, body: InvestmentInput) =>
+  api<InvestmentOut>(`/owner/investments/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(body) });
+export const deleteInvestment = (id: string) => api(`/owner/investments/${encodeURIComponent(id)}`, { method: "DELETE" });
+export const getReport = (key: string, month: string) =>
+  api<ReportOut>(`/owner/reports/${encodeURIComponent(key)}?month=${encodeURIComponent(month)}`);
 
 /* ---------- writes ---------- */
 

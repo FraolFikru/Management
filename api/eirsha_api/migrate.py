@@ -106,6 +106,36 @@ def owner_chain(db: Db) -> None:
             log.warning("seer: %s is now the Owner of %s (there was no Owner account)", first["username"], oid)
 
 
+def owner_planning(db: Db) -> None:
+    """Owner app: investment plans (Investments tab) and the targets on the Goals tab."""
+    pg = db.dialect == "postgres"
+    ts = "timestamptz NOT NULL DEFAULT now()" if pg else "TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))"
+    money = "numeric(14,2)" if pg else "NUMERIC"
+    db.execute(f"""CREATE TABLE IF NOT EXISTS owner_investment (
+        id            text PRIMARY KEY,
+        org_id        text NOT NULL REFERENCES organization(id),
+        title         text NOT NULL,
+        kind          text NOT NULL DEFAULT 'OTHER',
+        target_amount {money} NOT NULL DEFAULT 0,
+        saved_amount  {money} NOT NULL DEFAULT 0,
+        target_date   {'date' if pg else 'TEXT'},
+        note          text,
+        created_by    text REFERENCES app_user(id),
+        created_at    {ts},
+        updated_at    {ts},
+        deleted_at    {'timestamptz' if pg else 'TEXT'}
+    )""")
+    db.execute("CREATE INDEX IF NOT EXISTS ix_owner_investment_org ON owner_investment (org_id) WHERE deleted_at IS NULL")
+    db.execute(f"""CREATE TABLE IF NOT EXISTS owner_goal_target (
+        org_id     text NOT NULL REFERENCES organization(id),
+        goal_key   text NOT NULL,
+        target     {money} NOT NULL,
+        updated_by text REFERENCES app_user(id),
+        updated_at {ts},
+        PRIMARY KEY (org_id, goal_key)
+    )""")
+
+
 def migrate() -> None:
     db = Db.from_env()
     try:
@@ -113,6 +143,7 @@ def migrate() -> None:
             table_service(db)
             rebrand(db)
             owner_chain(db)
+            owner_planning(db)
     except Exception:
         log.exception("seer: migration failed")
         raise
