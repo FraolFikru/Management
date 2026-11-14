@@ -3,16 +3,17 @@
    approve or reject each report so losses are reviewed, not hidden. */
 
 import type { FieldErrors, InventoryItem, WasteReason, WasteRecord } from "../types";
-import { t, tk, tkAll } from "../i18n";
-import { localDay, money, normalize, num, parseAmount, plain, relDay, round2, stamp, today } from "../format";
+import { t, tk } from "../i18n";
+import { localDay, money, num, parseAmount, plain, relDay, round2, stamp, today } from "../format";
 import { COGS_COLOR, NOTE_REQUIRED, WASTE_IDS, isWasteReason } from "../catalog";
 import { newId } from "../seed";
 import {
-  canApproveWaste, canDelete, db, decideWaste, inventory, inventoryItem, inPeriod, lastCost, recordWaste, removeRecord, restoreRecord,
+  canApproveWaste, canDelete, db, decideWaste, inventoryItem, inPeriod, lastCost, recordWaste, removeRecord, restoreRecord,
   state, stampUser, user,
 } from "../store";
 import { $, esc, highlight, icon } from "../ui/dom";
-import { attachCombobox, type ComboOption } from "../ui/combobox";
+import { attachCombobox, type ComboResult } from "../ui/combobox";
+import { recentItems, searchItems } from "../ui/itemsearch";
 import { byline, clearErrors, errText, invalid, metricsBar, seg, showErrors } from "../ui/shared";
 import { toast } from "../ui/toast";
 import { rerender, type ActionMap } from "../ui/app";
@@ -34,27 +35,22 @@ let d: Draft = fresh();
 
 const item = (): InventoryItem | undefined => (d.itemId ? inventoryItem(d.itemId) : undefined);
 
-function source(query: string): { heading: string; options: ComboOption<InventoryItem>[] } {
-  const q = normalize(query);
-  if (!q) return { heading: "", options: [] };
-  const hits = inventory()
-    .map((it) => {
-      const name = tk(it.nameKey);
-      const texts = [...tkAll(it.nameKey), ...it.aliases].map(normalize);
-      const score = texts.some((x) => x.startsWith(q)) ? 100 : texts.some((x) => x.includes(q)) ? 70 : 0;
-      return { it, name, score, start: normalize(name).indexOf(q) };
-    })
-    .filter((x) => x.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 8);
+function source(query: string): ComboResult<InventoryItem> {
+  const q = query.trim();
+  const hits = q ? searchItems(q, 8) : recentItems(8).map((item) => ({ item, start: -1, nearMiss: false }));
+  const unsure = q !== "" && hits.length > 0 && hits.every((h) => h.nearMiss);
   return {
-    heading: hits.length ? t("Stock items") : "",
-    options: hits.map(({ it, name, start }) => ({
-      value: it,
-      html: `<span class="opt-main"><span class="opt-name">${highlight(name, start, q.length)}</span>
-        <span class="opt-crumb"><i class="dot" style="background:${COGS_COLOR[it.category]}"></i>${esc(tk(`cogs.${it.category}`))}</span></span>
-        <span class="opt-side"><span class="mono">${money(lastCost(it.id) ?? it.unitCost)}/${esc(tk(`unit.${it.unit}`))}</span></span>`,
-    })),
+    preselect: unsure ? -1 : undefined,
+    heading: hits.length ? (!q ? t("Bought recently") : unsure ? t("Did you mean?") : t("Stock items")) : "",
+    options: hits.map(({ item: it, start }) => {
+      const name = tk(it.nameKey);
+      return {
+        value: it,
+        html: `<span class="opt-main"><span class="opt-name">${start >= 0 ? highlight(name, start, q.length) : esc(name)}</span>
+          <span class="opt-crumb"><i class="dot" style="background:${COGS_COLOR[it.category]}"></i>${esc(tk(`cogs.${it.category}`))}</span></span>
+          <span class="opt-side"><span class="mono">${money(lastCost(it.id) ?? it.unitCost)}/${esc(tk(`unit.${it.unit}`))}</span></span>`,
+      };
+    }),
   };
 }
 

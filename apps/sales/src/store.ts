@@ -292,7 +292,9 @@ export function lastCost(itemId: string): number | undefined {
   return best?.unitCost;
 }
 
-export const vendors = (): string[] => [...new Set(db.purchases.map((p) => p.vendor).filter(Boolean))].sort();
+/** Suppliers used before (for suggestions). "Unknown vendor" is what a blank supplier is saved as, so it's left out. */
+export const vendors = (): string[] =>
+  [...new Set(db.purchases.map((p) => p.vendor).filter((v) => v && v !== "Unknown vendor"))].sort();
 export const pastReasons = (): string[] => [...new Set(db.expenses.map((e) => e.reason))];
 
 /* ---------- periods & totals ---------- */

@@ -13,6 +13,8 @@ export interface ComboOption<T> {
 export interface ComboResult<T> {
   heading: string;
   options: ComboOption<T>[];
+  /** row Enter takes without arrowing; -1 = none (the person must choose). Default: the top row once text is typed. */
+  preselect?: number;
 }
 
 export type ComboSource<T> = (query: string) => ComboResult<T>;
@@ -48,7 +50,8 @@ export function attachCombobox<T>(
     const res = source(input.value);
     options = res.options;
     if (!options.length) return close();
-    active = input.value.trim() && options[0].variant !== "create" ? 0 : -1;
+    // with text typed, Enter takes the top row ("add as new" too, when it's the only row) — unless the source says to choose
+    active = res.preselect ?? (input.value.trim() ? 0 : -1);
     list.innerHTML =
       (res.heading ? `<li role="presentation" class="opt-head">${res.heading}</li>` : "") +
       options
@@ -78,9 +81,9 @@ export function attachCombobox<T>(
       e.preventDefault();
       active = Math.max(0, active - 1);
       paint();
-    } else if (e.key === "Enter" && !list.hidden && active >= 0) {
-      e.preventDefault();
-      choose(active);
+    } else if (e.key === "Enter" && !list.hidden && input.value.trim()) {
+      e.preventDefault();                 // never submit the form from an open list
+      if (active >= 0) choose(active);
     } else if (e.key === "Escape" && !list.hidden) {
       e.stopPropagation();
       close();
