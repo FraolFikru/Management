@@ -11,7 +11,8 @@ import * as api from "./api";
 import { t } from "./i18n";
 import type { Draft, Floor, FloorTable, Lang, Menu, Order, OrderLine, PayMethod } from "./types";
 
-export type Filter = "mine" | "all" | "free" | "bill";
+export type Filter = "mine" | "all";
+export type View = "tables" | "waiting";
 export type Sheet =
   | { kind: "guests"; tableId: string; orderId?: string; guests: number }
   | { kind: "item"; draftId: string }
@@ -26,14 +27,21 @@ export type Sheet =
   | { kind: "profile" }
   | { kind: "setup"; count: string; name: string; error: string; busy: boolean };
 
-interface Prefs { lang: Lang; dark: boolean; filter: Filter }
-const prefs = api.cache.read<Prefs>("seer.waiter.prefs") ?? { lang: "en", dark: false, filter: "mine" };
+interface Prefs { lang: Lang; dark: boolean; filter: Filter; view?: View }
+const prefs = api.cache.read<Prefs>("seer.waiter.prefs") ?? { lang: "en", dark: false, filter: "all" };
 
 export const state = {
   lang: prefs.lang,
   dark: prefs.dark,
-  filter: prefs.filter as Filter,
-  search: "",
+  filter: (prefs.filter === "mine" ? "mine" : "all") as Filter,
+  /** bottom tab: the floor plan, or the list of open tables that need something */
+  view: (prefs.view === "waiting" ? "waiting" : "tables") as View,
+  /** "New order": the floor plan waits for a free table to be chosen */
+  picking: false,
+  /** the free table chosen on the floor plan, opened with the button under it */
+  picked: null as string | null,
+  /** room / area of the floor plan ("" = all) */
+  area: "",
   floor: api.cache.read<Floor>("seer.waiter.floor"),
   floorError: "",
   loading: false,
@@ -62,7 +70,7 @@ export const sending: Record<string, Draft[]> = api.cache.read("seer.waiter.send
 let render: () => void = () => {};
 export function onChange(fn: () => void): void { render = fn; }
 const persist = (): void => { api.cache.write("seer.waiter.drafts", drafts); api.cache.write("seer.waiter.sending", sending); };
-export function savePrefs(): void { api.cache.write("seer.waiter.prefs", { lang: state.lang, dark: state.dark, filter: state.filter }); }
+export function savePrefs(): void { api.cache.write("seer.waiter.prefs", { lang: state.lang, dark: state.dark, filter: state.filter, view: state.view }); }
 
 const newId = (p: string): string => `${p}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 export const me = () => state.floor?.me ?? null;
@@ -71,6 +79,20 @@ export const tableOf = (id: string): FloorTable | undefined => state.floor?.tabl
 export const canEdit = (o: Order | null): boolean => !!o && !!me() && (o.waiterId === me()!.id || me()!.canManage);
 export const isOpen = (o: Order | null): boolean => !!o && (o.orderStatus === "OPEN" || o.orderStatus === "SENT");
 export const item = (id: string) => state.menu?.items.find((i) => i.id === id);
+
+/** The rooms of this branch (tables without one are in the main room). */
+export const areas = (): string[] => [...new Set((state.floor?.tables ?? []).map((x) => x.area?.trim() || t("Main room")))];
+const inScope = (tb: FloorTable): boolean =>
+  (state.filter === "all" || tb.order?.waiterId === me()?.id) && (!state.area || (tb.area?.trim() || t("Main room")) === state.area);
+/** Tables on the floor plan: "New order" shows only the free ones. */
+export const visibleTables = (): FloorTable[] =>
+  (state.floor?.tables ?? []).filter((tb) => (state.picking ? tb.status === "FREE" : inScope(tb)));
+/** Open tables, the ones that need the waiter first. */
+export const waitingTables = (): FloorTable[] => {
+  const rank: Record<string, number> = { READY: 0, BILL: 1, IN_KITCHEN: 2, SEATED: 3, SERVED: 4 };
+  return (state.floor?.tables ?? []).filter((tb) => tb.order && tb.status !== "FREE" && (state.filter === "all" || tb.order.waiterId === me()?.id))
+    .sort((a, b) => (rank[a.status] ?? 9) - (rank[b.status] ?? 9) || (a.order!.openedAt < b.order!.openedAt ? -1 : 1));
+};
 
 let toastTimer: number | undefined;
 export function toast(text: string, bad = false): void {
