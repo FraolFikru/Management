@@ -838,3 +838,24 @@ body.sh-open { overflow: hidden; }
   .sh-card { padding: 14px; }
 }
 .sh-nav-heading { margin: 20px 12px 6px; font-size: 11.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+
+/* ---------- purchases: search-first item entry ---------- */
+.input-lg { min-height: 50px; font-size: 16px; }
+.opt.create svg { width: 16px; height: 16px; margin-right: 6px; flex: none; }
+.picked {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  min-height: 50px; padding: 8px 8px 8px 14px; border-radius: var(--r-sm);
+  background: var(--surface-2); border: 1px solid var(--line-strong);
+}
+.picked-name { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.picked-name strong { font-size: 16px; }
+.picked-name .meta { color: var(--muted); font-size: 12.5px; }
+.new-item-panel { display: grid; gap: 12px; padding: 14px; border-radius: var(--r-sm); border: 1px dashed var(--line-strong); background: var(--surface-2); }
+.new-item-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.new-item-head strong { display: inline-flex; align-items: center; gap: 6px; }
+.new-item-head svg { width: 16px; height: 16px; }
+.browse { margin-top: 10px; }
+.browse summary { cursor: pointer; color: var(--muted); font-size: 13px; padding: 4px 0; width: fit-content; }
+.browse summary:hover { color: var(--text); }
+.browse[open] summary { margin-bottom: 8px; }
+.browse .chip-grid.items { margin-top: 10px; }

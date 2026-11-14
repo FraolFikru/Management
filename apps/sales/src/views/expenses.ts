@@ -53,7 +53,7 @@ export function renderExpenses(): string {
         </div>
         <div class="field"><span class="label" id="xMethodLbl">${t("Paid with")}</span>${methodGrid("x-method", d.method, EXPENSE_METHODS, "xMethodLbl")}</div>
         <div class="field"><label for="xNote">${t("Note")} <span class="opt-label">${t("(optional)")}</span></label>
-          <input id="xNote" class="input" type="text" placeholder="${t("e.g. receipt no., who was paid")}" value="${esc(d.note)}" data-bind="expense.note"></div>
+          <input id="xNote" class="input" type="text" placeholder="${t("e.g. who was paid")}" value="${esc(d.note)}" data-bind="expense.note"></div>
         <div class="total-bar">
           <div><span class="label">${t("Expense total")}</span><output id="xSum" aria-live="polite">${money(parseAmount(d.amount) || 0, 2)}</output>
             <small class="stamp">${icon("user")} ${t("Will be logged by {name}", { name: esc(user().name) })}</small></div>
