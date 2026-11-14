@@ -22,6 +22,7 @@ import {
 import { icon } from "./icons";
 import { getLiveSeries, loadLive } from "./live";
 import { adminsClick, adminsSubmit, renderAdmins } from "./admins";
+import { initPlanning, planningClick, planningLeave, planningSubmit, renderGoals, renderInvestments, renderReports } from "./planning";
 import { renderSupport } from "./help";
 import { isLive, saveBudget as apiSaveBudget, sessionUser, signIn as apiSignIn, signOut as apiSignOut } from "./api";
 import { LANGS, dayLong, dayShort, monthShort, translate, type Lang } from "./i18n";
@@ -158,6 +159,7 @@ const pad2 = (n: number): string => String(n).padStart(2, "0");
 const fmtShort = (d: Date): string => `${monthShort(settings.lang)[d.getMonth()]} ${pad2(d.getDate())}`;
 const fmtDate = (d: Date): string => `${fmtShort(d)}, ${d.getFullYear()}`;
 const fmtWhen = (w: When): string => (w instanceof Date ? fmtShort(w) : t(w));
+initPlanning({ t: (s, v) => t(s, v), money: (n, d) => money(n, d), fmtDate: (d) => fmtDate(d), rerender: () => renderPage() });
 const signed = (n: number): string => `${n >= 0 ? "+" : ""}${n.toFixed(1)}%`;
 
 const isMac = /Mac|iPhone|iPad/.test(navigator.userAgent);
@@ -352,7 +354,7 @@ function renderDashboard(): string {
                 <td>${escapeHtml(t(x.description))}</td>
                 <td><span class="cat"><i style="background:${categoryColor[x.category]}"></i>${t(x.category)}</span></td>
                 <td>${fmtDate(x.date)}</td>
-                <td class="mono">${money(Math.abs(x.amount))}</td>
+                <td class="mono tx-amount ${x.amount >= 0 ? "in" : "out"}">${x.amount >= 0 ? "+" : "−"}${money(Math.abs(x.amount))}</td>
                 <td><span class="status ${x.status.toLowerCase()}">${t(x.status)}</span></td>
               </tr>`,
               )
@@ -397,7 +399,9 @@ function renderAnalytics(): string {
             })
             .join("")}
         </div>
-        <p class="note">${t("Dinner service (19–20) is your strongest window. Consider staffing accordingly.")}</p>
+        <p class="note">${peakHours.length
+          ? t("{x} is your busiest hour ({n} orders). Have your strongest staff on then.", { x: peakHours.reduce((a, b) => (b.orders > a.orders ? b : a)).hour, n: peakHours.reduce((a, b) => (b.orders > a.orders ? b : a)).orders })
+          : t("Peak hours appear once orders are paid.")}</p>
       </article>
 
       <article class="panel">
@@ -824,141 +828,7 @@ function syncBudget(line: BudgetLine, before: number): void {
   });
 }
 
-/* ---------- Investments ---------- */
-
-function renderInvestments(): string {
-  if (isLive) return `
-    <div class="page-grid single">
-      <article class="panel"><div class="panel-head"><h2>${t("Investments")}</h2></div>
-        <p class="muted-note">${t("Investment plans aren't tracked in the system yet.")}</p></article>
-    </div>`;
-  return `
-    <div class="page-grid">
-      <article class="panel">
-        <div class="panel-head"><h2>${t("Equipment")}</h2></div>
-        <div class="report-card">
-          <h3>${t("New Industrial Oven")}</h3>
-          <p>${t("Planned Q1 2027 · Est. ETB 185,000")}</p>
-          <div class="progress-bar"><i style="width:35%;background:var(--info)"></i></div>
-          <small>${t("35% funded from reserves")}</small>
-        </div>
-        <div class="report-card">
-          <h3>${t("POS Terminal Upgrade")}</h3>
-          <p>${t("3 new terminals · ETB 42,000")}</p>
-          <div class="progress-bar"><i style="width:80%;background:var(--revenue)"></i></div>
-          <small>${t("Almost ready")}</small>
-        </div>
-      </article>
-      <article class="panel">
-        <div class="panel-head"><h2>${t("Expansion")}</h2></div>
-        <div class="report-card">
-          <h3>${t("Second Branch – CMC")}</h3>
-          <p>${t("Feasibility study complete. Target open date: mid-2027.")}</p>
-          <strong class="projection">${t("ETB 1.2M projected")}</strong>
-        </div>
-        <div class="report-card">
-          <h3>${t("Delivery Fleet")}</h3>
-          <p>${t("2 motorcycles + branded boxes")}</p>
-          <div class="progress-bar"><i style="width:60%;background:var(--muted)"></i></div>
-        </div>
-      </article>
-    </div>
-  `;
-}
-
-/* ---------- Goals ---------- */
-
-function renderGoals(): string {
-  return `
-    <div class="page-grid single">
-      ${goals
-        .map((g) => {
-          const ratio = g.lowerIsBetter ? g.target / g.current : g.current / g.target;
-          const pct = Math.min(100, Math.round(ratio * 100));
-          const fmt = (v: number): string => (g.unit === "ETB" ? money(v) : `${v}${g.unit}`);
-          const due = g.deadline ? t("Due {x}", { x: fmtShort(g.deadline) }) : t("Ongoing");
-          return `
-          <div class="goal-card">
-            <div class="goal-top">
-              <strong>${t(g.title)}</strong>
-              <span class="goal-due">${due}</span>
-            </div>
-            <div class="goal-value">${fmt(g.current)}<small> / ${fmt(g.target)}</small></div>
-            <div class="progress-bar"><i style="width:${pct}%;background:${pct >= 90 ? "var(--revenue)" : "var(--muted)"}"></i></div>
-          </div>`;
-        })
-        .join("")}
-    </div>
-  `;
-}
-
-/* ---------- Reports ---------- */
-
-type ReportKey = "daily-sales" | "weekly-pnl" | "monthly-tax" | "inventory" | "staff" | "menu";
-const reports: { key: ReportKey; title: string; desc: string; where?: string }[] = [
-  { key: "daily-sales", title: "Daily Sales Report", desc: "Revenue, orders, average ticket, payment mix for any day." },
-  { key: "weekly-pnl",  title: "Weekly P&L",          desc: "Profit & loss with food cost, labor and overhead breakdown." },
-  { key: "monthly-tax", title: "Monthly Tax Summary", desc: "VAT, withholding and income tax ready for accountant.", where: "Finance" },
-  { key: "inventory",   title: "Inventory Valuation", desc: "Current stock value and variance vs last count.",         where: "Purchasing" },
-  { key: "staff",       title: "Staff Hours & Cost",  desc: "Hours worked, overtime and labor cost % of sales.",       where: "HR" },
-  { key: "menu",        title: "Menu Performance",    desc: "Contribution margin and popularity of every dish." },
-];
-
-function renderReports(): string {
-  return `
-    <div class="page-grid">
-      ${reports
-        .map((r) => {
-          const action = r.where
-            ? `<button class="btn" disabled title="${t("Open in the {app} app", { app: r.where })}">${t("Open in {app}", { app: r.where })}</button>`
-            : `<button class="btn" data-report="${r.key}">${t("Download CSV")} ${icon("arrow-right")}</button>`;
-          return `
-        <div class="report-card">
-          <h3>${escapeHtml(t(r.title))}</h3>
-          <p>${escapeHtml(t(r.desc))}</p>
-          ${action}
-        </div>`;
-        })
-        .join("")}
-    </div>
-  `;
-}
-
-/** Make a CSV file in the browser and trigger a download. */
-function downloadCsv(filename: string, rows: (string | number)[][]): void {
-  const esc = (v: string | number): string => {
-    const s = String(v ?? "");
-    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
-  };
-  const text = rows.map((r) => r.map(esc).join(",")).join("\n");
-  const blob = new Blob(["\ufeff" + text], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = filename; a.style.display = "none";
-  document.body.append(a); a.click(); a.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-function generateReport(key: ReportKey): void {
-  const stamp = new Date().toISOString().slice(0, 10);
-  if (key === "daily-sales") {
-    const live = getLiveSeries();
-    const days = live?.daily ?? [];
-    const rows: (string | number)[][] = [["Date", "Revenue (ex-VAT)", "Expenses"]];
-    for (const d of days) rows.push([d.date, d.revenue, d.expenses]);
-    downloadCsv(`seer-daily-sales-${stamp}.csv`, rows);
-  } else if (key === "weekly-pnl") {
-    const live = getLiveSeries();
-    const weeks = live?.weekly ?? [];
-    const rows: (string | number)[][] = [["Week starting", "Revenue (ex-VAT)", "Expenses", "Profit"]];
-    for (const w of weeks) rows.push([w.start, w.revenue, w.expenses, w.revenue - w.expenses]);
-    downloadCsv(`seer-weekly-pnl-${stamp}.csv`, rows);
-  } else if (key === "menu") {
-    const rows: (string | number)[][] = [["Dish", "Units sold", "Revenue (ETB)", "Share %"]];
-    for (const d of topDishes) rows.push([t(d.name), d.sold, d.revenue, d.pct]);
-    downloadCsv(`seer-menu-performance-${stamp}.csv`, rows);
-  }
-}
+/* Investments, Goals and Reports live in planning.ts */
 
 /* ---------- Settings ---------- */
 
@@ -1088,6 +958,7 @@ function renderPage(): void {
 }
 
 function go(page: Page): void {
+  if (page !== state.activeNav) planningLeave();
   state.activeNav = page;
   state.editingBudget = null;
   state.budgetError = "";
@@ -1462,7 +1333,7 @@ function renderTable(): void {
         <td><span class="merchant"><span class="m-icon" style="background:${bg}">${escapeHtml([...desc][0] ?? "")}</span>${escapeHtml(desc)}</span></td>
         <td><span class="cat"><i style="background:${bg}"></i>${t(x.category)}</span></td>
         <td>${fmtDate(x.date)}</td>
-        <td class="mono">${money(Math.abs(x.amount))}</td>
+        <td class="mono tx-amount ${x.amount >= 0 ? "in" : "out"}">${x.amount >= 0 ? "+" : "−"}${money(Math.abs(x.amount))}</td>
         <td><span class="status ${x.status.toLowerCase()}">${t(x.status)}</span></td>
         <td><button class="icon-btn row-more" aria-label="${t("More")}">${icon("dots-h")}</button></td>
       </tr>`;
@@ -1541,6 +1412,7 @@ function onClick(e: MouseEvent): void {
   }
 
   if (state.activeNav === "System Admins" && adminsClick(el, t)) return;
+  if (planningClick(el)) return;
 
   const themeBtn = hit("[data-theme-btn]");
   if (themeBtn) return setSetting("theme", themeBtn.dataset.themeBtn as ThemePref);
@@ -1621,8 +1493,6 @@ function onClick(e: MouseEvent): void {
     state.page++;
     return renderTable();
   }
-  const report = hit("[data-report]");
-  if (report) return generateReport(report.dataset.report as ReportKey);
   if (hit("#resetSettings")) return resetSettings();
   if (hit("#menuBtn")) return void document.body.classList.add("nav-open");
   if (hit("#scrim")) return void document.body.classList.remove("nav-open");
@@ -1773,7 +1643,7 @@ const typing = (): boolean => {
 };
 
 function redraw(): void {
-  if (!LIVE_PAGES.includes(state.activeNav) || document.querySelector("dialog[open], .modal.open")) return;
+  if (!LIVE_PAGES.includes(state.activeNav) || document.querySelector("dialog[open], .modal.open, #investmentForm, #goalForm, #adminForm")) return;
   const y = window.scrollY;
   quietRedraw = true;
   try { renderPage(); } finally { quietRedraw = false; }
@@ -1840,6 +1710,7 @@ function onSignInSubmit(e: Event): void {
 document.addEventListener("submit", (e) => {
   const form = e.target as HTMLFormElement;
   if (form.id === "adminForm") { e.preventDefault(); adminsSubmit(form, t); }
+  else if (planningSubmit(form)) e.preventDefault();
 });
 
 if (isLive) {

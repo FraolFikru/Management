@@ -5,7 +5,7 @@
    ========================================================= */
 
 import {
-  budgets, buildStats, cashFlow, dailyPattern, goals, paymentMethods, peakHours, stats, topDishes, transactions, user,
+  budgets, buildStats, cashFlow, dailyPattern, goals, investments, paymentMethods, peakHours, stats, topDishes, transactions, user,
   type BudgetLine, type Category, type MonthPoint, type PaymentInfo, type PaymentMethod, type When,
 } from "./data";
 import { loadAll } from "./api";
@@ -54,6 +54,7 @@ export async function loadLive(): Promise<void> {
     ...(x.fixed ? { fixed: { committed: x.fixed.committed, paidOn: x.fixed.paidOn ? day(x.fixed.paidOn) : null } } : {}),
   })));
   goals.splice(0, goals.length, ...b.goals.map((g) => ({ ...g, deadline: g.deadline ? day(g.deadline) : null })));
+  if (b.investments) investments.splice(0, investments.length, ...b.investments.map((x) => ({ ...x, targetDate: x.targetDate ? day(x.targetDate) : null })));
   // headline cards: this month so far against the same days of last month, so today's sales show up
   const before = Object.values(paymentMethods).reduce((s, p) => s + p.balance / (1 + p.change / 100), 0);
   const now = Object.values(paymentMethods).reduce((s, p) => s + p.balance, 0);

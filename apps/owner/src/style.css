@@ -1022,3 +1022,27 @@ body.sh-open { overflow: hidden; }
 .title-wrap { display: grid; gap: 2px; min-width: 0; }
 .live-stamp { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
 .live-stamp:not(:empty)::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--revenue, #22c55e); box-shadow: 0 0 0 3px color-mix(in srgb, var(--revenue, #22c55e) 25%, transparent); }
+
+/* transactions: money in vs money out */
+.tx-amount.in { color: var(--revenue); }
+.tx-amount.out { color: var(--text); }
+
+/* goals: change target */
+.goal-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.goal-foot-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.goal-edit { display: grid; gap: 8px; margin-top: 12px; }
+.goal-edit-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* investments */
+.invest-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); margin-top: 6px; }
+.invest-card { display: grid; gap: 8px; align-content: start; }
+.invest-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.invest-card h3 { margin: 0; }
+.invest-card p { margin: 0; }
+.invest-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+
+/* reports: month picker */
+.report-head { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.report-head .signin-field { max-width: 220px; }
+.report-head .muted-note { margin: 0 0 10px; }
+.report-card small.muted-note { display: block; margin-bottom: 10px; }

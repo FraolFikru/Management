@@ -1,5 +1,7 @@
 export type Status = "Success" | "Pending" | "Failed";
 export type Category = "Food Cost" | "Labor" | "Utilities" | "Rent" | "Marketing" | "Supplies";
+/** transactions also carry money coming in */
+export type TxCategory = Category | "Sales";
 export type PaymentMethod = "telebirr" | "cash" | "cbe";
 /** "Today" / "Yesterday" are translated; a Date is formatted in the active language. */
 export type When = "Today" | "Yesterday" | Date;
@@ -7,7 +9,7 @@ export type When = "Today" | "Yesterday" | Date;
 export interface Transaction {
   id: string;
   description: string;
-  category: Category;
+  category: TxCategory;
   date: Date;
   amount: number;
   status: Status;
@@ -167,7 +169,8 @@ export const transactions: Transaction[] = Array.from({ length: 50 }, (_, i) => 
   };
 });
 
-export const categoryColor: Record<Category, string> = {
+export const categoryColor: Record<TxCategory, string> = {
+  Sales: "#e8c15a",
   "Food Cost": "#7fcf8f",
   Labor: "#7fa3e0",
   Utilities: "#e07fae",
@@ -250,9 +253,35 @@ export const budgets: BudgetLine[] = [
 /* ---------- goals ---------- */
 
 /** Live mode: replaced with real figures. */
-export const goals: { title: string; current: number; target: number; unit: "ETB" | "%" | "★"; deadline: Date | null; lowerIsBetter?: boolean }[] = [
-  { title: "Monthly Revenue Target", current: 128400, target: 150000, unit: "ETB", deadline: new Date(2026, 10, 30) },
-  { title: "Food Cost under 30%", current: 31.2, target: 30, unit: "%", deadline: new Date(2026, 11, 15), lowerIsBetter: true },
-  { title: "Average Order Value", current: 420, target: 480, unit: "ETB", deadline: new Date(2026, 11, 31) },
+export type GoalKey = "revenue" | "foodCost" | "aov";
+export interface Goal {
+  /** goals with a key have a target the owner can change */
+  key?: GoalKey;
+  title: string; current: number; target: number; unit: "ETB" | "%" | "★"; deadline: Date | null; lowerIsBetter?: boolean;
+  /** true when the owner set the target; false = the automatic one */
+  custom?: boolean;
+}
+export const goals: Goal[] = [
+  { key: "revenue", title: "Monthly Revenue Target", current: 128400, target: 150000, unit: "ETB", deadline: new Date(2026, 10, 30) },
+  { key: "foodCost", title: "Food Cost under 30%", current: 31.2, target: 30, unit: "%", deadline: new Date(2026, 11, 15), lowerIsBetter: true },
+  { key: "aov", title: "Average Order Value", current: 420, target: 480, unit: "ETB", deadline: new Date(2026, 11, 31) },
   { title: "Customer Reviews (4.5+)", current: 4.3, target: 4.5, unit: "★", deadline: null },
+];
+
+/* ---------- investments (plans the owner is saving for) ---------- */
+
+export type InvestmentKind = "EQUIPMENT" | "EXPANSION" | "RENOVATION" | "VEHICLE" | "OTHER";
+export interface Investment {
+  id: string;
+  title: string;
+  kind: InvestmentKind;
+  target: number;
+  saved: number;
+  targetDate: Date | null;
+  note: string;
+}
+export const investments: Investment[] = [
+  { id: "demo-oven", title: "New industrial oven", kind: "EQUIPMENT", target: 185000, saved: 64750, targetDate: new Date(2027, 2, 31), note: "" },
+  { id: "demo-cmc", title: "Second branch – CMC", kind: "EXPANSION", target: 1200000, saved: 310000, targetDate: new Date(2027, 6, 1), note: "Feasibility study done" },
+  { id: "demo-moto", title: "Delivery motorcycles (2)", kind: "VEHICLE", target: 260000, saved: 156000, targetDate: null, note: "" },
 ];
