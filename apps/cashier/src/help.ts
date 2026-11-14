@@ -2,7 +2,7 @@
    Opens over the screen from the ? button in the header. */
 
 import { installSupport, type HelpContent, type Translate, type Who } from "./support";
-import { t, type Key } from "./i18n";
+import { tx } from "./text";
 import { currentUser, isLive } from "./api";
 
 /** Role codes → the names people use. */
@@ -39,15 +39,8 @@ export const CONTENT: HelpContent = {
   ],
 };
 
-/** The till's translator only knows its own keys; anything else stays in English. */
-const tr: Translate = (key, vars) => {
-  let s: string | undefined;
-  try { s = t(key as Key, vars); } catch { s = undefined; }
-  if (typeof s === "string" && s !== "undefined") return s;
-  let out = key;
-  for (const [k, v] of Object.entries(vars ?? {})) out = out.split(`{${k}}`).join(String(v));
-  return out;
-};
+/** Help text is free English sentences, so it uses the till's text dictionary (Amharic and Afaan Oromoo). */
+const tr: Translate = (key, vars) => tx(key, vars);
 
 const who = (): Who | null => {
   const u = isLive ? currentUser() : null;
