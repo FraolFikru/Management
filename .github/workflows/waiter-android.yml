@@ -11,7 +11,7 @@ on:
         description: "SEER server address the app talks to"
         default: "https://eirsha-api.onrender.com"
   push:
-    branches: [main, waiter-android]
+    branches: [main]
     paths: ["apps/waiter/**", ".github/workflows/waiter-android.yml"]
 
 permissions:
