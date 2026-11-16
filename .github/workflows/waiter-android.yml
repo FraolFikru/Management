@@ -39,7 +39,8 @@ jobs:
       - name: Install
         run: |
           npm install
-          npm install --no-save @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7
+          # one command: a later "npm install" would remove packages that are not in package.json
+          npm install --no-save @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 @capacitor/assets
 
       - name: Build the web app
         run: npm run build
@@ -52,7 +53,6 @@ jobs:
       - name: App icon and splash screen
         continue-on-error: true
         run: |
-          npm install --no-save @capacitor/assets
           npx capacitor-assets generate --android \
             --iconBackgroundColor '#141415' --iconBackgroundColorDark '#141415' \
             --splashBackgroundColor '#141415' --splashBackgroundColorDark '#141415'
