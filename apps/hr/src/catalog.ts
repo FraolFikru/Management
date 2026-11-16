@@ -31,7 +31,7 @@ export const ROLES = reg<UserRole>("role", {
 });
 export const ROLE_IDS = Object.keys(ROLES) as UserRole[];
 export const ROLE_COLOR: Record<UserRole, string> = {
-  BRANCH_MANAGER: "#c9a0f2", SALES_STAFF: "#8fd3f4", KITCHEN_STAFF: "#f2c48d", INVENTORY_CLERK: "#5bd18b", ADMIN: "#a4acc4",
+  BRANCH_MANAGER: "#a395a8", SALES_STAFF: "#8c96a3", KITCHEN_STAFF: "#c8b48a", INVENTORY_CLERK: "#8fa58a", ADMIN: "#9a9aa0",
   ACCOUNTANT: "#7fd1c7", HR_OFFICER: "#f29fb5", OWNER: "#e6d38a", WAITER: "#9ec5ff",
 };
 export const isRole = (v: string): v is UserRole => v in ROLES;
@@ -58,7 +58,7 @@ export const SHIFTS: Record<ShiftCode, ShiftTemplate> = {
   EVENING: { code: "EVENING", start: "14:00", end: "22:00", hours: 8 },
 };
 export const SHIFT_IDS = Object.keys(SHIFTS) as ShiftCode[];
-export const SHIFT_COLOR: Record<ShiftCode, string> = { MORNING: "#f2c48d", DAY: "#8fd3f4", EVENING: "#c9a0f2" };
+export const SHIFT_COLOR: Record<ShiftCode, string> = { MORNING: "#c8b48a", DAY: "#8c96a3", EVENING: "#a395a8" };
 export const isShift = (v: string): v is ShiftCode => v in SHIFTS;
 /** Minimum people wanted per shift, used for the coverage row of the planner. */
 export const COVERAGE_TARGET: Record<ShiftCode, number> = { MORNING: 3, DAY: 2, EVENING: 4 };
@@ -107,7 +107,7 @@ export const LOG_TYPES = reg<LogType>("log", {
 });
 export const LOG_IDS = Object.keys(LOG_TYPES) as LogType[];
 export const LOG_COLOR: Record<LogType, string> = {
-  REVIEW: "#8fd3f4", COMMENDATION: "#5bd18b", VOID_INCIDENT: "#f2c48d", LATENESS: "#fb9a4b", WARNING: "#ff7b6e", INCIDENT: "#c9a0f2",
+  REVIEW: "#8c96a3", COMMENDATION: "#8fa58a", VOID_INCIDENT: "#c8b48a", LATENESS: "#fb9a4b", WARNING: "#ff7b6e", INCIDENT: "#a395a8",
 };
 export const isLogType = (v: string): v is LogType => v in LOG_TYPES;
 /** Negative entries count against the employee's record. */

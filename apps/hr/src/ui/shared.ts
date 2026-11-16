@@ -23,7 +23,7 @@ export function fmtH(hours: number): string {
 
 export const avatar = (employeeId: string, size = ""): string => {
   const e = employee(employeeId);
-  const color = e ? ROLE_COLOR[e.role] : "#a4acc4";
+  const color = e ? ROLE_COLOR[e.role] : "#9a9aa0";
   return `<span class="avatar ${size}" style="--ring:${color}" aria-hidden="true">${esc(initials(e?.fullName ?? employeeId))}</span>`;
 };
 

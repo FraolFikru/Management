@@ -50,7 +50,7 @@ export const OPEX_IDS = Object.keys(OPEX) as OpexCategory[];
 
 export const isCogs = (c: CostCategory): c is COGSCategory => (COGS_IDS as string[]).includes(c);
 export const catName = (c: CostCategory): string => (isCogs(c) ? `cogs.${c}` : `opex.${c}`);
-export const COLORS = ["#5bd18b", "#8fd3f4", "#c9a0f2", "#f2c48d", "#f0857a", "#9fb4ff", "#4fc6b7"];
+export const COLORS = ["#8fa58a", "#8c96a3", "#a395a8", "#c8b48a", "#c0694e", "#7f8aa0", "#7fa39b"];
 
 export const METHODS = reg<PaymentMethod>("pay", {
   CASH: L("Cash", "ጥሬ ገንዘብ", "Callaa"),
@@ -58,7 +58,7 @@ export const METHODS = reg<PaymentMethod>("pay", {
   CBE_BIRR: L("CBE Birr", "ሲቢኢ ብር", "CBE Birr"),
 });
 export const METHOD_IDS = Object.keys(METHODS) as PaymentMethod[];
-export const METHOD_COLOR: Record<PaymentMethod, string> = { CASH: "#5bd18b", TELEBIRR: "#8fd3f4", CBE_BIRR: "#c9a0f2" };
+export const METHOD_COLOR: Record<PaymentMethod, string> = { CASH: "#8fa58a", TELEBIRR: "#8c96a3", CBE_BIRR: "#a395a8" };
 export const isMethod = (v: string): v is PaymentMethod => v in METHODS;
 
 export const ACCOUNTS = reg<AccountId>("acct", {
