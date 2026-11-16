@@ -17,7 +17,7 @@ export const CONTENT: HelpContent = {
   steps: [
     { title: "New orders arrive in Pending", body: "Each ticket shows the table or takeaway number, the time and the items, with any notes." },
     { title: "Tap Start when you begin cooking", body: "The ticket moves to Preparing, so everyone can see it's being cooked." },
-    { title: "Tap Mark ready when it's done", body: "The waiter or cashier sees it's ready to serve. If other stations are still cooking, the ticket waits for them." },
+    { title: "Tap Mark ready when it's done", body: "The waiter or cashier sees it's ready to serve. If you ticked only some dishes, the button sends just those and the rest stay on the ticket. If other stations are still cooking, the ticket waits for them." },
     { title: "Tap Picked up when it leaves the pass", body: "The ticket leaves the screen. Recall brings back the last one if you tapped it by mistake." },
     { title: "Watch the timer colours", body: "A ticket changes colour as it gets older, so late orders stand out." },
   ],

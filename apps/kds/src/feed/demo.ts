@@ -115,7 +115,9 @@ export class DemoOrderFeed implements OrderFeed {
       this.emit({ type: "remove", ticketId: tk.id });
       return;
     }
-    if (cmd.type === "item") {
+    if (cmd.type === "notify") {
+      if (!tk.items.some((i) => i.isCompleted)) throw new Error("Nothing done yet");
+    } else if (cmd.type === "item") {
       const it = tk.items.find((i) => i.id === cmd.itemId);
       if (!it) throw new Error("Not found");
       it.isCompleted = cmd.isCompleted;

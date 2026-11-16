@@ -47,6 +47,8 @@ export function waitingText(tkt: KitchenTicket): string {
 }
 
 function actions(tkt: KitchenTicket, allDone: boolean, waitingOn: string[]): string {
+  const doneCount = tkt.items.filter((i) => i.isCompleted).length;
+  const partly = doneCount > 0 && doneCount < tkt.items.length;
   const busy = state.busy.has(tkt.id) ? "disabled" : "";
   const back = (to: "PENDING" | "PREPARING"): string =>
     `<button type="button" class="btn ghost" data-action="status" data-id="${esc(tkt.id)}" data-status="${to}" ${busy}
@@ -56,8 +58,11 @@ function actions(tkt: KitchenTicket, allDone: boolean, waitingOn: string[]): str
   if (tkt.status === "PREPARING" && waitingOn.length)
     // a station view can't send the whole order out while other stations are still cooking
     return `${back("PENDING")}<span class="btn waiting" role="status">${icon("clock")}<span>${esc(t("Waiting for {stations}", { stations: waitingOn.join(", ") }))}</span></span>`;
+  if (tkt.status === "PREPARING" && partly)
+    // only the ticked dishes go out; the others keep cooking and the ticket stays here
+    return `${back("PENDING")}<button type="button" class="btn primary ready" data-action="notify" data-id="${esc(tkt.id)}" ${busy}>${icon("check")}<span>${esc(t("Send {n} ready", { n: doneCount }))}</span></button>`;
   if (tkt.status === "PREPARING")
-    return `${back("PENDING")}<button type="button" class="btn primary ready ${allDone ? "nudge" : ""}" data-action="status" data-id="${esc(tkt.id)}" data-status="READY" ${busy}>${icon("check")}<span>${esc(t("Mark ready"))}</span></button>`;
+    return `${back("PENDING")}<button type="button" class="btn primary ready ${allDone ? "nudge" : ""}" data-action="status" data-id="${esc(tkt.id)}" data-status="READY" ${busy}>${icon("check")}<span>${esc(t(doneCount ? "Mark ready" : "Mark all ready"))}</span></button>`;
   return `${back("PREPARING")}<button type="button" class="btn primary pickup" data-action="bump" data-id="${esc(tkt.id)}" ${busy}>${icon("hand")}<span>${esc(t("Picked up"))}</span></button>`;
 }
 

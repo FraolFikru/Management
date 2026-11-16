@@ -31,7 +31,7 @@ def snapshot(p: Principal = Depends(require("kds.view")), db: Db = Depends(get_d
 @router.post("/kds/tickets/{ticket_id}/{cmd}")
 def command(ticket_id: str, cmd: str, body: dict[str, Any], p: Principal = Depends(require("kds.update")),
             db: Db = Depends(get_db), idempotency_key: str | None = Header(default=None)):
-    if cmd not in ("status", "item", "bump", "recall"):
+    if cmd not in ("status", "item", "notify", "bump", "recall"):
         raise s.Invalid("unknown command", cmd=cmd)
     with db.tx():
         if idempotency_key:      # a retried request returns the first answer instead of applying twice
