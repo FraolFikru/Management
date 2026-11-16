@@ -5,6 +5,7 @@
    ========================================================= */
 
 import { t } from "./i18n";
+import { wakeFetch } from "./wake";
 
 export interface KdsUser { id: string; name: string; role: string; branchId: string }
 interface Session { accessToken: string; refreshToken: string; user: KdsUser }
@@ -83,7 +84,7 @@ export function signInScreen(): Promise<void> {
       e.preventDefault();
       const data = new FormData(e.target as HTMLFormElement);
       try {
-        const res = await fetch(`${apiBase()}/auth/login`, {
+        const res = await wakeFetch(`${apiBase()}/auth/login`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username: String(data.get("username")).trim(), password: String(data.get("password")) }),
         });

@@ -7,6 +7,7 @@
    VITE_API_URL empty → the built-in demo (nothing is saved).
    ========================================================= */
 
+import { wakeFetch } from "./wake";
 import type {
   AuditEntry, CogsPurchase, DispatchRecord, ExpenseRecord, InventoryItem, MenuItem, SaleLine, StaffAccount, UserRole, WasteLog,
 } from "./types";
@@ -71,7 +72,7 @@ const post = <T>(path: string, body: unknown): Promise<T> => api<T>(path, { meth
 /* ---------- session ---------- */
 
 export async function signIn(username: string, password: string): Promise<void> {
-  const res = await fetch(`${BASE}/auth/login`, {
+  const res = await wakeFetch(`${BASE}/auth/login`, {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username: username.trim(), password }),
   });

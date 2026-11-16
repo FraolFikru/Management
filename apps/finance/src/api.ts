@@ -8,6 +8,7 @@
    ========================================================= */
 
 import type { AccountId, Bill, BillPayment, DailySales, Movement, PayrollCost, Reconciliation, TaxFiling, Vendor } from "./types";
+import { wakeFetch } from "./wake";
 
 const BASE = ((import.meta.env ?? {}).VITE_API_URL ?? "").trim().replace(/\/$/, "");
 export const isLive = BASE.length > 0;
@@ -69,7 +70,7 @@ const post = <T>(path: string, body: unknown): Promise<T> => api<T>(path, { meth
 /* ---------- session ---------- */
 
 export async function signIn(username: string, password: string): Promise<void> {
-  const res = await fetch(`${BASE}/auth/login`, {
+  const res = await wakeFetch(`${BASE}/auth/login`, {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username: username.trim(), password }),
   });

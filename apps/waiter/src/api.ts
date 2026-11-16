@@ -8,6 +8,7 @@
    ========================================================= */
 
 import type { Floor, Menu, Order } from "./types";
+import { wakeFetch } from "./wake";
 
 const BASE = (import.meta.env.VITE_API_URL ?? "").trim().replace(/\/$/, "");
 export const isConfigured = BASE.length > 0;
@@ -84,7 +85,7 @@ async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 async function start(path: string, body: unknown): Promise<SessionUser> {
   let res: Response;
   try {
-    res = await fetch(`${BASE}${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    res = await wakeFetch(`${BASE}${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   } catch { throw new Offline("offline"); }
   if (!res.ok) throw new ApiError(res.status === 401 ? "wrong" : res.status === 429 ? "locked" : `Server error (${res.status})`, res.status);
   const s = (await res.json()) as Session;
