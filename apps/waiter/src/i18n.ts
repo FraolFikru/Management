@@ -278,6 +278,8 @@ const dict: Record<string, [am: string, om: string]> = {
   "{n} in order": ["{n} በትዕዛዝ ውስጥ", "{n} ajaja keessa"],
   "New order": ["አዲስ ትዕዛዝ", "Ajaja haaraa"],
   "Table {n}": ["ጠረጴዛ {n}", "Minjaala {n}"],
+  "Install on this phone": ["በዚህ ስልክ ላይ ጫን", "Bilbila kana irratti fe'i"],
+  "To install on iPhone: tap Share in Safari, then Add to Home Screen.": ["በአይፎን ለመጫን፦ በSafari ውስጥ Share ይንኩ፣ ከዚያ Add to Home Screen ይምረጡ።", "iPhone irratti fe'uuf: Safari keessatti Share tuqi, itti aansee Add to Home Screen filadhu."],
 };
 
 let lang: Lang = "en";

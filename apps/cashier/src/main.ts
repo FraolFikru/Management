@@ -18,6 +18,15 @@ import {
 
 type OrderType = 'dine-in' | 'takeaway';
 type Theme = 'light' | 'dark';
+const THEME_KEY = 'seer.cashier.theme';
+/** Dark like the rest of the suite unless this till was switched to light. */
+function savedTheme(): Theme {
+  let v: string | null = null;
+  try { v = localStorage.getItem(THEME_KEY); } catch { /* private mode */ }
+  const theme: Theme = v === 'light' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = theme;
+  return theme;
+}
 type MobileView = 'menu' | 'order';
 
 interface OrderLine {
@@ -52,7 +61,7 @@ interface State {
 }
 
 const state: State = {
-  theme: document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light',
+  theme: savedTheme(),
   category: 'mains',
   query: '',
   lines: [],
@@ -804,6 +813,7 @@ document.addEventListener('click', (e) => {
     case 'theme':
       state.theme = state.theme === 'dark' ? 'light' : 'dark';
       document.documentElement.dataset.theme = state.theme;
+      try { localStorage.setItem(THEME_KEY, state.theme); } catch { /* private mode */ }
       renderTopbar();
       return;
     case 'lang':
