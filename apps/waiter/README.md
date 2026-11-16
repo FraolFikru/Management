@@ -52,7 +52,7 @@ orders taken offline are queued and sent when the connection returns. It needs H
 
 ## Android app
 
-`.github/workflows/waiter-android.yml` packages this app with Capacitor and builds an APK on GitHub whenever
+`.github/workflows/android-apps.yml` packages this app with Capacitor and builds an APK on GitHub whenever
 `apps/waiter` changes on `main` (or when run by hand from the Actions tab, where the server address can be changed).
 The APK is published as the **waiter-android** release: open it on the phone, download `SEER-Waiter.apk`, install.
 The app carries its own screens, so it does not need the Vercel site; it talks to the SEER server directly.

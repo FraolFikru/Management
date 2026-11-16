@@ -1054,3 +1054,22 @@ b, strong { font-weight: 600; }
 .stub, .tx-id { font-family: var(--mono, ui-monospace, monospace); font-variant-numeric: tabular-nums; font-weight: 500;
   border: 1px dashed var(--stub-line, currentColor); border-radius: 4px; padding: 0 6px; white-space: nowrap; }
 :root { --stub-line: var(--border); }
+
+/* phones: a one-column grid must not grow wider than the screen because of a long table row or
+   number inside it (1fr alone lets a column stretch to its widest content) */
+@media (max-width: 860px) {
+  .layout, .grid, .page-grid, .settings-grid, .admin-form-grid { grid-template-columns: minmax(0, 1fr); }
+  .layout > *, .main > *, .grid > *, .page-grid > *, .stats > *, .settings-grid > * { min-width: 0; }
+  .panel { min-width: 0; max-width: 100%; }
+  .table-wrap, .panel:has(> table) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+@media (max-width: 560px) {
+  .stats { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* installed on a phone: keep clear of the status bar and the home indicator */
+@media (max-width: 860px) {
+  .topbar { padding-top: max(10px, env(safe-area-inset-top)); }
+  .main { padding-bottom: max(28px, env(safe-area-inset-bottom)); }
+  .sidebar { padding-top: max(16px, env(safe-area-inset-top)); }
+}
