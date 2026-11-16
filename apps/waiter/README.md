@@ -49,3 +49,12 @@ The Waiter is an installable web app (PWA). Open the deployed address in Chrome 
 **Install on this phone** on the sign-in screen (or Chrome menu → Install app). On iPhone, open it in Safari,
 tap Share, then **Add to Home Screen**. It then opens full screen from its own icon and starts without a signal;
 orders taken offline are queued and sent when the connection returns. It needs HTTPS (Vercel provides it).
+
+## Android app
+
+`.github/workflows/waiter-android.yml` packages this app with Capacitor and builds an APK on GitHub whenever
+`apps/waiter` changes on `main` (or when run by hand from the Actions tab, where the server address can be changed).
+The APK is published as the **waiter-android** release: open it on the phone, download `SEER-Waiter.apk`, install.
+The app carries its own screens, so it does not need the Vercel site; it talks to the SEER server directly.
+It is a test build: each build is signed with a fresh key, so remove the old app before installing a newer one.
+A Play Store version needs a Google developer account and a permanent signing key.

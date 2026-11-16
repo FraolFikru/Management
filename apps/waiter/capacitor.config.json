@@ -1,0 +1,7 @@
+{
+  "appId": "app.seer.waiter",
+  "appName": "SEER Waiter",
+  "webDir": "dist",
+  "backgroundColor": "#141415",
+  "android": { "backgroundColor": "#141415" }
+}
