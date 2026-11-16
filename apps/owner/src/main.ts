@@ -1725,3 +1725,9 @@ if (isLive) {
 } else {
   init();
 }
+
+// Installed on a phone (Add to Home Screen / Install app): keep the app's own files so it opens quickly.
+// The packaged Android app ships its files already, and dev mode must not cache.
+if ("serviceWorker" in navigator && !("Capacitor" in window) && !(import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV) {
+  window.addEventListener("load", () => { void navigator.serviceWorker.register("/sw.js").catch(() => undefined); });
+}

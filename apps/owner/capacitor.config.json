@@ -1,0 +1,9 @@
+{
+  "appId": "app.seer.owner",
+  "appName": "SEER Owner",
+  "webDir": "dist",
+  "backgroundColor": "#141415",
+  "android": {
+    "backgroundColor": "#141415"
+  }
+}

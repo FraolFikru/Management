@@ -1,8 +1,8 @@
-# Builds the SEER Waiter as an Android app (APK) and publishes it as the
-# "waiter-android" release, so it can be downloaded and installed on phones.
-# The app carries its own screens, so it does not depend on the Vercel site;
+# Builds the SEER Waiter and SEER Owner as Android apps (APKs) and publishes them as the
+# "waiter-android" and "owner-android" releases, so they can be downloaded and installed on phones.
+# Each app carries its own screens, so it does not depend on the Vercel site;
 # it talks to the SEER server at API_URL.
-name: Waiter Android app
+name: Android apps
 
 on:
   workflow_dispatch:
@@ -11,22 +11,28 @@ on:
         description: "SEER server address the app talks to"
         default: "https://eirsha-api.onrender.com"
   push:
-    branches: [main]
-    paths: ["apps/waiter/**", ".github/workflows/waiter-android.yml"]
+    branches: [main, owner-mobile-app]
+    paths: ["apps/waiter/**", "apps/owner/**", ".github/workflows/android-apps.yml"]
 
 permissions:
   contents: write
 
 concurrency:
-  group: waiter-android
+  group: android-apps
   cancel-in-progress: true
 
 jobs:
   apk:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { app: waiter, name: "SEER Waiter", file: SEER-Waiter.apk, tag: waiter-android }
+          - { app: owner, name: "SEER Owner", file: SEER-Owner.apk, tag: owner-android }
     defaults:
       run:
-        working-directory: apps/waiter
+        working-directory: apps/${{ matrix.app }}
     env:
       VITE_API_URL: ${{ inputs.api_url || vars.SEER_API_URL || 'https://eirsha-api.onrender.com' }}
     steps:
@@ -66,12 +72,12 @@ jobs:
         run: |
           cd android
           ./gradlew --no-daemon assembleDebug
-          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/SEER-Waiter.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/${{ matrix.file }}"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: SEER-Waiter-apk
-          path: SEER-Waiter.apk
+          name: ${{ matrix.app }}-apk
+          path: ${{ matrix.file }}
 
       - name: Publish the download
         if: github.ref == 'refs/heads/main'
@@ -79,7 +85,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete waiter-android --yes --cleanup-tag || true
-          gh release create waiter-android SEER-Waiter.apk \
-            --title "SEER Waiter for Android (build ${{ github.run_number }})" \
-            --notes "Install: open this page on the phone, download SEER-Waiter.apk and open it. Android will ask to allow installing from this source. If an older build is installed, remove it first. Server: ${{ env.VITE_API_URL }}"
+          gh release delete ${{ matrix.tag }} --yes --cleanup-tag || true
+          gh release create ${{ matrix.tag }} ${{ matrix.file }} \
+            --title "${{ matrix.name }} for Android (build ${{ github.run_number }})" \
+            --notes "Install: open this page on the phone, download ${{ matrix.file }} and open it. Android will ask to allow installing from this source. If an older build is installed, remove it first. Server: ${{ env.VITE_API_URL }}"
