@@ -28,7 +28,7 @@ export type Sheet =
   | { kind: "setup"; count: string; name: string; error: string; busy: boolean };
 
 interface Prefs { lang: Lang; dark: boolean; filter: Filter; view?: View }
-const prefs = api.cache.read<Prefs>("seer.waiter.prefs") ?? { lang: "en", dark: false, filter: "all" };
+const prefs = api.cache.read<Prefs>("seer.waiter.prefs") ?? { lang: "en", dark: true, filter: "all" };
 
 export const state = {
   lang: prefs.lang,

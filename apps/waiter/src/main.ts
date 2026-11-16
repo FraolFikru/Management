@@ -1,5 +1,6 @@
 import "./style.css";
 import { initHelp } from "./help";
+import { initInstall, install } from "./install";
 import * as api from "./api";
 import { setLang, t } from "./i18n";
 import * as S from "./store";
@@ -117,6 +118,7 @@ const acts: Record<string, (id: string) => void> = {
   "signin-mode": () => { signInUi.mode = signInUi.mode === "pin" ? "password" : "pin"; signInUi.message = ""; signInUi.first = ""; render(); $("#siFirst")?.focus(); },
   lang: (id) => { state.lang = id as Lang; setLang(state.lang); S.savePrefs(); render(); },
   dark: () => { state.dark = !state.dark; S.savePrefs(); render(); },
+  install: () => { void install(); },
   profile: () => { state.sheet = { kind: "profile" }; render(); },
   "sign-out": () => { void api.signOut().then(() => { stop(); render(); }); },
   reload: () => { state.loading = true; state.floorError = ""; render(); void S.loadFloor(); },
@@ -281,3 +283,4 @@ if (api.isConfigured && api.sessionUser()) start();
 render();
 
 initHelp();
+initInstall(render);

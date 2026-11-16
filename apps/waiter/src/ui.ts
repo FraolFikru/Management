@@ -3,6 +3,7 @@
    a dish grid with add counters, and an order review with steppers. */
 
 import { helpButton } from "./support";
+import { installState } from "./install";
 import { isConfigured, sessionUser } from "./api";
 import { LANGS, money, nm, since, t } from "./i18n";
 import { areas, canEdit, draftTotal, draftsOf, isOpen, item, me, order, orders, sending, state, tableOf, visibleTables, waitingTables } from "./store";
@@ -102,6 +103,7 @@ export function renderSignIn(): string {
       <button class="link" type="button" data-act="signin-mode">${t(pin ? "Use username and password" : "Use staff code and PIN")}</button>
       ${pin ? `<p class="hint">${t("Your staff code is on your badge. Ask your manager for a PIN.")}</p>` : ""}
       ${langSeg()}
+      ${installState() === "ready" ? `<button class="link" type="button" data-act="install">${t("Install on this phone")}</button>` : ""}
     </form>
   </main>`;
 }
@@ -510,7 +512,9 @@ export function renderSheet(): string {
         <div class="stepper-row"><span>${t("Language")}</span><div class="seg">${LANGS.map((l) => `<button data-act="lang" data-id="${l.code}" aria-pressed="${state.lang === l.code}">${l.label}</button>`).join("")}</div></div>
         <div class="stepper-row"><span>${t("Dark mode")}</span><button class="switch" data-act="dark" role="switch" aria-checked="${state.dark}"><i></i></button></div>
         ${state.branches.length > 1 ? `<label class="field"><span>${t("Branch")}</span><select id="branchSel">${state.branches.map((b) => `<option value="${b.id}" ${b.id === u?.branchId ? "selected" : ""}>${esc(b.name)}</option>`).join("")}</select></label>` : ""}
-        <div class="opts">${me()?.canSetup ? `<button class="opt" data-act="setup">${icon("table")} ${t("Manage tables")}</button>` : ""}
+        <div class="opts">${installState() === "ready" ? `<button class="opt" data-act="install">${icon("plus")} ${t("Install on this phone")}</button>` : ""}
+        ${installState() === "ios" ? `<p class="hint">${t("To install on iPhone: tap Share in Safari, then Add to Home Screen.")}</p>` : ""}
+        ${me()?.canSetup ? `<button class="opt" data-act="setup">${icon("table")} ${t("Manage tables")}</button>` : ""}
         <button class="opt danger" data-act="sign-out">${icon("out")} ${t("Sign out")}</button></div>`);
     }
     case "setup": {

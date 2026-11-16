@@ -42,3 +42,10 @@ cached. The floor updates live over the backend's WebSocket (`/ws?topics=floor`)
     npm install && npm run dev
 
 Deploy on Vercel as `eirsha-waiter`, root directory `apps/waiter`.
+
+## Install on a phone
+
+The Waiter is an installable web app (PWA). Open the deployed address in Chrome on Android and choose
+**Install on this phone** on the sign-in screen (or Chrome menu → Install app). On iPhone, open it in Safari,
+tap Share, then **Add to Home Screen**. It then opens full screen from its own icon and starts without a signal;
+orders taken offline are queued and sent when the connection returns. It needs HTTPS (Vercel provides it).
