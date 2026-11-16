@@ -423,4 +423,5 @@ export const UI_STRINGS: Record<string, Entry> = {
   "Sign-in problems and passwords.": { am: "የመግቢያ ችግሮች እና የይለፍ ቃሎች።", om: "Rakkoo seenuu fi jecha icciitii." },
   "Paying suppliers — the Finance app.": { am: "ለአቅራቢዎች መክፈል — የፋይናንስ መተግበሪያ።", om: "Dhiyeessitootaaf kaffaluu — appii Faayinaansii." },
   "Menu prices — the Admin app.": { am: "የምናሌ ዋጋዎች — የአስተዳዳሪ መተግበሪያ።", om: "Gatii baafata nyaataa — appii Bulchiinsaa." },
+  "What the restaurant bought, spent and wasted": { am: "ምግብ ቤቱ የገዛው፣ ያወጣው እና ያባከነው", om: "Waan manni nyaataa bitate, baase fi balleesse" },
 };

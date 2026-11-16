@@ -7,7 +7,7 @@ import type { PaymentMethod, PaymentSummary } from "../types";
 import { t, tk } from "../i18n";
 import { fmtTime, money, num, pct } from "../format";
 import { COGS_COLOR, COGS_IDS, PAY_COLOR, PAY_IDS } from "../catalog";
-import { db, inPeriod, lowStock, paymentSummary, pendingDispatches, periodTotals, state, stockLevel, suggestedOrder, user } from "../store";
+import { db, inPeriod, lowStock, paymentSummary, pendingDispatches, periodTotals, state, stockLevel, suggestedOrder } from "../store";
 import { esc, icon } from "../ui/dom";
 import { bar, changePct, chip, compareLabel, dot, empty, metricCard, payName, qtyUnit, shiftSeg } from "../ui/shared";
 import { auditLine } from "./audit";
@@ -87,7 +87,7 @@ export function renderOverview(): string {
   const toReview = db.purchases.filter((p) => p.status === "PENDING").length;
   const pending = pendingDispatches().length;
   return `
-    <div class="page-head"><div><h1 tabindex="-1">${t("Good day, {name}", { name: esc(user().name.split(" ")[0]) })}</h1>
+    <div class="page-head"><div><h1 tabindex="-1">${t("Overview")}</h1>
       <p>${esc(tk("branch.name"))} · ${t("Live view of today's sales, costs and approvals.")}</p></div></div>
     ${metricCards()}
     ${pending ? `<a class="dispatch-banner" href="#dispatch">${icon("truck")}<span><strong>${t("{n} dispatches waiting for your decision", { n: pending })}</strong>

@@ -40,7 +40,7 @@ export function renderDashboard(): string {
 
   return `
     <div class="page-head">
-      <div><h1>${t("Dashboard")}</h1><p>${t("Hello {name}. Here is what the restaurant bought.", { name: esc(u.name.split(" ")[0]) })}</p></div>
+      <div><h1>${t("Dashboard")}</h1><p>${t("What the restaurant bought, spent and wasted")}</p></div>
       ${periodSeg()}
     </div>
     ${metricsBar()}

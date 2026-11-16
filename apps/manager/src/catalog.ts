@@ -41,11 +41,11 @@ export const COGS_CATEGORIES = reg<COGSCategory>("cogs", {
 });
 export const COGS_IDS = Object.keys(COGS_CATEGORIES) as COGSCategory[];
 export const COGS_COLOR: Record<COGSCategory, string> = {
-  RAW_INGREDIENTS: "#5bd18b",
-  BEVERAGE_BAR: "#8fd3f4",
-  PACKAGING_DISPOSABLES: "#f2c48d",
-  KITCHEN_CONSUMABLES: "#c9a0f2",
-  CLEANING_SANITATION: "#4fc6b7",
+  RAW_INGREDIENTS: "#8fa58a",
+  BEVERAGE_BAR: "#8c96a3",
+  PACKAGING_DISPOSABLES: "#c8b48a",
+  KITCHEN_CONSUMABLES: "#a395a8",
+  CLEANING_SANITATION: "#7fa39b",
 };
 
 /* sub-groups inside each category */
@@ -100,17 +100,17 @@ export const MAIN_TO_COGS: Record<MainCategory, COGSCategory> = {
   CLEANING: "CLEANING_SANITATION",
 };
 export const MAIN_COLOR: Record<MainCategory, string> = {
-  VEGETABLES: "#5bd18b",
-  MEAT_FISH: "#f0857a",
-  DAIRY_EGGS: "#f2e3a0",
-  GRAINS_FLOUR: "#d9b27c",
-  OIL: "#f2c48d",
-  SPICES: "#ff9f6b",
-  DRINKS: "#8fd3f4",
-  COFFEE_TEA: "#b88b6a",
-  PACKAGING: "#c9a0f2",
-  KITCHEN: "#9fb4ff",
-  CLEANING: "#4fc6b7",
+  VEGETABLES: "#8fa58a",
+  MEAT_FISH: "#c0694e",
+  DAIRY_EGGS: "#d2c79a",
+  GRAINS_FLOUR: "#b89b70",
+  OIL: "#c8b48a",
+  SPICES: "#c98a5e",
+  DRINKS: "#8c96a3",
+  COFFEE_TEA: "#8a6a52",
+  PACKAGING: "#a395a8",
+  KITCHEN: "#7f8aa0",
+  CLEANING: "#7fa39b",
 };
 
 const GROUP_MAIN: Record<string, MainCategory> = {
@@ -266,8 +266,8 @@ export const WASTE_REASONS = reg<WasteReason>("waste", {
 });
 export const WASTE_IDS = Object.keys(WASTE_REASONS) as WasteReason[];
 export const WASTE_COLOR: Record<WasteReason, string> = {
-  PREP_WASTE: "#9fb4ff", TRIM_LOSS: "#8fd3f4", OVER_PORTIONING: "#c9a0f2", DROPPED_ITEMS: "#f2c48d",
-  SPOILAGE: "#5bd18b", EXPIRED_STOCK: "#f2e3a0", INVENTORY_THEFT: "#f0857a", OTHER: "#a4acc4",
+  PREP_WASTE: "#7f8aa0", TRIM_LOSS: "#8c96a3", OVER_PORTIONING: "#a395a8", DROPPED_ITEMS: "#c8b48a",
+  SPOILAGE: "#8fa58a", EXPIRED_STOCK: "#d2c79a", INVENTORY_THEFT: "#c0694e", OTHER: "#9a9aa0",
 };
 /** reasons that need a written explanation */
 export const NOTE_REQUIRED: ReadonlySet<WasteReason> = new Set<WasteReason>(["INVENTORY_THEFT", "OTHER"]);
@@ -308,7 +308,7 @@ export const PAYMENT_METHODS = reg<PaymentMethod>("pay", {
 });
 export const PAY_IDS = Object.keys(PAYMENT_METHODS) as PaymentMethod[];
 export const PAY_COLOR: Record<PaymentMethod, string> = {
-  CASH: "#5bd18b", TELEBIRR: "#8fd3f4", CBE_BIRR: "#c9a0f2",
+  CASH: "#8fa58a", TELEBIRR: "#8c96a3", CBE_BIRR: "#a395a8",
 };
 
 export const EXPENSE_SOURCES = reg<ExpenseSource>("src", {

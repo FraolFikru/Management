@@ -4,7 +4,7 @@
 import { t, tk } from "../i18n";
 import { money, today } from "../format";
 import { workedHours } from "../seed";
-import { attendanceOn, branchStaff, db, employee, onBreak, payslip, state, user } from "../store";
+import { attendanceOn, branchStaff, db, employee, onBreak, payslip, state } from "../store";
 import { esc, icon } from "../ui/dom";
 import { dayLabel, empty, fmtH, metricCard } from "../ui/shared";
 import { attendanceRows, boardHead } from "./attendance";
@@ -23,7 +23,7 @@ export function renderToday(): string {
   const net = branchStaff(true).reduce((s, e) => s + payslip(e, month).grossTaxable, 0);
   const logs = db.logs.filter((l) => employee(l.employeeId)?.branchId === state.branch).slice(0, 4);
   return `
-    <div class="page-head"><div><h1 tabindex="-1">${t("Good day, {name}", { name: esc(user().fullName.split(" ")[0]) })}</h1>
+    <div class="page-head"><div><h1 tabindex="-1">${t("Today")}</h1>
       <p>${esc(tk(`branch.${state.branch}`))} · ${esc(dayLabel(day))}</p></div></div>
     <section class="metrics"><h2 class="sr">${t("Today at a glance")}</h2><div class="metric-grid">
       ${metricCard({ icon: "users", title: t("On shift now"), value: String(on), note: brk ? t("{n} on break", { n: brk }) : t("Nobody on break"), href: "attendance", tone: "good" })}

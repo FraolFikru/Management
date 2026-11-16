@@ -282,7 +282,7 @@ function renderDashboard(): string {
     : t("Food cost is running 1.2% above target this week.");
   const alert = settings.showAlert && alertText
     ? `<div class="alert" role="status">
-        <span>${icon("warning")} <strong>${t("Alert:")}</strong> ${escapeHtml(alertText)}</span>
+        <span>${icon("warning")} ${escapeHtml(alertText)}</span>
         <a href="#" data-goto="Budgets">${t("Review budgets")} ${icon("arrow-right")}</a>
       </div>`
     : "";
@@ -297,9 +297,7 @@ function renderDashboard(): string {
             return `
           <article class="panel stat${i === 0 ? " featured glow" : ""}">
             <div class="stat-head">
-              <span class="stat-icon">${icon(s.icon)}</span>
               <span class="stat-label">${t(s.label)}</span>
-              <button class="more" aria-label="${t("More")}">${icon("dots-v")}</button>
             </div>
             <div class="stat-value" data-count="${s.value}" data-unit="${s.unit}">${s.unit === "%" ? "0.0%" : money(0)}</div>
             <div class="stat-foot">
@@ -350,7 +348,7 @@ function renderDashboard(): string {
               .map(
                 (x) => `
               <tr>
-                <td class="mono">${x.id}</td>
+                <td><span class="tx-id">${x.id}</span></td>
                 <td>${escapeHtml(t(x.description))}</td>
                 <td><span class="cat"><i style="background:${categoryColor[x.category]}"></i>${t(x.category)}</span></td>
                 <td>${fmtDate(x.date)}</td>
@@ -1329,7 +1327,7 @@ function renderTable(): void {
           return `
       <tr class="${sel ? "selected" : ""}">
         <td><input type="checkbox" data-id="${x.id}" ${sel ? "checked" : ""} aria-label="${x.id}"/></td>
-        <td class="mono">${x.id}</td>
+        <td><span class="tx-id">${x.id}</span></td>
         <td><span class="merchant"><span class="m-icon" style="background:${bg}">${escapeHtml([...desc][0] ?? "")}</span>${escapeHtml(desc)}</span></td>
         <td><span class="cat"><i style="background:${bg}"></i>${t(x.category)}</span></td>
         <td>${fmtDate(x.date)}</td>
