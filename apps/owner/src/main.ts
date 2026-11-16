@@ -105,6 +105,7 @@ function loadSettings(): Settings {
 }
 
 function saveSettings(): void {
+  document.documentElement.lang = settings.lang;   // screen readers, and the shared server-wake notice
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify(settings));
   } catch {
@@ -113,6 +114,7 @@ function saveSettings(): void {
 }
 
 const settings = loadSettings();
+document.documentElement.lang = settings.lang;
 
 /* ---------- view state ---------- */
 

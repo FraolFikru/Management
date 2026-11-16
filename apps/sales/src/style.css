@@ -16,22 +16,22 @@
   --line-strong: rgba(237, 237, 237, 0.14);
   --text: #ededed;
   --muted: #a1a1a6;
-  --faint: #85858b;
+  --faint: #929298;
 
   --primary: #ededed;
   --primary-ink: #141415;
 
   --sale: #4cc38a;
   --sale-soft: rgba(76, 195, 138, 0.12);
-  --spend: #e5484d;
-  --spend-soft: rgba(229, 72, 77, 0.12);
+  --spend: #f2777a;
+  --spend-soft: rgba(242, 119, 122, 0.12);
 
   --good: #4cc38a;
   --good-bg: rgba(76, 195, 138, 0.12);
   --warn: #d9a35b;
   --warn-bg: rgba(217, 163, 91, 0.12);
-  --bad: #e5484d;
-  --bad-bg: rgba(229, 72, 77, 0.12);
+  --bad: #f2777a;
+  --bad-bg: rgba(242, 119, 122, 0.12);
 
   /* the only blue: interactive hover glow */
   --glow: transparent;
@@ -60,18 +60,18 @@
   --line-strong: rgba(23, 23, 23, 0.14);
   --text: #171717;
   --muted: #525252;
-  --faint: #737373;
+  --faint: #666666;
   --primary: #171717;
   --primary-ink: #ffffff;
-  --sale: #16a34a;
+  --sale: #137a3a;
   --sale-soft: #e8f5ec;
-  --spend: #dc2626;
+  --spend: #b91c1c;
   --spend-soft: #fdeceb;
-  --good: #16a34a;
+  --good: #137a3a;
   --good-bg: #e8f5ec;
-  --warn: #a16207;
+  --warn: #854d0e;
   --warn-bg: #f8f0e1;
-  --bad: #dc2626;
+  --bad: #b91c1c;
   --bad-bg: #fdeceb;
   --glow: transparent;
   --glow-line: rgba(23, 23, 23, 0.14);
@@ -864,3 +864,11 @@ body.sh-open { overflow: hidden; }
 /* unslop: headings take hierarchy from size, not weight */
 h1, h2, h3, h4, th { font-weight: 500; }
 b, strong { font-weight: 600; }
+
+/* light theme: category colours used as label text are darkened so small labels stay readable */
+:root[data-theme="light"] .shift-chip { color: color-mix(in srgb, var(--shift) 45%, #171717); }
+:root[data-theme="light"] .linked { color: #6f5f38; background: #f5f0e3; }
+:root[data-theme="light"] .pill.break { color: #4f5966; background: #eef0f2; }
+:root[data-theme="light"] .role-tag.r-admin { color: #6d5f72; background: #f1eef2; }
+:root[data-theme="light"] .role-tag.r-branch_manager { color: #4f5966; background: #eef0f2; }
+:root[data-theme="light"] .role-tag.r-inventory_clerk { color: #3f625b; background: #e9f1ef; }
