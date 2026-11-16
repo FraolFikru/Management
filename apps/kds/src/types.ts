@@ -92,6 +92,8 @@ export type FeedEvent =
 export type FeedCommand =
   | { type: "status"; ticketId: string; status: KDSOrderStatus; at: string; by: string }
   | { type: "item"; ticketId: string; itemId: string; isCompleted: boolean; at: string; by: string }
+  /** some dishes are ticked done, not all: tell the waiter those are ready, leave the rest cooking */
+  | { type: "notify"; ticketId: string; at: string; by: string }
   | { type: "bump"; ticketId: string; at: string; by: string }
   | { type: "recall"; ticketId: string; at: string; by: string };
 

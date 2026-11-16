@@ -339,7 +339,8 @@ def kds_snapshot(db: Db, branch_id: str) -> dict:
 
 
 def kds_command(db: Db, actor: Actor, ticket_id: str, cmd: str, body: dict) -> dict:
-    """status | item | bump | recall — same semantics as kitchen-display's demo feed."""
+    """status | item | notify | bump | recall — same semantics as kitchen-display's demo feed.
+    notify: some dishes are ticked done but not all; tell the floor those are ready and leave the rest alone."""
     t = _get(db, "kds_ticket", ticket_id, actor.org_id)
     if actor.branch_id and t["branch_id"] != actor.branch_id and actor.role != "ADMIN":
         raise NotFound("kds_ticket not found", id=ticket_id)
@@ -372,6 +373,13 @@ def kds_command(db: Db, actor: Actor, ticket_id: str, cmd: str, body: dict) -> d
                       {"is_completed": done, "completed_at": at if done else None, "completed_by": actor.user_id if done else None})
         if not n:
             raise NotFound("ticket item not found", itemId=body["itemId"])
+    elif cmd == "notify":
+        if not active or t["status"] == "READY":
+            raise Conflict("ticket is not being prepared", status=t["status"])
+        if not db.scalar("SELECT count(*) FROM kds_ticket_item WHERE ticket_id = ? AND is_completed AND NOT is_voided", (ticket_id,)):
+            raise Conflict("no dish is marked done yet")
+        if t["status"] == "PENDING":
+            ch.update(status="PREPARING", started_at=t["started_at"] or at)
     elif cmd == "bump":
         if not active:
             raise Conflict("ticket already off the board", status=t["status"])
@@ -389,7 +397,7 @@ def kds_command(db: Db, actor: Actor, ticket_id: str, cmd: str, body: dict) -> d
     db.update("kds_ticket", {"id": ticket_id}, ch)
     payload = {"type": "remove", "ticketId": ticket_id} if event == "remove" else {"type": "upsert", "ticket": kds_payload(db, ticket_id)}
     outbox(db, actor.org_id, t["branch_id"], "kds.ticket", event, "kds_ticket", ticket_id, payload)
-    floor_event(db, actor.org_id, t["branch_id"], "ready" if ch.get("status") == "READY" else "kitchen",
+    floor_event(db, actor.org_id, t["branch_id"], "ready" if ch.get("status") == "READY" or cmd == "notify" else "kitchen",
                 db.one("SELECT * FROM customer_order WHERE id = ?", (t["order_id"],)))
     audit(db, actor, "KDS", f"kds_ticket.{cmd}", "kds_ticket", ticket_id, "Ticket {orderNumber}: {cmd}",
           {"orderNumber": t["order_number"], "cmd": cmd, **{k: v for k, v in body.items() if k in ("status", "itemId", "isCompleted")}},

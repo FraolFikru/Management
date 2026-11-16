@@ -14,7 +14,7 @@ import { clock } from "./format";
 import { audioReady, chime, unlockAudio } from "./sound";
 import {
   attachFeed, bump, column, itemsFor, onNewTickets, onSendFailure, recall, setLang, setSound, setStation,
-  setStatus, setType, state, subscribe, tick, toggleItem, toggleTheme,
+  notifyReady, setStatus, setType, state, subscribe, tick, toggleItem, toggleTheme,
 } from "./store";
 import { board } from "./ui/board";
 import { $ } from "./ui/dom";
@@ -118,6 +118,14 @@ app.addEventListener("click", (ev) => {
     case "status":
       void changeStatus(el.dataset.id ?? "", el.dataset.status as KDSOrderStatus);
       break;
+    case "notify": {
+      const id = el.dataset.id ?? "";
+      const tk = state.tickets.get(id);
+      if (!tk) break;
+      const done = tk.items.filter((i) => i.isCompleted).length, left = tk.items.length - done, no = tk.orderNumber;
+      void notifyReady(id).then((ok) => ok && toast(t("{no}: {done} ready for the waiter, {left} still cooking", { no, done, left }), { kind: "good" }));
+      break;
+    }
     case "bump": {
       const id = el.dataset.id ?? "";
       const no = state.tickets.get(id)?.orderNumber ?? "";

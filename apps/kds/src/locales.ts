@@ -206,4 +206,8 @@ export const UI_STRINGS: Record<string, Entry> = {
   "Questions about what a customer ordered.": { am: "ደንበኛው ምን እንዳዘዘ የሚመለከቱ ጥያቄዎች።", om: "Gaaffii waan maamilli ajaje ilaallatu." },
   "Changing or cancelling orders — the waiter or the cashier.": { am: "ትዕዛዞችን መቀየር ወይም መሰረዝ — አስተናጋጁ ወይም ገንዘብ ተቀባዩ።", om: "Ajaja jijjiiruu ykn haquu — keessummeessaa ykn kaffaltii fudhataa." },
   "Stock and waste — the Purchasing app.": { am: "ክምችት እና ብክነት — የግዢ መተግበሪያ።", om: "Kuusaa fi badiinsa — appii Bittaa." },
+  "Send {n} ready": { am: "{n} ዝግጁ ላክ", om: "{n} qophaa'e ergi" },
+  "Mark all ready": { am: "ሁሉንም ዝግጁ አድርግ", om: "Hunda qophaa'e godhi" },
+  "{no}: {done} ready for the waiter, {left} still cooking": { am: "{no}፦ {done} ለአስተናጋጁ ዝግጁ፣ {left} ገና በመብሰል ላይ", om: "{no}: {done} tajaajilaaf qophaa'eera, {left} ammallee bilchaachaa jira" },
+  "The waiter or cashier sees it's ready to serve. If you ticked only some dishes, the button sends just those and the rest stay on the ticket. If other stations are still cooking, the ticket waits for them.": { am: "አስተናጋጁ ወይም ገንዘብ ተቀባዩ ለማቅረብ ዝግጁ መሆኑን ያያል። የተወሰኑ ምግቦችን ብቻ ምልክት ካደረጉ፣ ቁልፉ እነዚያን ብቻ ይልካል፤ የቀሩት በቲኬቱ ላይ ይቆያሉ። ሌሎች ጣቢያዎች አሁንም እያበሰሉ ከሆነ ቲኬቱ ይጠብቃቸዋል።", om: "Keessummeessaan ykn kaffaltii fudhataan dhiyeessuuf qophaa'uu isaa arga. Nyaata muraasa qofa yoo mallatteessite, qabduun sanneen qofa erga; kanneen hafan tikeeticha irra turu. Iddoowwan biroo ammallee yoo bilcheessaa jiraatan, tikeetichi isaan eeggata." },
 };

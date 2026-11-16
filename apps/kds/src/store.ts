@@ -207,6 +207,13 @@ export async function setStatus(id: string, status: KDSOrderStatus): Promise<boo
   return ok;
 }
 
+/** Some dishes are ticked, not all: send only those to the waiter. The other dishes stay as they are. */
+export function notifyReady(id: string): Promise<boolean> {
+  const tk = state.tickets.get(id);
+  if (!tk || tk.status === "READY" || !tk.items.some((i) => i.isCompleted)) return Promise.resolve(false);
+  return commit(id, () => undefined, [{ type: "notify", ticketId: id, at: nowIso(), by: KDS_OPERATOR }]);
+}
+
 /** Tick a dish done or not done. Ticking the first dish on a new ticket also starts it. */
 export function toggleItem(ticketId: string, itemId: string): Promise<boolean> {
   const tk = state.tickets.get(ticketId);
