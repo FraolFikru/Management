@@ -31,5 +31,6 @@ export function initInstall(changed: () => void): void {
   window.addEventListener("appinstalled", () => { pending = null; onChange(); });
   // the service worker is what lets the installed app open without a signal
   const dev = (import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV;
-  if ("serviceWorker" in navigator && !dev) window.addEventListener("load", () => { void navigator.serviceWorker.register("/sw.js").catch(() => undefined); });
+  const native = "Capacitor" in window;   // the packaged Android app ships its own files, so it needs no service worker
+  if ("serviceWorker" in navigator && !dev && !native) window.addEventListener("load", () => { void navigator.serviceWorker.register("/sw.js").catch(() => undefined); });
 }
