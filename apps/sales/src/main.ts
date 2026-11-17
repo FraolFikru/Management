@@ -1,5 +1,5 @@
 /* =========================================================
-   SEER Sales v3 — entry point.
+   SEER Purchases (formerly "Sales") v3 — entry point.
    Shows the sign-in screen until a staff member signs in, then the
    app shell. This app is for buying only. All events are delegated (data-action / data-bind),
    and each screen only opens for roles allowed to use it.
@@ -72,7 +72,7 @@ function render(focusSelector?: string): void {
       app.classList.add("signed-out");
       app.innerHTML = isLive ? renderSignIn(live) : renderSignIn();
     }
-    document.title = "SEER · Sales";
+    document.title = "SEER · Purchases";
     $<HTMLElement>(focusSelector ?? (isLive ? (live.message ? "#livePass" : "#liveUser") : state.signInFor ? "#pin" : ".staff-btn"))?.focus();
     return;
   }
@@ -85,7 +85,7 @@ function render(focusSelector?: string): void {
   view.innerHTML = def.render();
   def.mount?.();
   renderNav();
-  document.title = `${t(def.title)} · SEER Sales`;
+  document.title = `${t(def.title)} · SEER Purchases`;
   if (focusSelector) $<HTMLElement>(focusSelector)?.focus();
 }
 

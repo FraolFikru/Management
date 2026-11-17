@@ -1,0 +1,79 @@
+# Builds SEER for Windows: the nine apps plus the shell, packaged with Electron into one installer,
+# published as the "seer-windows" release.
+name: Windows app
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: "SEER server address the app talks to"
+        default: "https://eirsha-api.onrender.com"
+  push:
+    branches: [main, windows-app]
+    paths: ["apps/**", "desktop/**", ".github/workflows/windows-app.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-app
+  cancel-in-progress: true
+
+jobs:
+  installer:
+    runs-on: windows-latest
+    env:
+      API_URL: ${{ inputs.api_url || vars.SEER_API_URL || 'https://eirsha-api.onrender.com' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+
+      - name: Build the nine apps
+        shell: bash
+        run: |
+          export VITE_API_URL="$API_URL"
+          export VITE_KDS_API_URL="$API_URL"
+          export VITE_KDS_WS_URL="$(echo "$API_URL" | sed 's/^http/ws/')/ws"
+          mkdir -p desktop/web
+          for app in owner admin manager sales finance hr cashier waiter kds; do
+            echo "::group::$app"
+            (cd apps/$app && npm install --no-audit --no-fund && npm run build)
+            cp -r apps/$app/dist desktop/web/$app
+            echo "::endgroup::"
+          done
+          echo "{\"apiUrl\": \"$API_URL\"}" > desktop/web/config.json
+
+      - name: Install the desktop tools
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+
+      - name: Check that the program starts and every app loads
+        working-directory: desktop
+        shell: bash
+        env: { ELECTRON_ENABLE_LOGGING: "1" }
+        run: npx electron . --smoke
+
+      - name: Build the installer
+        working-directory: desktop
+        shell: bash
+        run: |
+          sed -i "s/\"version\": \"1.0.0\"/\"version\": \"1.0.${{ github.run_number }}\"/" package.json
+          npx electron-builder --win --publish never
+          ls -la release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SEER-Setup
+          path: desktop/release/SEER-Setup.exe
+
+      - name: Publish the download
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete seer-windows --yes --cleanup-tag || true
+          gh release create seer-windows desktop/release/SEER-Setup.exe \
+            --title "SEER for Windows (build ${{ github.run_number }})" \
+            --notes "Download SEER-Setup.exe and open it. Windows may show a blue 'Windows protected your PC' box because the installer is not signed yet: choose More info, then Run anyway. Server: $API_URL"

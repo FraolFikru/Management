@@ -86,7 +86,7 @@ export async function signOut(): Promise<void> {
 /* ---------- load ---------- */
 
 export interface Bootstrap {
-  /** this account's role in the Sales app; null = it can't use this app */
+  /** this account's role in the Purchases app; null = it can't use this app */
   role: Role | null;
   purchases: PurchaseRecord[];
   waste: WasteRecord[];
