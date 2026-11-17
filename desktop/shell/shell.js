@@ -30,7 +30,7 @@
     "Nothing is waiting.": ["የሚጠብቅ ነገር የለም።", "Wanti eeggatu hin jiru."],
     "Low stock": ["ዝቅተኛ ክምችት", "Kuusaa gadi aanaa"], "reorder at {n}": ["በ{n} እንደገና ይዘዙ", "{n} irratti irra deebi'ii ajaji"], "and {n} more": ["እና {n} ተጨማሪ", "fi {n} dabalataa"], "Stock is above the reorder level.": ["ክምችቱ ከዳግም ማዘዣ ደረጃ በላይ ነው።", "Kuusaan sadarkaa ajaja irra deebii ol jira."],
     "On shift": ["በፈረቃ ላይ", "Dabaree irra"], "Nobody is clocked in.": ["ማንም አልገባም።", "Namni seene hin jiru."],
-    "Open": ["ክፈት", "Bani"], "Some figures could not be loaded: {what}": ["አንዳንድ አሃዞች ሊጫኑ አልቻሉም፦ {what}", "Lakkoofsi tokko tokko fe'amuu hin dandeenye: {what}"],
+    "Open": ["ክፈት", "Bani"], "Menu": ["ምናሌ", "Baafata"], "Close menu": ["ምናሌውን ዝጋ", "Baafata cufi"], "Some figures could not be loaded: {what}": ["አንዳንድ አሃዞች ሊጫኑ አልቻሉም፦ {what}", "Lakkoofsi tokko tokko fe'amuu hin dandeenye: {what}"],
     "Owner": ["ባለቤት", "Abbaa Qabeenyaa"], "System Admin": ["የሲስተም አስተዳዳሪ", "Bulchaa Sirnaa"], "Branch manager": ["የቅርንጫፍ ሥራ አስኪያጅ", "Hogganaa Damee"], "Accountant": ["የሂሳብ ባለሙያ", "Herrega-qabaa"],
     "HR officer": ["የሰው ኃይል ባለሙያ", "Ogeessa Humna Namaa"], "Inventory clerk": ["የክምችት ሰራተኛ", "Hojjetaa Kuusaa"], "Kitchen staff": ["የወጥ ቤት ሰራተኛ", "Hojjetaa Kushinaa"],
     "This account has no part of SEER to open here.": ["ይህ መለያ እዚህ የሚከፍተው የSEER ክፍል የለውም።", "Herregni kun kutaa SEER asitti banu hin qabu."],
@@ -69,12 +69,13 @@
   const OPS_ROLES = ["OWNER", "ADMIN", "BRANCH_MANAGER"];
   const ROLE_NAME = { OWNER: "Owner", ADMIN: "System Admin", BRANCH_MANAGER: "Branch manager", SALES_STAFF: "Cashier", WAITER: "Waiter", KITCHEN_STAFF: "Kitchen staff", INVENTORY_CLERK: "Inventory clerk", ACCOUNTANT: "Accountant", HR_OFFICER: "HR officer" };
   const icon = (d) => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
-  const I = { ops: "M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z", out: "M10 4H5v16h5M15 8l4 4-4 4M19 12H9", theme: "M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z", refresh: "M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6", arrow: "M5 12h14M13 6l6 6-6 6" };
+  const I = { menu: "M4 6h16M4 12h16M4 18h16", ops: "M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z", out: "M10 4H5v16h5M15 8l4 4-4 4M19 12H9", theme: "M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z", refresh: "M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6", arrow: "M5 12h14M13 6l6 6-6 6" };
 
   /* ---------- state ---------- */
   let cfg = { apiUrl: "", ports: {} };
   let user = null, token = "", secret = null;      // secret = { username, password }, memory only (to renew the session)
   let view = "ops";
+  let menuOpen = false;                            // the SEER menu is tucked away until the top-left button opens it
   const opened = new Set();
   let ops = { at: 0, data: {}, failed: [] }, names = {}, timer = 0, busy = false, signMsg = "";
 
@@ -138,7 +139,7 @@
   async function signOut() {
     clearInterval(timer); timer = 0;
     if (bridge) await bridge.signOut();
-    user = null; token = ""; secret = null; opened.clear(); ops = { at: 0, data: {}, failed: [] }; signMsg = "";
+    user = null; token = ""; secret = null; menuOpen = false; opened.clear(); ops = { at: 0, data: {}, failed: [] }; signMsg = "";
     renderSignIn();
   }
 
@@ -154,7 +155,8 @@
     const mine = ROLE_APPS[user.role] || [], b = badges();
     const nav = (id, label, d) => `<button class="nav" data-view="${id}" ${view === id ? 'aria-current="page"' : ""} title="${esc(t(label))}">${icon(d)}<span>${esc(t(label))}</span>${b[id] ? `<b class="dot">${b[id]}</b>` : ""}</button>`;
     return `
-      <div class="brand"><img class="logo-dark" src="./logo-dark.png" alt=""><img class="logo-light" src="./logo-light.png" alt=""><strong>SEER</strong></div>
+      <div class="brand"><img class="logo-dark" src="./logo-dark.png" alt=""><img class="logo-light" src="./logo-light.png" alt=""><strong>SEER</strong>
+        <button class="icon-btn close" data-act="menu-close" aria-label="${esc(t("Close menu"))}" title="${esc(t("Close menu"))}">${icon("M6 6l12 12M18 6L6 18")}</button></div>
       ${OPS_ROLES.includes(user.role) ? nav("ops", "Operations", I.ops) : ""}
       ${SECTIONS.map((s) => { const list = mine.filter((a) => APPS[a].section === s); return list.length ? `<h3>${esc(t(s))}</h3>${list.map((a) => nav(a, APPS[a].label, APPS[a].icon)).join("")}` : ""; }).join("")}
       <div class="rail-foot">
@@ -163,10 +165,19 @@
         <button class="nav" data-act="signout">${icon(I.out)}<span>${esc(t("Sign out"))}</span></button>
       </div>`;
   }
+  function barHtml() {
+    const title = view === "ops" ? "Operations" : APPS[view] ? APPS[view].label : "";
+    const b = badges(), waiting = Object.values(b).reduce((s, n) => s + n, 0);
+    return `<button class="bar-btn" data-act="menu" aria-expanded="${menuOpen}" aria-label="${esc(t("Menu"))}" title="${esc(t("Menu"))}">${icon(I.menu)}${waiting && !menuOpen ? `<i class="pip"></i>` : ""}</button>
+      <strong>SEER</strong><span class="crumb">${esc(t(title))}</span>
+      <span class="bar-user">${esc(user.name)} · ${esc(t(ROLE_NAME[user.role] || user.role))}</span>`;
+  }
   function renderFrame() {
     document.documentElement.lang = lang; document.documentElement.dataset.theme = theme;
-    if (!root.querySelector(".frame")) root.innerHTML = `<div class="frame"><nav class="rail" aria-label="SEER"></nav><div class="stage"><section class="ops" id="ops" hidden></section></div></div>`;
+    if (!root.querySelector(".frame")) root.innerHTML = `<div class="frame"><header class="bar"></header><div class="stage"><section class="ops" id="ops" hidden></section></div><div class="scrim" data-act="menu-close"></div><nav class="rail" aria-label="SEER"></nav></div>`;
     root.querySelector(".rail").innerHTML = railHtml();
+    root.querySelector(".bar").innerHTML = barHtml();
+    root.querySelector(".frame").classList.toggle("menu-open", menuOpen);
     const stage = root.querySelector(".stage");
     if (APPS[view] && !opened.has(view)) {            // an app is loaded the first time it is opened, then kept running
       const f = document.createElement("iframe");
@@ -190,6 +201,7 @@
     if (!user) return;                                 // signed out while loading
     ops = { ...ops, at: Date.now(), data, failed };
     root.querySelector(".rail").innerHTML = railHtml();
+    root.querySelector(".bar").innerHTML = barHtml();
     if (view === "ops") renderOps();
   }
 
@@ -244,11 +256,15 @@
     if (el.dataset.lang) {
       lang = el.dataset.lang; store.set("seer.shell.lang", lang);
       if (user) { renderFrame(); if (!names[lang]) void loadOps(); } else renderSignIn((document.getElementById("suUser") || {}).value || "");
-    } else if (el.dataset.view) { view = el.dataset.view; renderFrame(); if (view === "ops") void loadOps(); }
+    } else if (el.dataset.view) { view = el.dataset.view; menuOpen = false; renderFrame(); if (view === "ops") void loadOps(); }
+    else if (el.dataset.act === "menu") { menuOpen = !menuOpen; renderFrame(); }
+    else if (el.dataset.act === "menu-close") { menuOpen = false; renderFrame(); }
     else if (el.dataset.act === "theme") { theme = theme === "dark" ? "light" : "dark"; store.set("seer.shell.theme", theme); renderFrame(); }
     else if (el.dataset.act === "refresh") void loadOps();
     else if (el.dataset.act === "signout") void signOut();
   });
+
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && menuOpen && user) { menuOpen = false; renderFrame(); } });
 
   /* ---------- start ---------- */
   (async () => {

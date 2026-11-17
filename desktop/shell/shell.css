@@ -47,9 +47,23 @@ ul { list-style: none; }
 .seg button { height: 28px; padding: 0 12px; border-radius: 999px; color: var(--sec); font-size: 13px; }
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); }
 
-/* frame: rail + stage */
-.frame { height: 100%; display: grid; grid-template-columns: 208px minmax(0, 1fr); }
-.rail { background: var(--deep); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 16px 10px 12px; gap: 4px; overflow-y: auto; }
+/* frame: a slim top bar, the open section below it, and the SEER menu as a drawer that slides in */
+.frame { height: 100%; display: grid; grid-template-rows: 36px minmax(0, 1fr); position: relative; overflow: hidden; }
+.bar { display: flex; align-items: center; gap: 10px; padding: 0 12px 0 6px; background: var(--deep); border-bottom: 1px solid var(--line); min-width: 0; }
+.bar strong { font-weight: 600; font-size: 13px; }
+.bar .crumb { color: var(--sec); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar .crumb::before { content: "/"; color: var(--muted); margin-right: 10px; }
+.bar-user { margin-left: auto; color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-btn { position: relative; width: 32px; height: 28px; border-radius: 8px; display: grid; place-items: center; color: var(--text); flex: none; }
+.bar-btn:hover, .bar-btn[aria-expanded="true"] { background: var(--raised); }
+.bar-btn .pip { position: absolute; top: 4px; right: 5px; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
+.scrim { position: absolute; inset: 36px 0 0 0; background: rgba(0, 0, 0, 0.45); opacity: 0; pointer-events: none; transition: opacity 180ms cubic-bezier(0.22, 1, 0.36, 1); z-index: 5; }
+.rail { position: absolute; top: 36px; bottom: 0; left: 0; width: 248px; z-index: 6; background: var(--deep); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 14px 10px 12px; gap: 4px; overflow-y: auto;
+  transform: translateX(-100%); visibility: hidden; transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 200ms; }
+.frame.menu-open .rail { transform: none; visibility: visible; transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); }
+.frame.menu-open .scrim { opacity: 1; pointer-events: auto; }
+@media (prefers-reduced-motion: reduce) { .rail, .scrim { transition: none; } }
+.rail .brand .close { margin-left: auto; }
 .rail .brand { padding: 0 8px 12px; }
 .rail .brand img { height: 26px; }
 .rail .brand strong { font-size: 16px; }
@@ -99,4 +113,4 @@ ul { list-style: none; }
 .note { background: var(--warn-bg); color: var(--warn); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; margin-bottom: 16px; }
 .stub { font: 500 12.5px var(--mono); border: 1px dashed var(--line-2); border-radius: 4px; padding: 0 6px; }
 @media (max-width: 1180px) { .tile, .tile.wide, .tile.half { grid-column: span 6; } }
-@media (max-width: 860px) { .tile, .tile.wide, .tile.half { grid-column: span 12; } .frame { grid-template-columns: 64px minmax(0, 1fr); } .rail h3, .nav span, .rail .brand strong, .rail-foot .seg, .me span { display: none; } .nav { justify-content: center; padding: 0; } .nav .dot { display: none; } }
+@media (max-width: 860px) { .tile, .tile.wide, .tile.half { grid-column: span 12; } }
