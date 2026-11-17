@@ -97,7 +97,7 @@ export const db = {
 
 /* ---------- session ---------- */
 
-/** Live mode: the signed-in account, as the Sales app knows it (set after the backend data loads). */
+/** Live mode: the signed-in account, as the Purchases app knows it (set after the backend data loads). */
 let liveUser: StaffAccount | null = null;
 
 export const currentUser = (): StaffAccount | null =>

@@ -1,0 +1,27 @@
+{
+  "name": "seer-desktop",
+  "productName": "SEER",
+  "version": "1.0.0",
+  "description": "SEER restaurant operations for Windows: one sign-in for every SEER app.",
+  "author": "SEER",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "smoke": "electron . --smoke",
+    "dist": "electron-builder --win --publish never"
+  },
+  "devDependencies": {
+    "electron": "^37.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "app.seer.desktop",
+    "productName": "SEER",
+    "files": ["main.js", "preload.js", "shell/**", "build/icon.png", "package.json"],
+    "extraResources": [{ "from": "web", "to": "web" }],
+    "directories": { "output": "release", "buildResources": "build" },
+    "win": { "target": [{ "target": "nsis", "arch": ["x64"] }], "icon": "build/icon.ico" },
+    "nsis": { "oneClick": true, "perMachine": false, "artifactName": "SEER-Setup.exe", "shortcutName": "SEER", "createDesktopShortcut": true }
+  }
+}
