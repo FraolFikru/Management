@@ -9,7 +9,7 @@ on:
         description: "SEER server address the app talks to"
         default: "https://eirsha-api.onrender.com"
   push:
-    branches: [main, windows-app]
+    branches: [main]
     paths: ["apps/**", "desktop/**", ".github/workflows/windows-app.yml"]
 
 permissions:
