@@ -227,6 +227,9 @@ export interface DispatchRequest {
   timestamp: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
   rejectionReason?: string;
+  /** the manager it was sent to */
+  assignedTo?: string;
+  assignedToName?: string;
   approvedBy?: string;
   approvedByName?: string;
   decidedAt?: string;

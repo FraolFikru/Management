@@ -909,8 +909,19 @@ def decide_waste(db: Db, actor: Actor, waste_id: str, approve: bool, reason: str
     return db.one("SELECT * FROM waste_report WHERE id = ?", (waste_id,))
 
 
+def branch_managers(db: Db, branch_id: str) -> list[dict]:
+    """Who can approve this branch's dispatches: its branch managers (home branch, extra branch roles, or the branch's named manager)."""
+    return db.all("""SELECT DISTINCT u.id, u.full_name FROM app_user u
+                     LEFT JOIN user_branch_role r ON r.user_id = u.id AND r.branch_id = ?
+                     WHERE u.org_id = (SELECT org_id FROM branch WHERE id = ?) AND u.is_active AND u.deleted_at IS NULL
+                       AND (u.role_code = 'BRANCH_MANAGER' AND (u.home_branch_id = ? OR r.user_id IS NOT NULL)
+                            OR u.id = (SELECT manager_user_id FROM branch WHERE id = ?))
+                     ORDER BY u.full_name""", (branch_id, branch_id, branch_id, branch_id))
+
+
 def request_dispatch(db: Db, actor: Actor, branch_id: str, item_id: str, quantity: Any, *, to_location: str | None = None,
-                     to_branch_id: str | None = None, note: str | None = None, client_ref: str | None = None) -> dict:
+                     to_branch_id: str | None = None, note: str | None = None, client_ref: str | None = None,
+                     assigned_to: str | None = None) -> dict:
     """The Purchases team asks this branch's manager to let stock leave the store room (to the kitchen, bar, … or another branch)."""
     it = db.one("SELECT * FROM inventory_item WHERE id = ? AND org_id = ? AND deleted_at IS NULL", (item_id, actor.org_id))
     if not it:
@@ -928,8 +939,13 @@ def request_dispatch(db: Db, actor: Actor, branch_id: str, item_id: str, quantit
     if to_branch_id:
         if to_branch_id == branch_id:
             raise Invalid("a transfer must go to another branch")
-        if not db.scalar("SELECT 1 FROM branch WHERE id = ? AND org_id = ?", (to_branch_id, actor.org_id)):
+        if not db.scalar("SELECT 1 FROM branch WHERE id = ? AND org_id = ? AND deleted_at IS NULL", (to_branch_id, actor.org_id)):
             raise Invalid("unknown branch", to_branch_id=to_branch_id)
+    managers = {m["id"] for m in branch_managers(db, branch_id)}
+    if assigned_to and assigned_to not in managers:
+        raise Invalid("choose a manager of this branch", assigned_to=assigned_to)
+    if not assigned_to and len(managers) == 1:
+        assigned_to = next(iter(managers))
     if client_ref:
         prev = db.one("SELECT * FROM dispatch_request WHERE org_id = ? AND client_ref = ?", (actor.org_id, client_ref))
         if prev:
@@ -938,8 +954,10 @@ def request_dispatch(db: Db, actor: Actor, branch_id: str, item_id: str, quantit
     text = (note or "").strip()
     db.insert("dispatch_request", {"id": did, "org_id": actor.org_id, "branch_id": branch_id, "item_id": item_id, "quantity": q,
                                    "unit_code": it["unit_code"], "to_location_id": loc, "to_branch_id": to_branch_id,
-                                   "requested_by": actor.user_id, "note": text or None, "client_ref": client_ref})
-    outbox(db, actor.org_id, branch_id, "mgr.review", "created", "dispatch_request", did, {"entity": "dispatch_request", "id": did})
+                                   "requested_by": actor.user_id, "note": text or None, "client_ref": client_ref,
+                                   "assigned_to": assigned_to})
+    outbox(db, actor.org_id, branch_id, "mgr.review", "created", "dispatch_request", did,
+           {"entity": "dispatch_request", "id": did, "assignedTo": assigned_to})
     audit(db, actor, "SALES", "dispatch_request.create", "dispatch_request", did, "Dispatch request {name} {quantity}",
           {"name": it["name_key"], "quantity": str(q), "unit": it["unit_code"], "destination": to_location or "BRANCH"}, branch_id=branch_id)
     return db.one("SELECT * FROM dispatch_request WHERE id = ?", (did,))
@@ -977,6 +995,7 @@ def dispatch_list(db: Db, branch_id: str, since: str, *, requested_by: str | Non
                     **({"toBranchId": r["to_branch_id"], "toBranchName": r["to_branch_name"]} if r["to_branch_id"] else {}),
                     "timestamp": _iso(r["requested_at"]), **({"note": note} if note else {}),
                     **({"rejectionReason": r["rejection_reason"]} if r["rejection_reason"] else {}),
+                    **({"assignedTo": r["assigned_to"], "assignedToName": names.get(r["assigned_to"], "")} if r.get("assigned_to") else {}),
                     **({"approvedBy": r["decided_by"], "approvedByName": names.get(r["decided_by"], ""), "decidedAt": _iso(r["decided_at"])}
                        if r["decided_by"] else {})})
     return out

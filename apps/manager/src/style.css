@@ -1205,3 +1205,5 @@ b, strong { font-weight: 600; }
 .min-row:nth-child(odd) { background: var(--surface-2); }
 .min-row.edited { border-color: var(--warn); }
 @media (max-width: 560px) { .min-row { grid-template-columns: minmax(0, 1fr) 128px; } }
+
+.sub-head { margin: 16px 0 4px; font-size: 14px; font-weight: 600; }

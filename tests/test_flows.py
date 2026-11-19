@@ -53,6 +53,7 @@ def migrated(db: Db) -> Db:
         m.lower_minimums(db)
         m.owner_chain(db)
         m.owner_changes(db)
+        m.dispatch_assignee(db)
     return db
 
 
@@ -378,6 +379,15 @@ def test_dispatch_from_purchases(db: Db) -> None:
             raise AssertionError(f"accepted {bad}")
         except s.Invalid:
             pass
+    # sent to a chosen manager: only this branch's managers; with one manager it goes to them
+    assert d["assigned_to"] == hanna.user_id and lst[0]["assignedToName"] == "Hanna Tesfaye"
+    assert [m["full_name"] for m in s.branch_managers(db, BOLE)] == ["Hanna Tesfaye"]
+    piassa_mgr = db.scalar("SELECT id FROM app_user WHERE role_code = 'BRANCH_MANAGER' AND home_branch_id = ? LIMIT 1", (PIA,))
+    try:
+        s.request_dispatch(db, dawit, BOLE, "beef", 1, to_location="BAR", assigned_to=piassa_mgr)
+        raise AssertionError("sent to another branch's manager")
+    except s.Invalid:
+        pass
     t = s.request_dispatch(db, dawit, BOLE, "beef", 1, to_branch_id=PIA)
     tl = next(x for x in s.dispatch_list(db, BOLE, "2000-01-01") if x["id"] == t["id"])
     assert tl["toBranchId"] == PIA and tl["toBranchName"]

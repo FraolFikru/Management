@@ -179,6 +179,9 @@ export interface DispatchRecord extends DispatchRequest {
   /** what the Purchases team wrote when sending it */
   note?: string;
   requestedByName?: string;
+  /** the manager the Purchases team sent it to */
+  assignedTo?: string;
+  assignedToName?: string;
   /** staff ID of the manager who approved or rejected */
   approvedBy?: string;
   decidedAt?: string;
