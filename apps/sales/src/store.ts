@@ -8,13 +8,15 @@
 
 import type {
   AuditAction, AuditEntity, AuditEntry, CustomExpenseRecord, FieldErrors, InventoryItem, PeriodId, PeriodTotals,
-  MainCategory, PurchaseRecord, Role, StaffAccount, SupportedLanguage, ThemeMode, ViewId, WasteRecord,
+  MainCategory, PurchaseRecord, RestockRequest, Role, StaffAccount, SupportedLanguage, ThemeMode, ViewId, WasteRecord,
 } from "./types";
 import { BASE_INVENTORY, CAN_APPROVE_WASTE, CAN_DELETE, STAFF, VIEW_ACCESS } from "./catalog";
 import { generateSeed, newId } from "./seed";
 import { addDays, localDay, today } from "./format";
 import { isLanguage, registerText } from "./i18n";
 import { isLive, loadAll, remote, sessionUser, signOut as apiSignOut } from "./api";
+
+const loadRestock = (): Promise<RestockRequest[]> => remote.listRestock();
 
 /* ---------- preferences & session (persisted per browser) ---------- */
 
@@ -93,6 +95,8 @@ export const db = {
   expenses: seed.expenses,
   audit: seed.audit,
   customInventory: [] as InventoryItem[],
+  /** what the manager asked the Purchases team to buy */
+  restock: seed.restock as RestockRequest[],
 };
 
 /* ---------- session ---------- */
@@ -135,6 +139,7 @@ export async function loadFromBackend(): Promise<void> {
   db.expenses = b.expenses;
   db.audit = b.audit;
   db.customInventory = b.customInventory.map(({ name: _n, ...i }) => i);
+  db.restock = b.restock ?? [];
   liveUser = { userId: u.id, name: u.name, role: b.role, initials: u.initials ?? u.name.split(" ").map((w) => w[0]).join("").slice(0, 2), pin: "" };
   state.userId = u.id;
 }
@@ -196,10 +201,54 @@ export const stampUser = (): { loggedBy: string; userId: string } => ({ loggedBy
 /* ---------- writes ---------- */
 
 export function recordPurchase(p: PurchaseRecord): void {
+  // the purchase fills the manager's request it was bought for, or else the oldest one waiting for the same item
+  const req = (p.restockRequestId && db.restock.find((r) => r.id === p.restockRequestId && r.itemId === p.itemId && RESTOCK_WAITING.includes(r.status)))
+    || openRestockFor(p.itemId);
+  const reqBefore = req ? { ...req } : null;
+  if (req) {
+    p.restockRequestId = req.id;
+    if (p.unit === req.unit) req.bought += p.quantity;
+    if (req.bought >= req.quantity) { req.status = "DONE"; req.doneAt = new Date().toISOString(); }
+  }
   db.purchases.push(p);
   const e = log("CREATE", "PURCHASE", p.id, `Purchase ${p.itemId}`, { name: p.itemName, amount: p.totalCost, quantity: p.quantity, unit: p.unit });
   const ready = itemSaved.get(p.itemId) ?? Promise.resolve();
-  void ready.then(() => push(() => remote.purchase(p), () => { db.purchases = db.purchases.filter((x) => x !== p); unlog(e); }));
+  void ready.then(() => push(() => remote.purchase(p).then(() => refreshRestock()), () => {
+    db.purchases = db.purchases.filter((x) => x !== p);
+    if (req && reqBefore) Object.assign(req, reqBefore);
+    unlog(e);
+  }));
+}
+
+/* ---------- restock requests from the manager ---------- */
+
+export const RESTOCK_WAITING: readonly RestockRequest["status"][] = ["OPEN", "ORDERED"];
+export const waitingRestock = (): RestockRequest[] =>
+  db.restock.filter((r) => RESTOCK_WAITING.includes(r.status)).sort((a, b) => (a.requestedAt < b.requestedAt ? -1 : 1));
+export const openRestockFor = (itemId: string): RestockRequest | undefined =>
+  waitingRestock().find((r) => r.itemId === itemId);
+
+function restockChange(id: string, change: Partial<RestockRequest>, action: "ORDERED" | "DECLINE", reason?: string): RestockRequest | undefined {
+  const r = db.restock.find((x) => x.id === id);
+  if (!r) return undefined;
+  const before = { ...r };
+  Object.assign(r, change, { handledBy: user().userId, handledByName: user().name, handledAt: new Date().toISOString() });
+  void push(() => remote.restock(id, action, reason).then((saved) => Object.assign(r, saved)), () => Object.assign(r, before));
+  return r;
+}
+
+export const markRestockOrdered = (id: string): RestockRequest | undefined => restockChange(id, { status: "ORDERED" }, "ORDERED");
+export const declineRestock = (id: string, reason: string): RestockRequest | undefined =>
+  restockChange(id, { status: "DECLINED", reason, doneAt: new Date().toISOString() }, "DECLINE", reason);
+
+/** Live mode: fetch the latest requests (the manager may have sent new ones). True when anything changed. */
+export async function refreshRestock(): Promise<boolean> {
+  if (!isLive || !liveUser) return false;
+  const next = await loadRestock();
+  const sig = (l: RestockRequest[]): string => l.map((r) => `${r.id}:${r.status}:${r.bought}:${r.quantity}:${r.note}`).join("|");
+  if (sig(next) === sig(db.restock)) return false;
+  db.restock = next;
+  return true;
 }
 
 export function recordWaste(w: WasteRecord): void {

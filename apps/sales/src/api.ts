@@ -6,7 +6,7 @@
    VITE_API_URL empty → the built-in demo (nothing is saved).
    ========================================================= */
 
-import type { AuditEntry, CustomExpenseRecord, InventoryItem, PurchaseRecord, Role, WasteRecord } from "./types";
+import type { AuditEntry, CustomExpenseRecord, InventoryItem, PurchaseRecord, RestockRequest, Role, WasteRecord } from "./types";
 import { wakeFetch } from "./wake";
 
 const BASE = ((import.meta.env ?? {}).VITE_API_URL ?? "").trim().replace(/\/$/, "");
@@ -93,6 +93,8 @@ export interface Bootstrap {
   expenses: CustomExpenseRecord[];
   customInventory: (InventoryItem & { name: string })[];
   audit: AuditEntry[];
+  /** the manager's restock requests for this branch */
+  restock: RestockRequest[];
 }
 
 export const loadAll = (): Promise<Bootstrap> => api<Bootstrap>("/sales/bootstrap");
@@ -106,6 +108,7 @@ export const remote = {
   purchase: (p: PurchaseRecord) => post("/purchases", {
     id: p.id, itemId: p.itemId, quantity: p.quantity, unit: p.unit, unitCost: p.unitCost, vendor: p.vendor || "Unknown vendor",
     paymentMethod: p.paymentMethod, settlement: "PAID_NOW", note: p.note, timestamp: p.timestamp, clientRef: p.id,
+    restockRequestId: p.restockRequestId ?? null,
   }),
   waste: (w: WasteRecord) => post("/waste", {
     id: w.id, itemId: w.itemId, quantityLost: w.quantityLost, reason: w.reason, customNotes: w.customNotes ?? null,
@@ -118,4 +121,8 @@ export const remote = {
   decideWaste: (id: string, approve: boolean) => post(`/manager/waste/${encodeURIComponent(id)}/decision`, { approve }),
   remove: (path: "purchases" | "waste" | "expenses", id: string) => api(`/${path}/${encodeURIComponent(id)}`, { method: "DELETE" }),
   restore: (path: "purchases" | "waste" | "expenses", id: string) => post(`/${path}/${encodeURIComponent(id)}/restore`, {}),
+  /** Mark a manager's request ordered, or say it can't be bought (reason required). */
+  restock: (id: string, action: "ORDERED" | "DECLINE", reason?: string) =>
+    post<RestockRequest>(`/restock/${encodeURIComponent(id)}`, { action, reason: reason ?? null }),
+  listRestock: () => api<RestockRequest[]>("/restock"),
 };

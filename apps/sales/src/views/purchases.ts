@@ -5,13 +5,14 @@
    Then quantity × unit cost (two-way total), supplier and how it was paid
    (Cash, Telebirr, CBE Birr). No receipt or invoice is needed. */
 
-import type { FieldErrors, InventoryItem, MainCategory, PurchaseRecord } from "../types";
+import type { FieldErrors, InventoryItem, MainCategory, PurchaseRecord, RestockRequest } from "../types";
 import { registerText, t, tk } from "../i18n";
 import { localDay, money, num, parseAmount, plain, relDay, round2, stamp, today, fmtDay } from "../format";
 import { EXPENSE_METHODS, MAIN_COLOR, MAIN_IDS, MAIN_TO_COGS, UNIT_CODES, isExpenseMethod, isMain } from "../catalog";
 import { newId } from "../seed";
 import {
-  canDelete, db, inPeriod, inventory, inventoryItem, lastCost, recordPurchase, removeRecord, restoreRecord, state, stampUser, user, vendors, recordItem,
+  canDelete, db, declineRestock, inPeriod, inventory, inventoryItem, lastCost, markRestockOrdered, recordPurchase, removeRecord, restoreRecord, state,
+  stampUser, user, vendors, recordItem, waitingRestock,
 } from "../store";
 import { $, esc, highlight, icon } from "../ui/dom";
 import { attachCombobox, type ComboOption, type ComboResult } from "../ui/combobox";
@@ -38,11 +39,13 @@ interface Draft {
   date: string;
   method: PurchaseRecord["paymentMethod"];
   note: string;
+  /** buying for this manager request */
+  restockId: string | null;
 }
 
 const fresh = (keep: Partial<Draft> = {}): Draft => ({
   itemId: null, creating: false, newName: "", newMain: "", search: "", browseMain: "", quantity: "", unit: "kg", unitCost: "", total: "",
-  lastEdited: "cost", vendor: keep.vendor ?? "", date: keep.date ?? today(), method: keep.method ?? "CASH", note: "",
+  lastEdited: "cost", vendor: keep.vendor ?? "", date: keep.date ?? today(), method: keep.method ?? "CASH", note: "", restockId: null,
 });
 
 let d: Draft = fresh();
@@ -77,6 +80,67 @@ function source(query: string): ComboResult<Pick> {
   // only near-misses ("beet" ~ Beef): show them, but let the person choose — Enter mustn't pick the wrong item
   const unsure = hits.length > 0 && hits.every((h) => h.nearMiss);
   return { heading: !hits.length ? "" : unsure ? t("Did you mean?") : t("Your items"), options, preselect: unsure ? -1 : 0 };
+}
+
+/* ---------- the manager's restock requests ---------- */
+
+/** the request whose "Can't buy" reason box is open */
+let declining: string | null = null;
+let declineText = "";
+const DECLINE_REASONS = ["Not available at the market", "Price is much higher than usual", "Supplier can't deliver", "Not enough cash on hand"];
+
+const reqName = (r: RestockRequest): string => tk(r.nameKey) !== r.nameKey ? tk(r.nameKey) : r.name || r.itemId;
+const qtyU = (q: number, u: string): string => `${num(q)} ${tk(`unit.${u}`)}`;
+
+function requestRow(r: RestockRequest): string {
+  const left = Math.max(0, r.quantity - r.bought);
+  const status = r.status === "ORDERED"
+    ? `<span class="pill ordered">${t("Ordered")}</span>`
+    : r.bought > 0 ? `<span class="pill pending">${t("Part bought")}</span>` : `<span class="pill pending">${t("New")}</span>`;
+  const meta = [
+    r.bought > 0 ? t("Bought {b} of {q}", { b: qtyU(r.bought, r.unit), q: qtyU(r.quantity, r.unit) }) : "",
+    r.status === "ORDERED" && r.handledByName ? t("Ordered by {name}", { name: esc(r.handledByName) }) : "",
+  ].filter(Boolean).join(" · ");
+  const open = declining === r.id;
+  return `<li class="req${d.restockId === r.id ? " active" : ""}" id="req-${esc(r.id)}">
+    <div class="req-main">
+      <div class="req-top"><strong>${esc(reqName(r))}</strong><span class="num">${qtyU(left || r.quantity, r.unit)}</span>${status}</div>
+      ${r.note ? `<p class="req-note">“${esc(r.note)}”</p>` : ""}
+      ${meta ? `<small class="meta">${meta}</small>` : ""}
+      <small class="meta">${t("Asked by {name}", { name: esc(r.requestedByName || r.requestedBy) })} · ${esc(relDay(localDay(r.requestedAt)))} ${new Date(r.requestedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small>
+    </div>
+    <div class="req-act">
+      <button type="button" class="btn small primary" data-action="req-buy" data-value="${esc(r.id)}">${icon("check")} ${t("Buy now")}</button>
+      ${r.status === "OPEN" ? `<button type="button" class="btn small" data-action="req-ordered" data-value="${esc(r.id)}">${t("Mark ordered")}</button>` : ""}
+      <button type="button" class="btn small ghost" data-action="req-decline" data-value="${esc(r.id)}" aria-expanded="${open}">${t("Can't buy")}</button>
+    </div>
+    ${open ? `<div class="req-decline">
+      <span class="label" id="dl-${esc(r.id)}">${t("Tell the manager why")}</span>
+      <div class="chip-grid" role="group" aria-labelledby="dl-${esc(r.id)}">${DECLINE_REASONS.map((x) =>
+        `<button type="button" class="pick-chip" data-action="req-reason" data-value="${esc(x)}" aria-pressed="${declineText === t(x)}">${esc(t(x))}</button>`).join("")}</div>
+      <input id="declineText" class="input" type="text" placeholder="${t("Or write the reason")}" value="${esc(declineText)}" data-bind="purchase.declineText">
+      <p class="err" id="err-decline" role="alert"></p>
+      <div class="form-actions"><button type="button" class="btn small" data-action="req-decline-cancel">${t("Back")}</button>
+        <button type="button" class="btn small danger" data-action="req-decline-send" data-value="${esc(r.id)}">${t("Send to the manager")}</button></div>
+    </div>` : ""}
+  </li>`;
+}
+
+function requestsCard(): string {
+  const list = waitingRestock();
+  if (!list.length) return "";
+  return `<section class="card reqs" id="restockReqs" aria-labelledby="reqTitle">
+    <div class="card-head"><div><h2 id="reqTitle">${icon("alert")} ${t("Asked by the manager")}</h2>
+      <p>${t("{n} items to buy. Saving the purchase closes the request.", { n: list.length })}</p></div></div>
+    <ul class="req-list">${list.map(requestRow).join("")}</ul>
+  </section>`;
+}
+
+function forRequestBanner(): string {
+  const r = d.restockId ? db.restock.find((x) => x.id === d.restockId) : undefined;
+  if (!r) return "";
+  return `<div class="for-req" role="status">${icon("clipboard")}<span>${t("Buying for the manager's request: {item} · {q}", { item: esc(reqName(r)), q: qtyU(Math.max(0, r.quantity - r.bought) || r.quantity, r.unit) })}</span>
+    <button type="button" class="btn small ghost icon-btn" data-action="req-unlink" aria-label="${t("Not for this request")}" title="${t("Not for this request")}">${icon("x")}</button></div>`;
 }
 
 /* ---------- form ---------- */
@@ -140,9 +204,11 @@ export function renderPurchases(): string {
     <div class="page-head"><div><h1>${t("Purchases")}</h1><p>${t("Record what was bought for the kitchen and bar. This app is for buying only.")}</p></div>
       ${periodSeg()}</div>
     ${metricsBar()}
+    ${requestsCard()}
     <div class="split">
       <form class="card form" id="purchaseForm" novalidate aria-labelledby="pfTitle">
         <h2 id="pfTitle" class="sec-title">${t("New purchase")}</h2>
+        <div id="forReq">${forRequestBanner()}</div>
         <div class="field"><label for="pSearch" id="pItemLbl">${t("Item")}</label>
           <div id="pItemArea">${itemArea(e)}</div></div>
         <div class="row r4">
@@ -258,6 +324,10 @@ function refreshItem(focus?: string): void {
 }
 
 function pick(item: InventoryItem): void {
+  if (d.restockId && db.restock.find((r) => r.id === d.restockId)?.itemId !== item.id) {
+    d.restockId = null;
+    const box = $("#forReq"); if (box) box.innerHTML = "";
+  }
   d.itemId = item.id;
   d.creating = false;
   d.newName = "";
@@ -318,6 +388,11 @@ export function onPurchaseInput(key: string, value: string): void {
   else if (key === "date") d.date = value;
   else if (key === "note") d.note = value;
   else if (key === "unit") d.unit = value;
+  else if (key === "declineText") {
+    declineText = value;
+    document.querySelectorAll<HTMLElement>('[data-action="req-reason"]').forEach((b) => b.setAttribute("aria-pressed", "false"));
+    const err = $("#err-decline"); if (err) err.textContent = "";
+  }
 }
 
 function save(another: boolean): void {
@@ -350,15 +425,18 @@ function save(another: boolean): void {
     id: newId("pur"), category: item.category, itemName: item.nameKey, quantity: q, unit: d.unit,
     unitCost: round2(tot / q), totalCost: round2(tot), loggedBy, timestamp: ts,
     itemId: item.id, vendor: d.vendor.trim(), paymentMethod: d.method, userId, note: d.note.trim(),
+    ...(d.restockId ? { restockRequestId: d.restockId } : {}),
   };
   recordPurchase(rec);
+  const req = rec.restockRequestId ? db.restock.find((r) => r.id === rec.restockRequestId) : undefined;
   item.unitCost = rec.unitCost;
   d = another ? fresh({ vendor: d.vendor, date: d.date, method: d.method }) : fresh({ method: d.method });
   state.errors = {};
   rerender("#pSearch");
   const savedItem = item;
   toast(t("Saved {item} · {q} {u} · {x} · by {name}", { item: tk(savedItem.nameKey), q: num(q), u: tk(`unit.${rec.unit}`), x: money(rec.totalCost, 2), name: loggedBy }) +
-    (created ? ` · ${t("added to your items")}` : ""), () => {
+    (created ? ` · ${t("added to your items")}` : "") +
+    (req ? ` · ${req.status === "DONE" ? t("manager's request done") : t("{q} still to buy for the manager", { q: qtyU(Math.max(0, req.quantity - req.bought), req.unit) })}` : ""), () => {
     removeRecord("PURCHASE", rec.id);
     if (created) db.customInventory = db.customInventory.filter((i) => i !== savedItem);
     rerender();
@@ -367,9 +445,63 @@ function save(another: boolean): void {
 
 export const submitPurchase = (): void => save(false);
 
+function buyFor(r: RestockRequest): void {
+  const item = inventoryItem(r.itemId);
+  if (!item) { toast(t("This item isn't in your list yet. Search for it or add it, then save.")); return; }
+  pick(item);
+  d.restockId = r.id;
+  d.unit = r.unit;
+  d.quantity = plain(Math.max(0, r.quantity - r.bought) || r.quantity);
+  declining = null;
+  rerender("#pQty");
+  $("#purchaseForm")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 export const purchaseActions: ActionMap = {
+  "req-buy": (el) => { const r = db.restock.find((x) => x.id === el.dataset.value); if (r) buyFor(r); },
+  "req-ordered": (el) => {
+    const r = markRestockOrdered(el.dataset.value ?? "");
+    if (!r) return;
+    rerender();
+    toast(t("Marked {item} as ordered · the manager can see it", { item: reqName(r) }));
+  },
+  "req-decline": (el) => {
+    const id = el.dataset.value ?? "";
+    declining = declining === id ? null : id;
+    declineText = "";
+    rerender(declining ? '[data-action="req-reason"]' : undefined);
+  },
+  "req-decline-cancel": () => { declining = null; declineText = ""; rerender(); },
+  "req-reason": (el) => {
+    declineText = el.dataset.value ? t(el.dataset.value) : "";
+    const input = $<HTMLInputElement>("#declineText");
+    if (input) input.value = declineText;
+    setPressed(el);
+    const err = $("#err-decline"); if (err) err.textContent = "";
+  },
+  "req-decline-send": (el) => {
+    const id = el.dataset.value ?? "";
+    const why = declineText.trim();
+    if (!why) {
+      const err = $("#err-decline"); if (err) err.textContent = t("Pick a reason or write one.");
+      $<HTMLElement>("#declineText")?.focus();
+      return;
+    }
+    const r = declineRestock(id, why);
+    declining = null; declineText = "";
+    if (d.restockId === id) d.restockId = null;
+    rerender();
+    if (r) toast(t("Told the manager: {item} can't be bought", { item: reqName(r) }));
+  },
+  "req-unlink": () => {
+    d.restockId = null;
+    const box = $("#forReq"); if (box) box.innerHTML = "";
+    $<HTMLElement>("#pQty")?.focus();
+  },
   "save-purchase": (el) => save(Boolean(el.dataset.another)),
   "p-clear": () => {
+    d.restockId = null;
+    const box = $("#forReq"); if (box) box.innerHTML = "";
     d.itemId = null; d.creating = false; d.newName = ""; d.newMain = ""; d.search = "";
     clearErrors(["main", "item"]);
     refreshItem("#pSearch");

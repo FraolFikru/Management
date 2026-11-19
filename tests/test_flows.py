@@ -20,6 +20,7 @@ sys.path.insert(0, os.path.join(ROOT, "api"))
 
 from eirsha_api import services as s  # noqa: E402
 from eirsha_api.db import D, Db  # noqa: E402
+from eirsha_api import migrate as m  # noqa: E402
 
 BOLE, PIA = "BR-BOLE", "BR-PIA"
 
@@ -33,10 +34,19 @@ def fresh_db() -> Db:
         for f in ("db/postgres/001_schema.sql", "db/postgres/002_views.sql", "db/seed/postgres/010_reference.sql"):
             db.conn.execute(open(os.path.join(ROOT, f), encoding="utf-8").read())
         db.conn.execute("SET search_path = eirsha, public")
-        return db
+        return migrated(db)
     db = Db.sqlite(":memory:")
     for f in ("db/sqlite/001_schema.sql", "db/sqlite/002_views.sql", "db/seed/sqlite/010_reference.sql"):
         db.conn.executescript(open(os.path.join(ROOT, f), encoding="utf-8").read())
+    return migrated(db)
+
+
+def migrated(db: Db) -> Db:
+    """The schema steps the API applies at every start (migrate.py)."""
+    with db.tx():
+        m.table_service(db)
+        m.owner_planning(db)
+        m.restock_requests(db)
     return db
 
 
@@ -292,8 +302,59 @@ def test_permissions_and_identity(db: Db) -> None:
         assert "append-only" in str(e)
 
 
+def test_restock_manager_to_purchases(db: Db) -> None:
+    hanna = who(db, "Hanna Tesfaye")             # branch manager asks
+    dawit = who(db, "Dawit Alemu")               # Purchases team buys
+    sent = s.request_restock(db, hanna, BOLE, [{"itemId": "beef", "quantity": 20}, {"itemId": "onion", "quantity": 15, "note": "red ones"}],
+                             note="for the weekend")
+    assert [r["status"] for r in sent] == ["OPEN", "OPEN"] and len(s.restock_list(db, BOLE)) == 2
+    beef = next(r for r in sent if r["itemId"] == "beef")
+    onion = next(r for r in sent if r["itemId"] == "onion")
+    assert onion["note"] == "red ones" and beef["note"] == "for the weekend" and beef["requestedByName"] == "Hanna Tesfaye"
+    # asking again while it waits updates the same request
+    again = s.request_restock(db, hanna, BOLE, [{"itemId": "beef", "quantity": 25}])
+    assert again[0]["id"] == beef["id"] and again[0]["quantity"] == 25 and len(s.restock_list(db, BOLE)) == 2
+    assert events(db, "restock"), "Purchases is told"
+
+    # Purchases marks onions ordered, then buys part of the beef (no request named: linked by item)
+    assert s.update_restock(db, dawit, onion["id"], "ORDERED")["status"] == "ORDERED"
+    p1 = s.log_purchase(db, dawit, BOLE, "beef", 10, 650, vendor_name="Akaki Butchery")
+    assert p1["restock_request_id"] == beef["id"]
+    r = s.restock_list(db, BOLE, ids=[beef["id"]])[0]
+    assert r["status"] == "OPEN" and r["bought"] == 10
+    # the rest, named explicitly → done
+    p2 = s.log_purchase(db, dawit, BOLE, "beef", 15, 650, vendor_name="Akaki Butchery", restock_request_id=beef["id"])
+    assert s.restock_list(db, BOLE, ids=[beef["id"]])[0]["status"] == "DONE"
+    # the manager rejects the second purchase → the request is open again
+    s.review_purchase(db, hanna, p2["id"], "REJECT", "wrong cut")
+    r = s.restock_list(db, BOLE, ids=[beef["id"]])[0]
+    assert r["status"] == "OPEN" and r["bought"] == 10, r
+    # deleting the first (within the undo window) takes it back to 0
+    s.delete_record(db, dawit, "purchase", p1["id"], False)
+    assert s.restock_list(db, BOLE, ids=[beef["id"]])[0]["bought"] == 0
+    s.restore_record(db, dawit, "purchase", p1["id"], False)
+    assert s.restock_list(db, BOLE, ids=[beef["id"]])[0]["bought"] == 10
+
+    # can't get it: needs a reason; then the manager can reopen or cancel
+    try:
+        s.update_restock(db, dawit, onion["id"], "DECLINE", "")
+        raise AssertionError("declined without a reason")
+    except s.Invalid:
+        pass
+    d = s.update_restock(db, dawit, onion["id"], "DECLINE", "Merkato is closed today")
+    assert d["status"] == "DECLINED" and d["reason"] == "Merkato is closed today" and d["handledByName"] == "Dawit Alemu"
+    assert s.update_restock(db, hanna, onion["id"], "REOPEN")["status"] == "OPEN"
+    assert s.update_restock(db, hanna, onion["id"], "CANCEL")["status"] == "CANCELLED"
+    # a purchase of onions now doesn't attach to the cancelled request
+    p3 = s.log_purchase(db, dawit, BOLE, "onion", 5, 60, vendor_name="Merkato Fresh Produce")
+    assert p3["restock_request_id"] is None
+    # a purchase in another unit (grams) counts in the item's unit
+    s.log_purchase(db, dawit, BOLE, "beef", 15000, 0.65, unit="g", vendor_name="Akaki Butchery")
+    assert s.restock_list(db, BOLE, ids=[beef["id"]])[0]["status"] == "DONE"
+
+
 TESTS = [test_pos_to_kds_to_zreport, test_purchase_review_bill_withholding, test_waste_dispatch_expense,
-         test_hr_attendance_payroll_finance, test_permissions_and_identity]
+         test_hr_attendance_payroll_finance, test_permissions_and_identity, test_restock_manager_to_purchases]
 
 if __name__ == "__main__":
     failed = 0

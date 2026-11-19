@@ -5,7 +5,7 @@
 import type { ViewId } from "../types";
 import { LANGUAGES, getLanguage, t } from "../i18n";
 import { STAFF } from "../catalog";
-import { canView, canApproveWaste, currentUser, db, state } from "../store";
+import { canView, canApproveWaste, currentUser, db, state, waitingRestock } from "../store";
 import { HELP_ICON } from "../support";
 import { $, esc, icon, type IconName } from "./dom";
 import { roleName } from "./shared";
@@ -64,10 +64,12 @@ export function renderNav(): void {
     return;
   }
   const pending = canApproveWaste() ? db.waste.filter((w) => w.approval === "PENDING").length : 0;
+  const asked = waitingRestock().filter((r) => r.status === "OPEN").length;
   const items = NAV.filter((n) => canView(n.id, u.role));
   const link = (n: (typeof NAV)[number], cls: string): string =>
     `<a href="#${n.id}" class="${cls}" ${state.view === n.id ? 'aria-current="page"' : ""}>${icon(n.icon)}<span>${t(n.label)}</span>${
-      n.id === "waste" && pending ? `<span class="count" aria-label="${t("{n} awaiting approval", { n: pending })}">${pending}</span>` : ""}</a>`;
+      n.id === "waste" && pending ? `<span class="count" aria-label="${t("{n} awaiting approval", { n: pending })}">${pending}</span>` : ""}${
+      n.id === "purchases" && asked ? `<span class="count" aria-label="${t("{n} asked by the manager", { n: asked })}">${asked}</span>` : ""}</a>`;
   if (side) side.innerHTML = items.map((n) => link(n, "nav-link")).join("") + `<p class="nav-heading sh-nav-heading">${t("Support")}</p><a href="#help" class="nav-link" ${state.view === "help" ? 'aria-current="page"' : ""}>${HELP_ICON}<span>${t("Help & support")}</span></a>`;
   if (bottom) {
     bottom.style.setProperty("--tabs", String(items.length));

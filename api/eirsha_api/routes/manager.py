@@ -155,7 +155,38 @@ def manager_bootstrap(days: int = 31, p: Principal = Depends(require("mgr.dashbo
         audit.append(e)
     branch = db.one("SELECT id, name FROM branch WHERE id = ?", (br,))
     return {"role": MGR_ROLE.get(p.actor.role), "branch": {"id": branch["id"], "name": branch["name"]}, "staff": staff, "menu": menu, "inventory": inventory, "sales": {"cols": sale_cols, "rows": sale_rows},
-            "purchases": purchases, "dispatches": dispatches, "waste": waste, "expenses": expenses, "audit": audit}
+            "purchases": purchases, "dispatches": dispatches, "waste": waste, "expenses": expenses, "audit": audit,
+            "restock": s.restock_list(db, br)}
+
+
+class RestockLine(BaseModel):
+    itemId: str
+    quantity: float
+    note: str | None = None
+
+
+class RestockIn(BaseModel):
+    items: list[RestockLine]
+    note: str | None = None
+
+
+@router.post("/restock", status_code=201)
+def send_restock(body: RestockIn, p: Principal = Depends(require("mgr.dashboard")), db: Db = Depends(get_db)):
+    """The manager asks the Purchases team to buy these items."""
+    with db.tx():
+        return s.request_restock(db, p.actor, branch_of(p), [i.model_dump() for i in body.items], body.note)
+
+
+@router.post("/restock/{rid}/cancel")
+def cancel_restock(rid: str, p: Principal = Depends(require("mgr.dashboard")), db: Db = Depends(get_db)):
+    with db.tx():
+        return s.update_restock(db, p.actor, rid, "CANCEL")
+
+
+@router.post("/restock/{rid}/reopen")
+def reopen_restock(rid: str, p: Principal = Depends(require("mgr.dashboard")), db: Db = Depends(get_db)):
+    with db.tx():
+        return s.update_restock(db, p.actor, rid, "REOPEN")
 
 
 @router.get("/overview")

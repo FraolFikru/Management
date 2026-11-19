@@ -7,10 +7,11 @@ import type { PaymentMethod, PaymentSummary } from "../types";
 import { t, tk } from "../i18n";
 import { fmtTime, money, num, pct } from "../format";
 import { COGS_COLOR, COGS_IDS, PAY_COLOR, PAY_IDS } from "../catalog";
-import { db, inPeriod, lowStock, paymentSummary, pendingDispatches, periodTotals, state, stockLevel, suggestedOrder } from "../store";
+import { db, inPeriod, lowStock, openRestockFor, paymentSummary, pendingDispatches, periodTotals, state, stockLevel, suggestedOrder } from "../store";
 import { esc, icon } from "../ui/dom";
 import { bar, changePct, chip, compareLabel, dot, empty, metricCard, payName, qtyUnit, shiftSeg } from "../ui/shared";
 import { auditLine } from "./audit";
+import { restockCard, statusLabel } from "./restock";
 
 const SUMMARY_KEY: Record<PaymentMethod, keyof PaymentSummary> = { CASH: "cash", TELEBIRR: "telebirr", CBE_BIRR: "cbeBirr" };
 
@@ -60,7 +61,7 @@ export function lowStockWidget(limit = 8): string {
     <div class="card-head"><div><h2 id="lowTitle">${icon("alert")} ${t("Low stock warning")}</h2>
       <p>${t("{n} items at or below their reorder point", { n: low.length })}${out ? ` · <strong class="bad-text">${t("{n} out of stock", { n: out })}</strong>` : ""}${
         critical ? ` · ${t("{n} critical", { n: critical })}` : ""}</p></div>
-      <a class="btn small" href="#cogs">${t("Restock")} ${icon("arrow")}</a></div>
+      <button type="button" class="btn small primary" data-action="restock-open">${icon("truck")} ${t("Send restock request")}</button></div>
     <ul class="low-grid">${low.slice(0, limit).map((i) => {
       const lvl = stockLevel(i);
       const fill = Math.min(100, (i.currentQuantity / Math.max(i.reorderPoint, 1)) * 100);
@@ -68,7 +69,9 @@ export function lowStockWidget(limit = 8): string {
         <div class="low-top"><strong>${esc(tk(i.nameKey))}</strong><span class="lvl-tag">${t(LEVEL_LABEL[lvl as keyof typeof LEVEL_LABEL])}</span></div>
         <div class="low-qty"><span class="num">${qtyUnit(i.currentQuantity, i.unit)}</span><small>/ ${t("reorder at {x}", { x: num(i.reorderPoint) })}</small></div>
         <span class="low-track" aria-hidden="true"><i style="width:${fill}%"></i></span>
-        <small class="low-sugg">${t("Order about {x}", { x: qtyUnit(suggestedOrder(i), i.unit) })}</small>
+        ${(() => { const r = openRestockFor(i.id); return r
+          ? `<small class="low-sugg asked">${icon("check")} ${t("Asked for {x} · {status}", { x: qtyUnit(r.quantity, r.unit), status: statusLabel(r) })}</small>`
+          : `<small class="low-sugg">${t("Order about {x}", { x: qtyUnit(suggestedOrder(i), i.unit) })}</small>`; })()}
       </li>`;
     }).join("")}</ul>
     ${low.length > limit ? `<p class="meta more-low">${t("+{n} more items low", { n: low.length - limit })}</p>` : ""}
@@ -93,6 +96,7 @@ export function renderOverview(): string {
     ${pending ? `<a class="dispatch-banner" href="#dispatch">${icon("truck")}<span><strong>${t("{n} dispatches waiting for your decision", { n: pending })}</strong>
       <small>${t("Approve or reject them on the Dispatch page.")}</small></span>${icon("arrow")}</a>` : ""}
     ${lowStockWidget()}
+    ${restockCard()}
     <div class="grid-2">
       <section class="card" aria-labelledby="payTitle">${paymentPanel("today")}</section>
       <section class="card" aria-labelledby="cogsTitle">

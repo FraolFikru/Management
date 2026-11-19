@@ -5,7 +5,7 @@ import type { COGSCategory, MainCategory, WasteReason } from "../types";
 import { t, tk } from "../i18n";
 import { money, pct } from "../format";
 import { COGS_COLOR, COGS_IDS, MAIN_COLOR, MAIN_IDS, WASTE_IDS } from "../catalog";
-import { canView, db, inPeriod, inventoryItem, periodTotals, state, user } from "../store";
+import { canView, db, inPeriod, inventoryItem, periodTotals, state, user, waitingRestock } from "../store";
 import { esc, icon } from "../ui/dom";
 import { byline, metricsBar, periodSeg, roleName } from "../ui/shared";
 import { auditLine } from "./audit";
@@ -44,6 +44,11 @@ export function renderDashboard(): string {
       ${periodSeg()}
     </div>
     ${metricsBar()}
+    ${(() => { const asked = waitingRestock(); return asked.length && canView("purchases") ? `
+      <div class="attention" role="status">${icon("alert")}
+        <p><strong>${t("The manager asked for {n} items", { n: asked.length })}</strong> · ${esc(asked.slice(0, 3).map((r) => tk(r.nameKey) !== r.nameKey ? tk(r.nameKey) : r.name || r.itemId).join(", "))}${asked.length > 3 ? "…" : ""}</p>
+        <a class="btn small" href="#purchases">${t("Buy")} ${icon("arrow")}</a>
+      </div>` : ""; })()}
     ${pending.length && canView("audit") ? `
       <div class="attention" role="status">${icon("alert")}
         <p><strong>${t("{n} waste reports need your approval", { n: pending.length })}</strong> · ${t("{x} in losses waiting for review.", { x: money(pending.reduce((s, w) => s + w.lossValue, 0), 0) })}</p>
