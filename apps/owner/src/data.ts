@@ -43,6 +43,9 @@ export interface Stat {
   lowerIsBetter: boolean;
 }
 
+/** Owner changes waiting for this Owner's decision (shown on the Owners menu item). */
+export const ownerInbox = { waiting: 0 };
+
 export const user = {   // live mode: the signed-in owner
   name: "Abebe Kebede",
   email: "owner@seer.et",

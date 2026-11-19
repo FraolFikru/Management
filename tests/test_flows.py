@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.join(ROOT, "api"))
 from eirsha_api import services as s  # noqa: E402
 from eirsha_api.db import D, Db  # noqa: E402
 from eirsha_api import migrate as m  # noqa: E402
+from eirsha_api import owners as own  # noqa: E402
 
 BOLE, PIA = "BR-BOLE", "BR-PIA"
 
@@ -50,6 +51,8 @@ def migrated(db: Db) -> Db:
         m.dispatch_client_ref(db)
         m.dispatch_senders(db)
         m.lower_minimums(db)
+        m.owner_chain(db)
+        m.owner_changes(db)
     return db
 
 
@@ -420,9 +423,61 @@ def test_restock_minimums(db: Db) -> None:
         pass
 
 
+def test_owners_need_a_second_owner(db: Db) -> None:
+    selam = who(db, "Selam Girma")                       # the Owner (the oldest System Admin became the Owner)
+    assert selam.role == "OWNER"
+    abebe = who(db, "Abebe Kebede")                      # a System Admin
+    # alone: adding a co-owner happens at once
+    c = own.request_change(db, selam, "ADD", full_name="Yared Tesfaye", username="yared.t", branch_id=BOLE, password="partner-pass-1")
+    assert c["status"] == "APPLIED"
+    yared_id = db.scalar("SELECT id FROM app_user WHERE username = 'yared.t'")
+    assert db.scalar("SELECT role_code FROM app_user WHERE id = ?", (yared_id,)) == "OWNER"
+    yared = s.Actor.load(db, yared_id, BOLE)
+    # two Owners: adding a third waits for the other one
+    c = own.request_change(db, selam, "ADD", target_user_id=abebe.user_id)
+    assert c["status"] == "PENDING" and db.scalar("SELECT role_code FROM app_user WHERE id = ?", (abebe.user_id,)) == "ADMIN"
+    assert own.waiting_for(db, yared) == 1 and own.waiting_for(db, selam) == 0
+    fails(lambda: own.approve(db, selam, c["id"]), s.Forbidden)            # can't approve your own request
+    fails(lambda: own.apply_after_wait(db, selam, c["id"]), s.Conflict)    # the 7 days haven't passed
+    fails(lambda: own.request_change(db, selam, "ADD", target_user_id=abebe.user_id), s.Conflict)   # already waiting
+    fails(lambda: own.approve(db, abebe, c["id"]), s.Forbidden)            # a System Admin can't decide
+    assert own.approve(db, yared, c["id"])["status"] == "APPLIED"
+    assert db.scalar("SELECT role_code FROM app_user WHERE id = ?", (abebe.user_id,)) == "OWNER"
+    abebe = s.Actor.load(db, abebe.user_id, BOLE)
+    # removing: the one being removed can agree; nobody can approve their own request
+    r = own.request_change(db, selam, "REMOVE", target_user_id=abebe.user_id)
+    assert own.reject(db, yared, r["id"], "we still need him")["status"] == "REJECTED"
+    assert db.scalar("SELECT is_active FROM app_user WHERE id = ?", (abebe.user_id,))
+    r = own.request_change(db, selam, "REMOVE", target_user_id=abebe.user_id)
+    assert own.approve(db, abebe, r["id"])["status"] == "APPLIED"
+    assert not db.scalar("SELECT is_active FROM app_user WHERE id = ?", (abebe.user_id,))
+    # a partner who doesn't answer: after 7 days the one who asked can apply it
+    r = own.request_change(db, selam, "RESET_PASSWORD", target_user_id=yared_id, password="new-pass-123")
+    fails(lambda: own.cancel(db, yared, r["id"]), s.Forbidden)
+    db.execute("UPDATE owner_change SET wait_until = '2000-01-01T00:00:00Z' WHERE id = ?", (r["id"],))
+    assert own.apply_after_wait(db, selam, r["id"])["status"] == "APPLIED"
+    assert "passwordHash" not in (db.scalar("SELECT payload FROM owner_change WHERE id = ?", (r["id"],)) or "")
+    # the last Owner can't be removed; you can't reset your own password here
+    r = own.request_change(db, selam, "REMOVE", target_user_id=selam.user_id)    # leaving: Yared agrees
+    own.approve(db, yared, r["id"])
+    fails(lambda: own.request_change(db, yared, "REMOVE", target_user_id=yared_id), s.Conflict)
+    fails(lambda: own.request_change(db, yared, "RESET_PASSWORD", target_user_id=yared_id, password="xxxxxxxxx"), s.Invalid)
+    # usernames are checked, also against waiting requests
+    fails(lambda: own.request_change(db, yared, "ADD", full_name="X Y", username="hanna.t", branch_id=BOLE, password="12345678"), s.Conflict)
+
+
+def fails(f, exc) -> None:
+    """f must be refused with exc."""
+    try:
+        f()
+    except exc:
+        return
+    raise AssertionError("allowed")
+
+
 TESTS = [test_pos_to_kds_to_zreport, test_purchase_review_bill_withholding, test_waste_dispatch_expense,
          test_hr_attendance_payroll_finance, test_permissions_and_identity, test_restock_manager_to_purchases,
-         test_dispatch_from_purchases, test_restock_minimums]
+         test_dispatch_from_purchases, test_restock_minimums, test_owners_need_a_second_owner]
 
 if __name__ == "__main__":
     failed = 0

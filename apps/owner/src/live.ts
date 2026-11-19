@@ -5,7 +5,7 @@
    ========================================================= */
 
 import {
-  budgets, buildStats, cashFlow, dailyPattern, goals, investments, paymentMethods, peakHours, stats, topDishes, transactions, user,
+  budgets, buildStats, ownerInbox, cashFlow, dailyPattern, goals, investments, paymentMethods, peakHours, stats, topDishes, transactions, user,
   type BudgetLine, type Category, type MonthPoint, type PaymentInfo, type PaymentMethod, type When,
 } from "./data";
 import { loadAll } from "./api";
@@ -32,6 +32,7 @@ export async function loadLive(): Promise<void> {
   });
   if (!b.role) throw new Error("no-access");
   Object.assign(user, b.user);
+  ownerInbox.waiting = b.ownerRequests ?? 0;
   cashFlow.splice(0, cashFlow.length, ...b.cashFlow);
   series = { daily: b.daily, weekly: b.weekly };
   // the weekday pattern is only used by the demo; keep it in step anyway

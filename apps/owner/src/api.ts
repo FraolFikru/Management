@@ -104,6 +104,8 @@ export interface Bootstrap {
   goals: { key?: GoalKey; title: string; current: number; target: number; unit: "ETB" | "%" | "★"; deadline: string | null; lowerIsBetter?: boolean; custom?: boolean }[];
   /** missing on an older backend */
   investments?: InvestmentOut[];
+  /** Owner changes another Owner asked for that this Owner can decide */
+  ownerRequests?: number;
 }
 
 export interface InvestmentOut { id: string; title: string; kind: InvestmentKind; target: number; saved: number; targetDate: string | null; note: string }
@@ -141,3 +143,31 @@ export const listAdmins = () => api<{ admins: AdminAccount[]; branches: { id: st
 export const createAdmin = (body: AdminInput) => api<AdminAccount>("/owner/admins", { method: "POST", body: JSON.stringify(body) });
 export const updateAdmin = (id: string, body: AdminInput) =>
   api<AdminAccount>(`/owner/admins/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(body) });
+
+/* ---------- Owners (changing who is an Owner needs another Owner's approval) ---------- */
+
+export interface OwnerAccount {
+  id: string; staff_code: string | null; full_name: string; username: string; home_branch_id: string; phone: string | null;
+  is_active: boolean | number; last_login_at: string | null; created_at: string | null;
+}
+export type OwnerChangeKind = "ADD" | "REMOVE" | "RESET_PASSWORD";
+export interface OwnerChange {
+  id: string; kind: OwnerChangeKind; summary: string; status: "PENDING" | "APPLIED" | "REJECTED" | "CANCELLED";
+  targetUserId: string | null; targetName: string; username?: string | null;
+  requestedBy: string; requestedByName: string; requestedAt: string; waitUntil: string | null;
+  decidedBy: string | null; decidedByName: string; decidedAt: string | null; reason: string;
+}
+export interface OwnersOverview {
+  me: string; owners: OwnerAccount[]; requests: OwnerChange[]; staff: { id: string; full_name: string; role_code: string }[];
+  branches: { id: string; name: string }[]; waitDays: number;
+}
+export interface OwnerChangeInput {
+  kind: OwnerChangeKind; userId?: string; fullName?: string; username?: string; branchId?: string; phone?: string | null; password?: string;
+}
+export const listOwners = () => api<OwnersOverview>("/owner/owners");
+export const askOwnerChange = (body: OwnerChangeInput) => api<OwnerChange>("/owner/owners/changes", { method: "POST", body: JSON.stringify(body) });
+export const decideOwnerChange = (id: string, action: "approve" | "reject" | "cancel" | "apply", reason?: string) =>
+  api<OwnerChange>(`/owner/owners/changes/${encodeURIComponent(id)}/${action}`, { method: "POST", body: JSON.stringify({ reason: reason ?? null }) });
+/** Your own password (needs the current one). */
+export const changeMyPassword = (currentPassword: string, newPassword: string) =>
+  api<{ ok: boolean }>("/auth/password", { method: "POST", body: JSON.stringify({ currentPassword, newPassword }) });

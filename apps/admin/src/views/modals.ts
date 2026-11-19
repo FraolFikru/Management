@@ -112,7 +112,8 @@ function submitBranch(id: string | null): void {
 function roleChoices(id: string | null): UserRole[] {
   const was = id ? db.users.find((u) => u.id === id) : undefined;
   if (was && was.id === state.userId) return [was.role];
-  return isOwner() ? ROLE_IDS : ROLE_IDS.filter((r) => !PROTECTED_ROLES.includes(r));
+  // Owners are added on the Owners page of the Owner app, with the other Owners' approval
+  return isOwner() ? ROLE_IDS.filter((r) => r !== "OWNER") : ROLE_IDS.filter((r) => !PROTECTED_ROLES.includes(r));
 }
 
 function userForm(id: string | null): string {
@@ -124,7 +125,8 @@ function userForm(id: string | null): string {
     <div class="field"><span class="label" id="roleLbl">${t("Role")}</span>
       <div class="role-grid" role="group" aria-labelledby="roleLbl">${roleChoices(id).map((r) => `<button type="button" class="pay-opt" data-action="user-role" data-value="${r}" aria-pressed="${ud.role === r}"><strong>${esc(tk(`role.${r}`))}</strong><small>${esc(t(ROLE_APPS[r]))}</small></button>`).join("")}</div>
       ${errText(state.errors, "role")}
-      ${isOwner() ? "" : `<small class="hint">${t("Owner and System Admin accounts are created by the Owner in the Owner app.")}</small>`}</div>
+      <small class="hint">${isOwner() ? t("Owners are added on the Owners page of the Owner app; another Owner approves.")
+        : t("System Admin accounts are created by the Owner in the Owner app. Owners are added on its Owners page.")}</small></div>
     <div class="row">
       <div class="field"><label for="uBranch">${t("Branch")}</label><select id="uBranch" class="input" data-bind="user.assignedBranchId">${db.branches.map((b) =>
         `<option value="${b.id}" ${ud.assignedBranchId === b.id ? "selected" : ""}>${esc(b.name)}</option>`).join("")}</select></div>
@@ -152,6 +154,7 @@ function submitUser(id: string | null): void {
   if (was && was.id === state.userId && (ud.role !== was.role || !ud.isActive)) e.role = t("You can't change your own role or deactivate yourself.");
   if (!isOwner() && PROTECTED_ROLES.includes(ud.role) && (!was || was.role !== ud.role)) e.role = t("Only the Owner can create Owner or System Admin accounts.");
   if (!isOwner() && was && PROTECTED_ROLES.includes(was.role) && was.id !== state.userId) e.role = t("Only the Owner can change Owner or System Admin accounts.");
+  if (was && was.role === "OWNER" && was.id !== state.userId) e.role = t("Owner accounts are managed on the Owners page of the Owner app.");
   if (isLive && ((!id && pw.length < 8) || (id && pw && pw.length < 8))) e.password = t("At least 8 characters.");
   const newPin = PIN_ROLES.includes(ud.role) ? pin.trim() : "";
   if (newPin && !/^\d{4,6}$/.test(newPin)) e.pin = t("Use 4 to 6 digits.");

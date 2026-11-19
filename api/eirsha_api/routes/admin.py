@@ -249,6 +249,8 @@ def users(p: Principal = Depends(require("admin.users_manage", "admin.access")),
 def add_user(body: UserIn, p: Principal = Depends(require("admin.users_manage")), db: Db = Depends(get_db)):
     if body.role in PROTECTED_ROLES and p.actor.role != OWNER:
         raise s.Forbidden("only the Owner can create Owner or System Admin accounts")
+    if body.role == OWNER:
+        raise s.Forbidden("Owners are added on the Owners page of the Owner app, with the other Owners' approval")
     with db.tx():
         uid = body.id or new_id("usr")
         _check_username(db, p.actor.org_id, body.username, uid)
@@ -276,6 +278,11 @@ def edit_user(uid: str, body: UserIn, p: Principal = Depends(require("admin.user
         if not u:
             raise s.NotFound("user not found")
         _check_username(db, p.actor.org_id, body.username, uid)
+        if u["role_code"] == OWNER or body.role == OWNER:
+            # who is an Owner (and their passwords) changes only on the Owners page of the Owner app, with another
+            # Owner's approval; here an Owner may only edit their own name, username, phone or password
+            if uid != p.actor.user_id or body.role != u["role_code"] or not body.isActive or body.pin:
+                raise s.Forbidden("Owner accounts are managed on the Owners page of the Owner app, with another Owner's approval")
         protected = u["role_code"] in PROTECTED_ROLES or body.role in PROTECTED_ROLES
         if protected and p.actor.role != OWNER:
             # a System Admin may only update their own name, phone or password here — never a role or status

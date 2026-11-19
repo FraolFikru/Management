@@ -1081,3 +1081,29 @@ b, strong { font-weight: 600; }
   color: var(--text); font: inherit; font-family: var(--font-mono); text-align: right; }
 .goal-input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 .goal-edit .field-error:empty { display: none; }
+
+/* ---------- Owners ---------- */
+.nav-count { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; display: grid; place-items: center;
+  background: var(--warn-bg); color: var(--warn); font-size: 11px; font-weight: 600; font-family: var(--font-mono); }
+.own-attn { border-color: color-mix(in srgb, var(--warn) 45%, var(--border)); }
+.own-reqs, .own-history { list-style: none; margin: 0; padding: 0; }
+.own-req { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border); }
+.own-req:first-child { border-top: 0; padding-top: 4px; }
+.own-req-icon { width: 32px; height: 32px; border-radius: 999px; display: grid; place-items: center; background: var(--panel-2); color: var(--muted); }
+.own-req-icon .ic { width: 16px; height: 16px; }
+.own-req-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.own-req-main small { color: var(--muted); font-size: 12.5px; }
+.own-req-main .warn-text { color: var(--warn); }
+.own-hist { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
+.own-hist:first-child { border-top: 0; }
+.own-hist div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.own-hist small { color: var(--muted); font-size: 12.5px; }
+.own-mode { width: fit-content; margin-bottom: 12px; }
+.own-mode button { padding: 0 12px; height: 30px; }
+.admin-row .own-pass { grid-column: 2 / -1; display: grid; gap: 8px; padding: 12px; border-radius: var(--r-sm); background: var(--panel-2); max-width: 520px; }
+.admin-row .admin-actions { flex-wrap: wrap; justify-content: flex-end; }
+@media (max-width: 700px) {
+  .own-req { grid-template-columns: auto minmax(0, 1fr); }
+  .own-req .admin-actions { grid-column: 2; }
+  .admin-row .own-pass { grid-column: 1 / -1; }
+}
