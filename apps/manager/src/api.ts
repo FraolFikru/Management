@@ -148,4 +148,8 @@ export const remote = {
   cancelRestock: (id: string) => post<RestockRequest>(`/manager/restock/${enc(id)}/cancel`, {}),
   reopenRestock: (id: string) => post<RestockRequest>(`/manager/restock/${enc(id)}/reopen`, {}),
   listRestock: () => api<RestockRequest[]>("/restock"),
+  listDispatches: () => api<DispatchRecord[]>("/manager/dispatches"),
+  /** Restock minimums (the low-stock alert fires at or below them). */
+  setMinimums: (items: { itemId: string; minimum: number }[]) =>
+    post<{ itemId: string; minimum: number }[]>("/manager/stock/minimums", { items }),
 };

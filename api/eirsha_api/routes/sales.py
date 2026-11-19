@@ -80,6 +80,7 @@ class DispatchIn(BaseModel):
     destination: str | None = None                 # BAR, KITCHEN_LINE, …
     toBranchId: str | None = None
     note: str | None = None
+    clientRef: str | None = None                   # a retried send is not saved twice
 
 
 @router.get("/inventory/items")
@@ -206,7 +207,19 @@ def list_expenses(period: str = "30d", p: Principal = Depends(require("expense.l
 def create_dispatch(body: DispatchIn, p: Principal = Depends(require("dispatch.request")), db: Db = Depends(get_db)):
     with db.tx():
         return s.request_dispatch(db, p.actor, branch_of(p), body.itemId, body.quantity, to_location=body.destination,
-                                  to_branch_id=body.toBranchId, note=body.note)
+                                  to_branch_id=body.toBranchId, note=body.note, client_ref=body.clientRef)
+
+
+@router.post("/dispatch/{did}/cancel")
+def cancel_dispatch(did: str, p: Principal = Depends(require("dispatch.request")), db: Db = Depends(get_db)):
+    with db.tx():
+        return s.cancel_dispatch(db, p.actor, did)
+
+
+@router.get("/dispatch/mine")
+def my_dispatches(p: Principal = Depends(require("dispatch.request")), db: Db = Depends(get_db)):
+    """What this branch sent to its manager: still waiting, plus the last two weeks."""
+    return s.dispatch_list(db, branch_of(p), (date.today() - timedelta(days=14)).isoformat())
 
 
 @router.get("/sales/dashboard")
@@ -229,7 +242,7 @@ def dashboard(period: str = "today", p: Principal = Depends(require("sales.dashb
 SALES_ROLE = {"ADMIN": "ADMIN", "OWNER": "ADMIN", "BRANCH_MANAGER": "MANAGER", "INVENTORY_CLERK": "INVENTORY_CLERK"}
 _ACTION = {"create": "CREATE", "delete": "DELETE", "restore": "RESTORE", "approve": "APPROVE", "reject": "REJECT",
            "sign_in": "SIGN_IN", "sign_out": "SIGN_OUT"}
-_ENTITY = {"purchase": "PURCHASE", "waste_report": "WASTE", "expense": "EXPENSE", "inventory_item": "ITEM", "auth": "SESSION"}
+_ENTITY = {"purchase": "PURCHASE", "waste_report": "WASTE", "expense": "EXPENSE", "inventory_item": "ITEM", "auth": "SESSION", "dispatch_request": "DISPATCH"}
 
 
 @router.get("/sales/bootstrap")
@@ -287,5 +300,17 @@ def sales_bootstrap(days: int = 60, p: Principal = Depends(require("purchase.log
         audit.append({"id": str(a["id"]), "action": action, "entity": entity, "entityId": a["entity_id"] or "", "summary": a["summary_template"],
                       "detail": detail, "userId": a["actor_user_id"] or "", "userName": a["actor_name"] or names.get(a["actor_user_id"], ""),
                       "role": SALES_ROLE.get(a["actor_role"] or "", "INVENTORY_CLERK"), "timestamp": iso(a["occurred_at"])})
+    branch = db.one("SELECT id, name FROM branch WHERE id = ?", (br,))
+    managers = [u["full_name"] for u in db.all("""SELECT DISTINCT u.full_name FROM app_user u
+                   LEFT JOIN user_branch_role r ON r.user_id = u.id AND r.branch_id = ?
+                   WHERE u.org_id = ? AND u.is_active AND u.deleted_at IS NULL AND u.role_code = 'BRANCH_MANAGER'
+                     AND (u.home_branch_id = ? OR r.user_id IS NOT NULL) ORDER BY u.full_name""", (br, org, br))]
+    places = [r["code"] for r in db.all("SELECT code FROM stock_location WHERE branch_id = ? AND NOT is_store_room ORDER BY code", (br,))]
+    others = [{"id": b["id"], "name": b["name"]} for b in db.all(
+        "SELECT id, name FROM branch WHERE org_id = ? AND id <> ? AND is_active ORDER BY name", (org, br))]
+    stock = {r["item_id"]: float(r["on_hand"]) for r in db.all("SELECT item_id, on_hand FROM branch_stock WHERE branch_id = ?", (br,))}
     return {"role": SALES_ROLE.get(p.actor.role), "purchases": purchases, "waste": waste, "expenses": expenses,
-            "customInventory": custom, "audit": audit, "restock": s.restock_list(db, br)}
+            "customInventory": custom, "audit": audit, "restock": s.restock_list(db, br),
+            "branch": {"id": branch["id"], "name": branch["name"]}, "managers": managers, "places": places, "branches": others,
+            "stock": stock, "dispatches": s.dispatch_list(db, br, (date.today() - timedelta(days=14)).isoformat()),
+            "canDispatch": "dispatch.request" in p.permissions}

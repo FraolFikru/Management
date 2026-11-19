@@ -10,7 +10,7 @@ import { t, tk } from "../i18n";
 import { fmtDay, fmtTime, localDay, today } from "../format";
 import { db, approveDispatch, isLowStock, item, pendingDispatches, reopenDispatch, state, stockLevel, user } from "../store";
 import { esc, icon } from "../ui/dom";
-import { empty, qtyUnit, seg, stampOf, staffCell, statusPill } from "../ui/shared";
+import { empty, qtyUnit, seg, stampOf, staffCell, statusPill , destOf } from "../ui/shared";
 import { toast } from "../ui/toast";
 import { rerender, type ActionMap } from "../ui/app";
 import { openModal } from "./modals";
@@ -29,7 +29,8 @@ function requestCard(d: DispatchRecord): string {
   return `<li class="dispatch row-hover" id="dsp-${d.id}">
     <div class="dsp-col">
       <div class="dsp-main"><strong>${esc(tk(d.itemName))}</strong><span class="dsp-qty num">${qtyUnit(d.quantity, d.unit)}</span></div>
-      <span class="dsp-dest">${icon("arrow")} ${esc(tk(`dest.${d.destination}`))}</span>
+      <span class="dsp-dest">${icon("arrow")} ${esc(destOf(d))}</span>
+      ${d.note ? `<p class="dsp-note">“${esc(d.note)}”</p>` : ""}
       ${stampOf(d.requestedBy, d.timestamp, t("Requested by"))}
       <small class="wait ${waited >= 30 ? "late" : ""}">${t("waiting {n} min", { n: waited })}</small>
     </div>
@@ -58,11 +59,11 @@ function history(): string {
   return `<div class="table-wrap"><table class="data">
     <caption class="sr">${t("Decided dispatches")}</caption>
     <thead><tr><th scope="col">${t("Item Name")}</th><th scope="col" class="num">${t("Requested Quantity")}</th><th scope="col">${t("Target/Destination")}</th>
-      <th scope="col">${t("Cashier ID")}</th><th scope="col">${t("Timestamp")}</th><th scope="col">${t("Status")}</th><th scope="col">${t("Decided by")}</th></tr></thead>
+      <th scope="col">${t("Requested by")}</th><th scope="col">${t("Timestamp")}</th><th scope="col">${t("Status")}</th><th scope="col">${t("Decided by")}</th></tr></thead>
     <tbody>${shown.map((d) => `<tr>
       <th scope="row">${esc(tk(d.itemName))}</th>
       <td class="num">${qtyUnit(d.quantity, d.unit)}</td>
-      <td>${esc(tk(`dest.${d.destination}`))}</td>
+      <td>${esc(destOf(d))}</td>
       <td>${staffCell(d.requestedBy)}</td>
       <td class="nowrap">${esc(fmtDay(localDay(d.timestamp)))} ${fmtTime(d.timestamp)}</td>
       <td>${statusPill(d.status)}${d.rejectionReason ? `<small class="why">${esc(t(d.rejectionReason))}</small>` : ""}</td>
@@ -80,7 +81,7 @@ export function renderDispatch(): string {
   const blocked = pending.filter((d) => { const it = item(d.itemId); return !it || it.currentQuantity < d.quantity; }).length;
   return `
     <div class="page-head"><div><h1 tabindex="-1">${t("Dispatch")}</h1>
-      <p>${t("Stock requests sent by the Sales Department. Approving moves the stock out; rejecting needs a reason.")}</p></div></div>
+      <p>${t("Stock requests sent by the Purchases team. Approving moves the stock out; rejecting needs a reason.")}</p></div></div>
     <div class="stat-row">
       <div class="stat"><span>${t("Waiting for you")}</span><strong class="num ${pending.length ? "warn-text" : ""}">${pending.length}</strong></div>
       <div class="stat"><span>${t("Approved today")}</span><strong class="num">${approved}</strong></div>
@@ -118,7 +119,7 @@ export const dispatchActions: ActionMap = {
     rerender(next ? `#dsp-${next.id} [data-action="approve-dispatch"]` : "#pendTitle");
     const it = item(d.itemId);
     const lvl = it ? stockLevel(it) : "OK";
-    toast(t("Approved {item} · {q} → {dest} · by {name}", { item: tk(d.itemName), q: qtyUnit(d.quantity, d.unit), dest: tk(`dest.${d.destination}`), name: user().name })
+    toast(t("Approved {item} · {q} → {dest} · by {name}", { item: tk(d.itemName), q: qtyUnit(d.quantity, d.unit), dest: destOf(d), name: user().name })
       + ` · ${t("stock {a} → {b}", { a: String(res.before), b: String(res.after) })}` + (lvl !== "OK" ? ` · ${t("now low stock")}` : ""),
       () => { reopenDispatch(id); rerender(); });
   },

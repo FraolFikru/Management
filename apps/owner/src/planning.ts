@@ -2,16 +2,21 @@
    Owner planning pages:
      Goals        — real figures against targets the owner can change
      Investments  — plans the owner is saving for (oven, second branch…)
-     Reports      — six reports, built on the server, downloaded as CSV
+     Reports      — six reports, built on the server, downloaded as Excel files (.xlsx)
    Live mode saves to the backend; the demo keeps changes in memory.
    ========================================================= */
 
 import { icon } from "./icons";
 import {
-  addInvestment, deleteInvestment, getReport, isLive, resetGoal, setGoal, updateInvestment, type InvestmentInput,
+  addInvestment, deleteInvestment, getReport, isLive, setGoal, updateInvestment, type InvestmentInput,
 } from "./api";
 import { goals, investments, topDishes, type Goal, type GoalKey, type Investment, type InvestmentKind } from "./data";
 import { getLiveSeries, loadLive } from "./live";
+import { downloadXlsx } from "./xlsx";
+
+const REPORT_TITLE: Partial<Record<string, string>> = {
+  "daily-sales": "Daily sales", "weekly-pnl": "Weekly profit & loss", menu: "Menu performance",
+};
 
 type T = (s: string, vars?: Record<string, string | number>) => string;
 export interface PlanningDeps {
@@ -39,7 +44,13 @@ async function refresh(): Promise<void> {
 
 /* ======================= Goals ======================= */
 
-const goalUi = { editing: null as GoalKey | null, value: "", error: "", busy: false, notice: "" };
+/** The owner types a target straight into each goal card; drafts hold what was typed but not saved yet. */
+const goalUi = {
+  drafts: {} as Partial<Record<GoalKey, string>>,
+  errors: {} as Partial<Record<GoalKey, string>>,
+  busy: null as GoalKey | null,
+  notice: "",
+};
 
 function goalValue(g: Goal, v: number): string {
   return g.unit === "ETB" ? deps.money(v) : `${v}${g.unit}`;
@@ -50,7 +61,7 @@ export function renderGoals(): string {
   return `
     <div class="help-intro">
       <h2>${t("Goals")}</h2>
-      <p>${t("Real figures for this month against your targets. Change a target any time — the automatic one is used until you do.")}</p>
+      <p>${t("Real figures for this month against your targets. Type any target you like and save it.")}</p>
     </div>
     ${goalUi.notice ? `<p class="admin-notice" role="status">${icon("check")} ${esc(goalUi.notice)}</p>` : ""}
     <div class="page-grid single">
@@ -58,7 +69,6 @@ export function renderGoals(): string {
         const ratio = g.lowerIsBetter ? (g.current ? g.target / g.current : 1) : g.current / g.target;
         const pct = Math.max(0, Math.min(100, Math.round(ratio * 100)));
         const due = g.deadline ? t("Due {x}", { x: deps.fmtDate(g.deadline) }) : t("Ongoing");
-        const editing = g.key && goalUi.editing === g.key;
         const met = g.lowerIsBetter ? g.current <= g.target : g.current >= g.target;
         return `
         <div class="goal-card">
@@ -68,23 +78,21 @@ export function renderGoals(): string {
           </div>
           <div class="goal-value">${goalValue(g, g.current)}<small> / ${goalValue(g, g.target)}</small></div>
           <div class="progress-bar"><i style="width:${pct}%;background:${met || pct >= 90 ? "var(--revenue)" : "var(--muted)"}"></i></div>
-          ${g.key ? editing ? `
-            <form class="goal-edit" id="goalForm" data-goal="${g.key}" novalidate>
-              <label class="signin-field"><span>${g.unit === "%" ? t("Target (% of revenue)") : t("Target (ETB)")}</span>
-                <input id="goalInput" inputmode="decimal" autocomplete="off" value="${esc(goalUi.value)}"></label>
-              <div class="goal-edit-actions">
-                <button type="button" class="btn" data-goal-cancel>${t("Cancel")}</button>
-                <button type="submit" class="btn btn-primary" ${goalUi.busy ? "disabled" : ""}>${goalUi.busy ? t("Saving…") : t("Save target")}</button>
+          ${g.key ? (() => {
+            const key = g.key;
+            const draft = goalUi.drafts[key];
+            const dirty = draft !== undefined && num(draft) !== g.target;
+            return `
+            <form class="goal-edit${dirty ? " dirty" : ""}" id="goalForm-${key}" data-goal="${key}" novalidate>
+              <label class="goal-target-field" for="goalInput-${key}">${g.unit === "%" ? t("Your target (% of revenue)") : t("Your target (ETB)")}</label>
+              <div class="goal-target-row">
+                <input id="goalInput-${key}" class="goal-input" data-goal-input="${key}" inputmode="decimal" autocomplete="off"
+                  value="${esc(draft ?? String(g.target))}" aria-describedby="goalErr-${key}">
+                <button type="submit" class="btn btn-primary" ${goalUi.busy === key ? "disabled" : ""}>${goalUi.busy === key ? t("Saving…") : t("Save target")}</button>
               </div>
-              <p class="field-error" role="alert">${esc(goalUi.error)}</p>
-            </form>` : `
-            <div class="goal-foot">
-              <span class="muted-note">${g.custom ? t("Target set by you") : t("Automatic target")}</span>
-              <span class="goal-foot-actions">
-                ${g.custom ? `<button type="button" class="btn" data-goal-reset="${g.key}">${t("Use automatic")}</button>` : ""}
-                <button type="button" class="btn" data-goal-edit="${g.key}">${icon("pencil")} ${t("Change target")}</button>
-              </span>
-            </div>` : ""}
+              <p class="field-error" id="goalErr-${key}" role="alert">${esc(goalUi.errors[key] ?? "")}</p>
+            </form>`;
+          })() : ""}
         </div>`;
       }).join("")}
     </div>`;
@@ -92,25 +100,38 @@ export function renderGoals(): string {
 
 async function saveGoal(key: GoalKey): Promise<void> {
   const { t } = deps;
-  const v = num(goalUi.value);
+  const raw = (goalUi.drafts[key] ?? "").trim();
   const g = goals.find((x) => x.key === key);
   if (!g) return;
-  if (!(v > 0)) { goalUi.error = t("Enter a number above 0."); return deps.rerender(); }
-  if (g.unit === "%" && v > 100) { goalUi.error = t("A percentage can't be above 100."); return deps.rerender(); }
-  goalUi.busy = true; goalUi.error = ""; deps.rerender();
+  const v = num(raw);
+  goalUi.notice = "";
+  if (raw === "" || !Number.isFinite(v) || v < 0) { goalUi.errors[key] = t("Enter a number (0 or more)."); return deps.rerender(); }
+  if (g.unit === "%" && v > 100) { goalUi.errors[key] = t("A percentage can't be above 100."); return deps.rerender(); }
+  goalUi.busy = key; goalUi.errors[key] = ""; deps.rerender();
   try {
     if (isLive) await setGoal(key, v);
     else { g.target = v; g.custom = true; }
-    goalUi.editing = null;
+    delete goalUi.drafts[key];
     goalUi.notice = t("Target saved.");
     await refresh();
   } catch (err) {
-    goalUi.error = errText(err);
+    goalUi.errors[key] = errText(err);
     deps.rerender();
   } finally {
-    goalUi.busy = false;
+    goalUi.busy = null;
+    deps.rerender();
   }
 }
+
+/** Typing in a goal's target box. */
+document.addEventListener("input", (e) => {
+  const el = e.target as HTMLInputElement;
+  const key = el.dataset?.goalInput as GoalKey | undefined;
+  if (!key) return;
+  goalUi.drafts[key] = el.value;
+  el.closest(".goal-edit")?.classList.add("dirty");
+  if (goalUi.errors[key]) { goalUi.errors[key] = ""; const err = document.getElementById(`goalErr-${key}`); if (err) err.textContent = ""; }
+});
 
 /* ======================= Investments ======================= */
 
@@ -283,7 +304,7 @@ export function renderReports(): string {
     <div class="report-head panel">
       <label class="signin-field"><span>${t("Month")}</span>
         <input type="month" id="reportMonth" value="${esc(repUi.month)}" max="${thisMonth()}"></label>
-      <p class="muted-note">${t("Each report downloads as a CSV file that opens in Excel or Google Sheets.")}</p>
+      <p class="muted-note">${t("Each report downloads as an Excel file (.xlsx) that also opens in Google Sheets.")}</p>
     </div>
     ${repUi.notice ? `<p class="admin-notice" role="status">${icon("check")} ${esc(repUi.notice)}</p>` : ""}
     ${repUi.error ? `<p class="field-error" role="alert">${esc(repUi.error)}</p>` : ""}
@@ -293,23 +314,9 @@ export function renderReports(): string {
           <h3>${esc(t(r.title))}</h3>
           <p>${esc(t(r.desc))}</p>
           <small class="muted-note">${spanText(r.span)}</small>
-          <button class="btn" data-report="${r.key}" ${repUi.busy ? "disabled" : ""}>${repUi.busy === r.key ? t("Preparing…") : `${t("Download CSV")} ${icon("arrow-right")}`}</button>
+          <button class="btn" data-report="${r.key}" ${repUi.busy ? "disabled" : ""}>${repUi.busy === r.key ? t("Preparing…") : `${t("Download Excel")} ${icon("arrow-right")}`}</button>
         </div>`).join("")}
     </div>`;
-}
-
-function downloadCsv(filename: string, rows: (string | number)[][]): void {
-  const cell = (v: string | number): string => {
-    const s = String(v ?? "");
-    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
-  };
-  const text = rows.map((r) => r.map(cell).join(",")).join("\n");
-  const blob = new Blob(["﻿" + text], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = filename; a.style.display = "none";
-  document.body.append(a); a.click(); a.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 /** Demo mode: build what we can from the figures on screen. */
@@ -328,12 +335,18 @@ async function generate(key: ReportKey): Promise<void> {
   try {
     if (isLive) {
       const r = await getReport(key, m);
-      downloadCsv(r.filename, [[r.title], r.columns, ...r.rows]);
-      repUi.notice = t("Downloaded {x}", { x: r.filename });
+      const file = r.filename.replace(/\.csv$/i, "") + ".xlsx";
+      downloadXlsx(file, { title: r.title, columns: r.columns, rows: r.rows });
+      repUi.notice = t("Downloaded {x}", { x: file });
     } else {
       const rows = demoRows(key);
       if (!rows) repUi.error = t("Connect the app to the server to make this report.");
-      else { downloadCsv(`seer-${key}-${m}.csv`, rows); repUi.notice = t("Downloaded {x}", { x: `seer-${key}-${m}.csv` }); }
+      else {
+        const file = `seer-${key}-${m}.xlsx`;
+        const [columns, ...body] = rows;
+        downloadXlsx(file, { title: REPORT_TITLE[key] ?? key, columns: columns.map(String), rows: body });
+        repUi.notice = t("Downloaded {x}", { x: file });
+      }
     }
   } catch (err) {
     repUi.error = errText(err);
@@ -348,29 +361,6 @@ async function generate(key: ReportKey): Promise<void> {
 /** Clicks on these pages. Returns true when handled. */
 export function planningClick(el: Element): boolean {
   const hit = <E extends HTMLElement>(sel: string): E | null => el.closest<E>(sel);
-  // goals
-  const ge = hit("[data-goal-edit]");
-  if (ge) {
-    const key = ge.dataset.goalEdit as GoalKey;
-    const g = goals.find((x) => x.key === key);
-    goalUi.editing = key; goalUi.value = g ? String(g.target) : ""; goalUi.error = ""; goalUi.notice = "";
-    deps.rerender();
-    document.querySelector<HTMLInputElement>("#goalInput")?.select();
-    return true;
-  }
-  if (hit("[data-goal-cancel]")) { goalUi.editing = null; goalUi.error = ""; deps.rerender(); return true; }
-  const gr = hit("[data-goal-reset]");
-  if (gr) {
-    const key = gr.dataset.goalReset as GoalKey;
-    void (async () => {
-      try {
-        if (isLive) await resetGoal(key);
-        goalUi.notice = deps.t("Back to the automatic target.");
-        await refresh();
-      } catch (err) { goalUi.notice = errText(err); deps.rerender(); }
-    })();
-    return true;
-  }
   // investments
   if (hit("[data-inv-add]")) {
     invUi.form = { id: null, title: "", kind: "EQUIPMENT", target: "", saved: "", targetDate: "", note: "", error: "", busy: false };
@@ -405,9 +395,10 @@ export function planningClick(el: Element): boolean {
 
 /** Form submits on these pages. Returns true when handled. */
 export function planningSubmit(form: HTMLFormElement): boolean {
-  if (form.id === "goalForm") {
-    goalUi.value = document.querySelector<HTMLInputElement>("#goalInput")?.value ?? "";
-    void saveGoal(form.dataset.goal as GoalKey);
+  if (form.classList.contains("goal-edit")) {
+    const key = form.dataset.goal as GoalKey;
+    goalUi.drafts[key] = form.querySelector<HTMLInputElement>(".goal-input")?.value ?? "";
+    void saveGoal(key);
     return true;
   }
   if (form.id === "investmentForm") { void saveInvestment(); return true; }
@@ -416,5 +407,5 @@ export function planningSubmit(form: HTMLFormElement): boolean {
 
 /** Clear one-off messages when the owner moves to another page. */
 export function planningLeave(): void {
-  goalUi.notice = ""; goalUi.editing = null; invUi.notice = ""; invUi.confirm = null; repUi.notice = ""; repUi.error = "";
+  goalUi.notice = ""; goalUi.drafts = {}; goalUi.errors = {}; invUi.notice = ""; invUi.confirm = null; repUi.notice = ""; repUi.error = "";
 }

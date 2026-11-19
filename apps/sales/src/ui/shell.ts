@@ -13,6 +13,7 @@ import { roleName } from "./shared";
 export const NAV: readonly { id: ViewId; label: string; icon: IconName }[] = [
   { id: "dashboard", label: "Dashboard", icon: "overview" },
   { id: "purchases", label: "Purchases", icon: "box" },
+  { id: "dispatch", label: "Send out", icon: "truck" },
   { id: "waste", label: "Waste", icon: "trash" },
   { id: "expenses", label: "Other expenses", icon: "coin" },
   { id: "audit", label: "Audit trail", icon: "clipboard" },

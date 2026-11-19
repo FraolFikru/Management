@@ -263,7 +263,7 @@ export interface Goal {
 }
 export const goals: Goal[] = [
   { key: "revenue", title: "Monthly Revenue Target", current: 128400, target: 150000, unit: "ETB", deadline: new Date(2026, 10, 30) },
-  { key: "foodCost", title: "Food Cost under 30%", current: 31.2, target: 30, unit: "%", deadline: new Date(2026, 11, 15), lowerIsBetter: true },
+  { key: "foodCost", title: "Food cost (% of revenue)", current: 31.2, target: 30, unit: "%", deadline: new Date(2026, 11, 15), lowerIsBetter: true },
   { key: "aov", title: "Average Order Value", current: 420, target: 480, unit: "ETB", deadline: new Date(2026, 11, 31) },
   { title: "Customer Reviews (4.5+)", current: 4.3, target: 4.5, unit: "★", deadline: null },
 ];

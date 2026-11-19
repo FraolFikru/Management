@@ -30,6 +30,9 @@ export const payName = (m: PaymentMethod): string => tk(`pay.${m}`);
 export const roleName = (r: UserRole): string => tk(`role.${r}`);
 export const unitName = (u: string): string => tk(`unit.${u}`);
 export const qtyUnit = (q: number, u: string): string => `${num(q)} ${unitName(u)}`;
+/** Where a dispatch goes: a place in this branch, or the other branch's name for a transfer. */
+export const destOf = (d: { destination?: string; toBranchName?: string }): string =>
+  d.toBranchName || tk(`dest.${d.destination ?? ""}`);
 
 /** Accountability stamp: avatar · Name (ID) · time. Used on every record. */
 export function stampOf(staffId: string, iso: string, label = ""): string {

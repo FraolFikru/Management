@@ -9,10 +9,11 @@ import { NOTE_REQUIRED, REJECT_REASONS, STAFF, WASTE_COLOR, WASTE_IDS, isWasteRe
 import { db, flagPurchase, item, logWaste, rejectDispatch, removeWaste, reopenDispatch, reopenPurchase, state, user, type Modal } from "../store";
 import { $, $$, esc, highlight, icon } from "../ui/dom";
 import { attachCombobox, type ComboOption } from "../ui/combobox";
-import { clearErrors, dot, errText, invalid, qtyUnit, roleName, showErrors, stampOf, unitName } from "../ui/shared";
+import { clearErrors, dot, errText, invalid, qtyUnit, roleName, showErrors, stampOf, unitName , destOf } from "../ui/shared";
 import { toast } from "../ui/toast";
 import { rerender, type ActionMap } from "../ui/app";
 import { freshRestock, mountRestock, restockForm } from "./restock";
+import { freshMinimums, minimumsForm, mountMinimums } from "./minimums";
 
 const FLAG_REASONS: readonly string[] = ["Price higher than last week", "Receipt missing", "Quantity does not match delivery note", "Wrong item delivered"];
 
@@ -32,6 +33,7 @@ export function openModal(m: Exclude<Modal, null>, from: HTMLElement): void {
   state.errors = {};
   if (m.kind === "waste") w = freshWaste();
   if (m.kind === "restock") freshRestock();
+  if (m.kind === "minimums") freshMinimums();
   reason = "";
   reasonText = "";
   renderModal();
@@ -128,7 +130,7 @@ function reasonForm(kind: "reject" | "flag", id: string): string {
   let summary = "";
   if (kind === "reject") {
     const d = db.dispatches.find((x) => x.id === id);
-    if (d) summary = `<strong>${esc(tk(d.itemName))}</strong> · ${qtyUnit(d.quantity, d.unit)} → ${esc(tk(`dest.${d.destination}`))}<br>${stampOf(d.requestedBy, d.timestamp, t("Requested by"))}`;
+    if (d) summary = `<strong>${esc(tk(d.itemName))}</strong> · ${qtyUnit(d.quantity, d.unit)} → ${esc(destOf(d))}<br>${stampOf(d.requestedBy, d.timestamp, t("Requested by"))}`;
   } else {
     const p = db.purchases.find((x) => x.id === id);
     const it = p ? item(p.itemId) : undefined;
@@ -157,12 +159,13 @@ export function renderModal(): void {
   if (!root) return;
   if (!m) { root.innerHTML = ""; return; }
   const title = m.kind === "waste" ? t("Log waste / shrinkage") : m.kind === "restock" ? t("Send restock request")
+    : m.kind === "minimums" ? t("Restock minimums")
     : m.kind === "reject" ? t("Reject with Reason") : t("Flag purchase");
   root.innerHTML = `<div class="modal-backdrop" data-action="modal-close"></div>
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="modal-head"><h2 id="modalTitle">${title}</h2>
         <button type="button" class="btn icon-btn ghost" data-action="modal-close" aria-label="${t("Close")}">${icon("x")}</button></div>
-      ${m.kind === "waste" ? wasteForm() : m.kind === "restock" ? restockForm() : reasonForm(m.kind, m.id)}
+      ${m.kind === "waste" ? wasteForm() : m.kind === "restock" ? restockForm() : m.kind === "minimums" ? minimumsForm() : reasonForm(m.kind, m.id)}
     </div>`;
   document.body.classList.add("modal-open");
   if (m.kind === "waste") {
@@ -172,6 +175,8 @@ export function renderModal(): void {
     $<HTMLElement>(w.itemId ? "#wQty" : "#wItem")?.focus();
   } else if (m.kind === "restock") {
     mountRestock(renderModal);
+  } else if (m.kind === "minimums") {
+    mountMinimums();
   } else {
     $<HTMLElement>('[data-action="r-pick"]')?.focus();
   }
@@ -236,7 +241,7 @@ export function submitWaste(): void {
 
 export function submitReason(): void {
   const m = state.modal;
-  if (!m || m.kind === "waste" || m.kind === "restock") return;
+  if (!m || m.kind === "waste" || m.kind === "restock" || m.kind === "minimums") return;
   const text = reasonText.trim() || (reason ? reason : "");
   if (!text) {
     showErrors({ reason: t("Pick a reason or write one.") }, ["reason"]);
@@ -248,7 +253,7 @@ export function submitReason(): void {
     if (!d || !rejectDispatch(id, text)) { closeModal(); return; }
     closeModal();
     rerender();
-    toast(t("Rejected {item} → {dest} · by {name}", { item: tk(d.itemName), dest: tk(`dest.${d.destination}`), name: user().name }), () => { reopenDispatch(id); rerender(); });
+    toast(t("Rejected {item} → {dest} · by {name}", { item: tk(d.itemName), dest: destOf(d), name: user().name }), () => { reopenDispatch(id); rerender(); });
   } else {
     const p = db.purchases.find((x) => x.id === id);
     const it = p ? item(p.itemId) : undefined;

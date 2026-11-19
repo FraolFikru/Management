@@ -1073,3 +1073,11 @@ b, strong { font-weight: 600; }
   .main { padding-bottom: max(28px, env(safe-area-inset-bottom)); }
   .sidebar { padding-top: max(16px, env(safe-area-inset-top)); }
 }
+
+/* goal target: typed straight into the card */
+.goal-target-field { font-size: 12px; color: var(--muted); }
+.goal-target-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; max-width: 420px; }
+.goal-input { width: 100%; min-width: 0; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel-2);
+  color: var(--text); font: inherit; font-family: var(--font-mono); text-align: right; }
+.goal-input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.goal-edit .field-error:empty { display: none; }

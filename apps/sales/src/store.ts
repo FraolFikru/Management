@@ -8,7 +8,7 @@
 
 import type {
   AuditAction, AuditEntity, AuditEntry, CustomExpenseRecord, FieldErrors, InventoryItem, PeriodId, PeriodTotals,
-  MainCategory, PurchaseRecord, RestockRequest, Role, StaffAccount, SupportedLanguage, ThemeMode, ViewId, WasteRecord,
+  DispatchRequest, MainCategory, PurchaseRecord, RestockRequest, Role, StaffAccount, SupportedLanguage, ThemeMode, ViewId, WasteRecord,
 } from "./types";
 import { BASE_INVENTORY, CAN_APPROVE_WASTE, CAN_DELETE, STAFF, VIEW_ACCESS } from "./catalog";
 import { generateSeed, newId } from "./seed";
@@ -97,6 +97,19 @@ export const db = {
   customInventory: [] as InventoryItem[],
   /** what the manager asked the Purchases team to buy */
   restock: seed.restock as RestockRequest[],
+  /** dispatch requests this branch sent to its manager */
+  dispatches: [] as DispatchRequest[],
+};
+
+/** This branch: who approves dispatches and where stock can go (demo values until the backend loads). */
+export const branchInfo = {
+  name: "Bole Branch",
+  managers: ["Hanna Tesfaye"] as string[],
+  places: ["KITCHEN_LINE", "BAR", "TAKEAWAY_COUNTER", "CATERING", "EVENT_HALL"] as string[],
+  branches: [{ id: "BR-PIA", name: "Piassa Branch" }] as { id: string; name: string }[],
+  /** store-room quantity per item; empty in the demo (unknown) */
+  stock: {} as Record<string, number>,
+  canDispatch: true,
 };
 
 /* ---------- session ---------- */
@@ -140,6 +153,15 @@ export async function loadFromBackend(): Promise<void> {
   db.audit = b.audit;
   db.customInventory = b.customInventory.map(({ name: _n, ...i }) => i);
   db.restock = b.restock ?? [];
+  db.dispatches = b.dispatches ?? [];
+  if (b.branch) {
+    branchInfo.name = b.branch.name;
+    branchInfo.managers = b.managers ?? [];
+    branchInfo.places = b.places ?? [];
+    branchInfo.branches = b.branches ?? [];
+    branchInfo.stock = b.stock ?? {};
+    branchInfo.canDispatch = b.canDispatch !== false;
+  }
   liveUser = { userId: u.id, name: u.name, role: b.role, initials: u.initials ?? u.name.split(" ").map((w) => w[0]).join("").slice(0, 2), pin: "" };
   state.userId = u.id;
 }
@@ -158,7 +180,8 @@ export function user(): StaffAccount {
   return u;
 }
 
-export const canView = (view: ViewId, role: Role = user().role): boolean => VIEW_ACCESS[view].includes(role);
+export const canView = (view: ViewId, role: Role = user().role): boolean =>
+  VIEW_ACCESS[view].includes(role) && (view !== "dispatch" || branchInfo.canDispatch);
 export const canApproveWaste = (): boolean => CAN_APPROVE_WASTE.includes(user().role);
 export const canDelete = (): boolean => CAN_DELETE.includes(user().role);
 
@@ -241,14 +264,49 @@ export const markRestockOrdered = (id: string): RestockRequest | undefined => re
 export const declineRestock = (id: string, reason: string): RestockRequest | undefined =>
   restockChange(id, { status: "DECLINED", reason, doneAt: new Date().toISOString() }, "DECLINE", reason);
 
-/** Live mode: fetch the latest requests (the manager may have sent new ones). True when anything changed. */
+/** Live mode: fetch the latest restock requests and dispatch decisions from the manager. True when anything changed. */
 export async function refreshRestock(): Promise<boolean> {
   if (!isLive || !liveUser) return false;
-  const next = await loadRestock();
+  const [next, disp] = await Promise.all([loadRestock(), branchInfo.canDispatch ? remote.myDispatches() : Promise.resolve(db.dispatches)]);
   const sig = (l: RestockRequest[]): string => l.map((r) => `${r.id}:${r.status}:${r.bought}:${r.quantity}:${r.note}`).join("|");
-  if (sig(next) === sig(db.restock)) return false;
+  const dsig = (l: DispatchRequest[]): string => l.map((d) => `${d.id}:${d.status}`).join("|");
+  const pendingLocal = db.dispatches.filter((d) => d.id.startsWith("local-"));
+  if (sig(next) === sig(db.restock) && dsig(disp) === dsig(db.dispatches.filter((d) => !d.id.startsWith("local-")))) return false;
   db.restock = next;
+  db.dispatches = [...pendingLocal, ...disp];
   return true;
+}
+
+/* ---------- dispatch: ask the branch manager to release stock ---------- */
+
+export interface DispatchDraft { itemId: string; quantity: number; destination?: string; toBranchId?: string; note: string }
+
+/** Shows at once as "Waiting for the manager"; replaced by the saved record when the backend answers. */
+export function sendDispatch(d: DispatchDraft): DispatchRequest | undefined {
+  const it = inventoryItem(d.itemId);
+  if (!it) return undefined;
+  const id = newId("local");
+  const to = d.toBranchId ? branchInfo.branches.find((b) => b.id === d.toBranchId) : undefined;
+  const rec: DispatchRequest = {
+    id, itemId: it.id, itemName: it.nameKey, quantity: d.quantity, unit: it.unit, destination: d.destination ?? "BRANCH",
+    ...(to ? { toBranchId: to.id, toBranchName: to.name } : {}), ...(d.note ? { note: d.note } : {}),
+    requestedBy: user().userId, requestedByName: user().name, timestamp: new Date().toISOString(), status: "PENDING",
+  };
+  db.dispatches.unshift(rec);
+  const e = log("CREATE", "DISPATCH", id, `Dispatch ${it.id}`, { name: it.nameKey, quantity: d.quantity, unit: it.unit });
+  void push(async () => {
+    const saved = (await remote.dispatch({ ...d, clientRef: id })) as { id: string };
+    rec.id = saved.id;
+  }, () => { db.dispatches = db.dispatches.filter((x) => x !== rec); unlog(e); });
+  return rec;
+}
+
+export function cancelDispatch(id: string): DispatchRequest | undefined {
+  const i = db.dispatches.findIndex((x) => x.id === id);
+  if (i < 0) return undefined;
+  const [rec] = db.dispatches.splice(i, 1);
+  void push(() => remote.cancelDispatch(id), () => { db.dispatches.splice(i, 0, rec); });
+  return rec;
 }
 
 export function recordWaste(w: WasteRecord): void {

@@ -16,15 +16,17 @@ import { wireApp, type ActionMap } from "./ui/app";
 import { VIEW_IDS, renderNav, renderShell, renderSignIn } from "./ui/shell";
 import { clearToast, runUndo, toast } from "./ui/toast";
 import { renderDashboard } from "./views/dashboard";
-import { mountPurchases, onPurchaseInput, purchaseActions, renderPurchases, submitPurchase } from "./views/purchases";
+import { mountPurchases, onPurchaseInput, purchaseActions, refreshRequests, renderPurchases, submitPurchase } from "./views/purchases";
 import { mountWaste, onWasteInput, renderWaste, submitWaste, wasteActions } from "./views/waste";
 import { expenseActions, onExpenseInput, renderExpenses, submitExpense } from "./views/expenses";
 import { auditActions, renderAudit } from "./views/audit";
+import { dispatchActions, mountDispatch, onDispatchInput, refreshDispatchSide, renderDispatch, submitDispatch } from "./views/dispatch";
 
 const VIEWS: Record<ViewId, { title: string; render: () => string; mount?: () => void }> = {
   help: { title: "Help & support", render: renderHelp },
   dashboard: { title: "Dashboard", render: renderDashboard },
   purchases: { title: "Purchases", render: renderPurchases, mount: mountPurchases },
+  dispatch: { title: "Send out", render: renderDispatch, mount: mountDispatch },
   waste: { title: "Waste", render: renderWaste, mount: mountWaste },
   expenses: { title: "Other expenses", render: renderExpenses },
   audit: { title: "Audit trail", render: renderAudit },
@@ -64,8 +66,14 @@ setInterval(() => {
   refreshRestock().then((changed) => {
     if (!changed) return;
     const typing = document.activeElement?.matches("input, textarea, select");
-    if (typing) { renderNav(); return; }
-    if (state.view === "dashboard" || state.view === "purchases") render(); else renderNav();
+    if (typing) {
+      // someone is typing: leave the form alone, update only the lists beside it
+      renderNav();
+      if (state.view === "dispatch") refreshDispatchSide();
+      else if (state.view === "purchases") refreshRequests();
+      return;
+    }
+    if (state.view === "dashboard" || state.view === "purchases" || state.view === "dispatch") render(); else renderNav();
   }, () => { /* offline: try again next time */ });
 }, 30_000);
 
@@ -151,7 +159,7 @@ const shellActions: ActionMap = {
   undo: () => runUndo(),
 };
 
-const ACTIONS: ActionMap = { ...shellActions, ...purchaseActions, ...wasteActions, ...expenseActions, ...auditActions };
+const ACTIONS: ActionMap = { ...shellActions, ...dispatchActions, ...purchaseActions, ...wasteActions, ...expenseActions, ...auditActions };
 
 /* ---------- event delegation ---------- */
 
@@ -170,6 +178,7 @@ document.addEventListener("submit", (e) => {
   if (id === "purchaseForm") submitPurchase();
   else if (id === "wasteForm") submitWaste();
   else if (id === "expenseForm") submitExpense();
+  else if (id === "dispatchForm") submitDispatch();
   else if (id === "liveSignIn") {
     if (live.busy) return;
     const u = $<HTMLInputElement>("#liveUser")?.value ?? "";
@@ -202,6 +211,7 @@ function routeInput(el: HTMLInputElement | HTMLSelectElement | HTMLTextAreaEleme
   if (scope === "purchase") onPurchaseInput(key, el.value);
   else if (scope === "waste") onWasteInput(key, el.value);
   else if (scope === "expense") onExpenseInput(key, el.value);
+  else if (scope === "dispatch") onDispatchInput(key, el.value);
 }
 
 document.addEventListener("input", (e) => {

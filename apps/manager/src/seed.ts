@@ -39,6 +39,8 @@ export interface SeedData {
 const MANAGER = "BM-001";
 const CLERK = "IC-201";
 const SALES = ["SS-104", "SS-117", "SS-122"];
+/** the Purchases team: they send dispatch requests to the manager */
+const PURCHASERS = ["IC-201", "IC-301"];
 
 export function generateSeed(): SeedData {
   const r = rng(20261106);
@@ -134,7 +136,7 @@ export function generateSeed(): SeedData {
     });
   }
 
-  /* ---------- dispatch requests from the Sales Department ---------- */
+  /* ---------- dispatch requests from the Purchases team ---------- */
   const DISPATCH: [string, Destination, number, number][] = [
     ["soft-drinks", "BAR", 2, 4], ["beer", "BAR", 2, 5], ["water", "BAR", 2, 6], ["injera", "CATERING", 40, 120],
     ["takeout-box", "TAKEAWAY_COUNTER", 2, 6], ["cups-lids", "TAKEAWAY_COUNTER", 2, 4], ["coffee", "KITCHEN_LINE", 1, 3],
@@ -144,7 +146,7 @@ export function generateSeed(): SeedData {
     const [id, dest, lo, hi] = pick(DISPATCH);
     const it = item(id);
     const d: DispatchRecord = {
-      id: newId("dsp"), itemId: id, itemName: it.nameKey, quantity: between(lo, hi), unit: it.unit, requestedBy: pick(SALES),
+      id: newId("dsp"), itemId: id, itemName: it.nameKey, quantity: between(lo, hi), unit: it.unit, requestedBy: pick(PURCHASERS),
       status: "PENDING", timestamp: ts, destination: dest,
     };
     if (decided) {
@@ -164,8 +166,8 @@ export function generateSeed(): SeedData {
   for (let k = 0; k < 3; k++) { const ts = minsAgo(between(200, 420)); request(ts, true); }
   // waiting right now
   const pending: [string, Destination, number, string, number][] = [
-    ["soft-drinks", "BAR", 3, "SS-117", 4], ["injera", "CATERING", 80, "SS-104", 11], ["takeout-box", "TAKEAWAY_COUNTER", 6, "SS-122", 19],
-    ["beer", "EVENT_HALL", 4, "SS-117", 27], ["coffee", "KITCHEN_LINE", 2, "SS-104", 42],
+    ["soft-drinks", "BAR", 3, "IC-301", 4], ["injera", "CATERING", 80, "IC-201", 11], ["takeout-box", "TAKEAWAY_COUNTER", 6, "IC-201", 19],
+    ["beer", "EVENT_HALL", 4, "IC-301", 27], ["coffee", "KITCHEN_LINE", 2, "IC-201", 42],
   ];
   for (const [id, dest, qty, by, mins] of pending) {
     const it = item(id);
