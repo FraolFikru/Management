@@ -96,8 +96,10 @@ export interface Bootstrap {
   /** the manager's restock requests for this branch */
   restock: RestockRequest[];
   /** this branch: who approves its dispatches, where stock can go, what is in the store room */
-  branch: { id: string; name: string };
-  managers: string[];
+  /** missing when the server hasn't been updated yet */
+  branch?: { id: string; name: string };
+  /** names on an older server; {id, name} now */
+  managers: ({ id: string; name: string } | string)[];
   places: string[];
   branches: { id: string; name: string }[];
   stock: Record<string, number>;
@@ -134,9 +136,9 @@ export const remote = {
     post<RestockRequest>(`/restock/${encodeURIComponent(id)}`, { action, reason: reason ?? null }),
   listRestock: () => api<RestockRequest[]>("/restock"),
   /** Ask this branch's manager to release stock from the store room. */
-  dispatch: (d: { itemId: string; quantity: number; destination?: string; toBranchId?: string; note: string; clientRef: string }) =>
+  dispatch: (d: { itemId: string; quantity: number; destination?: string; toBranchId?: string; note: string; clientRef: string; managerId?: string }) =>
     post<unknown>("/dispatch", { itemId: d.itemId, quantity: d.quantity, destination: d.destination ?? null, toBranchId: d.toBranchId ?? null,
-      note: d.note || null, clientRef: d.clientRef }),
+      note: d.note || null, clientRef: d.clientRef, managerId: d.managerId ?? null }),
   cancelDispatch: (id: string) => post<unknown>(`/dispatch/${encodeURIComponent(id)}/cancel`, {}),
   myDispatches: () => api<DispatchRequest[]>("/dispatch/mine"),
 };

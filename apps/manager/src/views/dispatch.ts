@@ -31,6 +31,7 @@ function requestCard(d: DispatchRecord): string {
       <div class="dsp-main"><strong>${esc(tk(d.itemName))}</strong><span class="dsp-qty num">${qtyUnit(d.quantity, d.unit)}</span></div>
       <span class="dsp-dest">${icon("arrow")} ${esc(destOf(d))}</span>
       ${d.note ? `<p class="dsp-note">“${esc(d.note)}”</p>` : ""}
+      ${d.assignedTo && d.assignedTo !== user().userId ? `<small class="meta">${t("Sent to {name}", { name: esc(d.assignedToName || d.assignedTo) })}</small>` : ""}
       ${stampOf(d.requestedBy, d.timestamp, t("Requested by"))}
       <small class="wait ${waited >= 30 ? "late" : ""}">${t("waiting {n} min", { n: waited })}</small>
     </div>
@@ -74,6 +75,10 @@ function history(): string {
 
 export function renderDispatch(): string {
   const pending = pendingDispatches();
+  // sent to me (or to nobody in particular) first; requests sent to another manager of this branch below
+  const me = user().userId;
+  const forMe = pending.filter((d) => !d.assignedTo || d.assignedTo === me);
+  const others = pending.filter((d) => d.assignedTo && d.assignedTo !== me);
   const now = today();
   const decided = db.dispatches.filter((d) => d.decidedAt && localDay(d.decidedAt) === now);
   const approved = decided.filter((d) => d.status === "APPROVED").length;
@@ -83,14 +88,18 @@ export function renderDispatch(): string {
     <div class="page-head"><div><h1 tabindex="-1">${t("Dispatch")}</h1>
       <p>${t("Stock requests sent by the Purchases team. Approving moves the stock out; rejecting needs a reason.")}</p></div></div>
     <div class="stat-row">
-      <div class="stat"><span>${t("Waiting for you")}</span><strong class="num ${pending.length ? "warn-text" : ""}">${pending.length}</strong></div>
+      <div class="stat"><span>${t("Waiting for you")}</span><strong class="num ${forMe.length ? "warn-text" : ""}">${forMe.length}</strong></div>
       <div class="stat"><span>${t("Approved today")}</span><strong class="num">${approved}</strong></div>
       <div class="stat"><span>${t("Rejected today")}</span><strong class="num">${rejected}</strong></div>
       <div class="stat"><span>${t("Blocked by stock")}</span><strong class="num ${blocked ? "bad-text" : ""}">${blocked}</strong></div>
     </div>
     <section class="card" aria-labelledby="pendTitle">
       <div class="card-head"><div><h2 id="pendTitle">${t("Pending review")}</h2><p>${t("Oldest first")}</p></div></div>
-      ${pending.length ? `<ul class="dispatch-list wide">${pending.map(requestCard).join("")}</ul>` : empty(t("No dispatches waiting"), t("New requests from sales staff appear here."))}
+      ${forMe.length ? `<ul class="dispatch-list wide">${forMe.map(requestCard).join("")}</ul>`
+        : others.length ? `<p class="meta">${t("Nothing was sent to you.")}</p>` : empty(t("No dispatches waiting"), t("New requests from the Purchases team appear here."))}
+      ${others.length ? `<h3 class="sub-head">${t("Sent to other managers")}</h3>
+        <p class="meta">${t("You can still decide these, for example when they are away.")}</p>
+        <ul class="dispatch-list wide">${others.map(requestCard).join("")}</ul>` : ""}
     </section>
     <section class="card" aria-labelledby="histTitle">
       <div class="card-head"><div><h2 id="histTitle">${t("Decision history")}</h2><p>${t("Who approved or rejected, and when")}</p></div>

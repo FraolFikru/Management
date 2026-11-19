@@ -280,6 +280,10 @@ def owner_changes(db: Db) -> None:
     db.execute("CREATE INDEX IF NOT EXISTS ix_owner_change_org_status ON owner_change (org_id, status)")
 
 
+def dispatch_assignee(db: Db) -> None:
+    _add_column(db, "dispatch_request", "assigned_to", "text REFERENCES app_user(id)", "text REFERENCES app_user(id)")
+
+
 def migrate() -> None:
     db = Db.from_env()
     try:
@@ -293,6 +297,7 @@ def migrate() -> None:
             dispatch_senders(db)
             lower_minimums(db)
             owner_changes(db)
+            dispatch_assignee(db)
     except Exception:
         log.exception("seer: migration failed")
         raise

@@ -664,4 +664,10 @@ export const UI_STRINGS: Record<string, Entry> = {
   "Enter a number (0 or more) for {item}.": { am: "ለ{item} ቁጥር ያስገቡ (0 ወይም ከዚያ በላይ)።", om: "{item}f lakkoofsa galchi (0 ykn isaa ol)." },
   "Minimum for {item} set to {q}": { am: "የ{item} ዝቅተኛ መጠን {q} ሆኗል", om: "Hangi xiqqaan {item} {q} ta'eera" },
   "Saved {n} restock minimums": { am: "{n} ዝቅተኛ የክምችት መጠኖች ተቀምጠዋል", om: "Hanga xiqqaa kuusaa {n} olkaa'ameera" },
+  /* dispatch: branch and manager */
+  "Sent to {name}": { am: "ወደ {name} ተልኳል", om: "Gara {name}tti ergame" },
+  "Sent to other managers": { am: "ወደ ሌሎች ሥራ አስኪያጆች የተላኩ", om: "Hoogganoota biroof kan ergame" },
+  "You can still decide these, for example when they are away.": { am: "እነዚህንም መወሰን ይችላሉ፤ ለምሳሌ እነርሱ በሌሉበት ጊዜ።", om: "Kanneenis murteessuu dandeessa, fakkeenyaaf yeroo isaan hin jirre." },
+  "New requests from the Purchases team appear here.": { am: "ከግዢ ቡድኑ የሚመጡ አዳዲስ ጥያቄዎች እዚህ ይታያሉ።", om: "Gaaffiiwwan haaraan garee bittaa irraa as mul'atu." },
+  "Nothing was sent to you.": { am: "ወደ እርስዎ የተላከ ነገር የለም።", om: "Wanti siif ergame hin jiru." },
 };

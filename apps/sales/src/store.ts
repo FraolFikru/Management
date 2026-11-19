@@ -101,12 +101,15 @@ export const db = {
   dispatches: [] as DispatchRequest[],
 };
 
-/** This branch: who approves dispatches and where stock can go (demo values until the backend loads). */
+/** This branch: who approves dispatches and where stock can go (demo values; replaced by the server's in live mode). */
 export const branchInfo = {
+  id: "BR-BOLE",
   name: "Bole Branch",
-  managers: ["Hanna Tesfaye"] as string[],
+  managers: [{ id: "u-hanna", name: "Hanna Tesfaye" }] as { id: string; name: string }[],
   places: ["KITCHEN_LINE", "BAR", "TAKEAWAY_COUNTER", "CATERING", "EVENT_HALL"] as string[],
-  branches: [{ id: "BR-PIA", name: "Piassa Branch" }] as { id: string; name: string }[],
+  branches: [{ id: "BR-CMC", name: "CMC Branch" }, { id: "BR-KAZ", name: "Kazanchis Branch" }, { id: "BR-PIA", name: "Piassa Branch" }] as { id: string; name: string }[],
+  /** live mode: false when the server is too old to send the branch details (Send out then says so instead of showing demo values) */
+  known: true,
   /** store-room quantity per item; empty in the demo (unknown) */
   stock: {} as Record<string, number>,
   canDispatch: true,
@@ -155,12 +158,19 @@ export async function loadFromBackend(): Promise<void> {
   db.restock = b.restock ?? [];
   db.dispatches = b.dispatches ?? [];
   if (b.branch) {
+    branchInfo.id = b.branch.id;
     branchInfo.name = b.branch.name;
-    branchInfo.managers = b.managers ?? [];
+    // an older server sent names only
+    branchInfo.managers = (b.managers ?? []).map((m) => (typeof m === "string" ? { id: "", name: m } : m));
     branchInfo.places = b.places ?? [];
     branchInfo.branches = b.branches ?? [];
     branchInfo.stock = b.stock ?? {};
     branchInfo.canDispatch = b.canDispatch !== false;
+    branchInfo.known = true;
+  } else {
+    // never show the demo branches and managers as if they were real
+    branchInfo.managers = []; branchInfo.branches = []; branchInfo.places = []; branchInfo.stock = {};
+    branchInfo.known = false;
   }
   liveUser = { userId: u.id, name: u.name, role: b.role, initials: u.initials ?? u.name.split(" ").map((w) => w[0]).join("").slice(0, 2), pin: "" };
   state.userId = u.id;
@@ -279,7 +289,7 @@ export async function refreshRestock(): Promise<boolean> {
 
 /* ---------- dispatch: ask the branch manager to release stock ---------- */
 
-export interface DispatchDraft { itemId: string; quantity: number; destination?: string; toBranchId?: string; note: string }
+export interface DispatchDraft { itemId: string; quantity: number; destination?: string; toBranchId?: string; note: string; managerId?: string }
 
 /** Shows at once as "Waiting for the manager"; replaced by the saved record when the backend answers. */
 export function sendDispatch(d: DispatchDraft): DispatchRequest | undefined {
@@ -290,12 +300,13 @@ export function sendDispatch(d: DispatchDraft): DispatchRequest | undefined {
   const rec: DispatchRequest = {
     id, itemId: it.id, itemName: it.nameKey, quantity: d.quantity, unit: it.unit, destination: d.destination ?? "BRANCH",
     ...(to ? { toBranchId: to.id, toBranchName: to.name } : {}), ...(d.note ? { note: d.note } : {}),
+    ...(d.managerId ? { assignedTo: d.managerId, assignedToName: branchInfo.managers.find((m) => m.id === d.managerId)?.name ?? "" } : {}),
     requestedBy: user().userId, requestedByName: user().name, timestamp: new Date().toISOString(), status: "PENDING",
   };
   db.dispatches.unshift(rec);
   const e = log("CREATE", "DISPATCH", id, `Dispatch ${it.id}`, { name: it.nameKey, quantity: d.quantity, unit: it.unit });
   void push(async () => {
-    const saved = (await remote.dispatch({ ...d, clientRef: id })) as { id: string };
+    const saved = (await remote.dispatch({ ...d, clientRef: id, managerId: d.managerId || undefined })) as { id: string };
     rec.id = saved.id;
   }, () => { db.dispatches = db.dispatches.filter((x) => x !== rec); unlog(e); });
   return rec;

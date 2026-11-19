@@ -81,6 +81,7 @@ class DispatchIn(BaseModel):
     toBranchId: str | None = None
     note: str | None = None
     clientRef: str | None = None                   # a retried send is not saved twice
+    managerId: str | None = None                   # the manager it is sent to
 
 
 @router.get("/inventory/items")
@@ -207,7 +208,8 @@ def list_expenses(period: str = "30d", p: Principal = Depends(require("expense.l
 def create_dispatch(body: DispatchIn, p: Principal = Depends(require("dispatch.request")), db: Db = Depends(get_db)):
     with db.tx():
         return s.request_dispatch(db, p.actor, branch_of(p), body.itemId, body.quantity, to_location=body.destination,
-                                  to_branch_id=body.toBranchId, note=body.note, client_ref=body.clientRef)
+                                  to_branch_id=body.toBranchId, note=body.note, client_ref=body.clientRef,
+                                  assigned_to=body.managerId)
 
 
 @router.post("/dispatch/{did}/cancel")
@@ -301,13 +303,10 @@ def sales_bootstrap(days: int = 60, p: Principal = Depends(require("purchase.log
                       "detail": detail, "userId": a["actor_user_id"] or "", "userName": a["actor_name"] or names.get(a["actor_user_id"], ""),
                       "role": SALES_ROLE.get(a["actor_role"] or "", "INVENTORY_CLERK"), "timestamp": iso(a["occurred_at"])})
     branch = db.one("SELECT id, name FROM branch WHERE id = ?", (br,))
-    managers = [u["full_name"] for u in db.all("""SELECT DISTINCT u.full_name FROM app_user u
-                   LEFT JOIN user_branch_role r ON r.user_id = u.id AND r.branch_id = ?
-                   WHERE u.org_id = ? AND u.is_active AND u.deleted_at IS NULL AND u.role_code = 'BRANCH_MANAGER'
-                     AND (u.home_branch_id = ? OR r.user_id IS NOT NULL) ORDER BY u.full_name""", (br, org, br))]
+    managers = [{"id": m["id"], "name": m["full_name"]} for m in s.branch_managers(db, br)]
     places = [r["code"] for r in db.all("SELECT code FROM stock_location WHERE branch_id = ? AND NOT is_store_room ORDER BY code", (br,))]
     others = [{"id": b["id"], "name": b["name"]} for b in db.all(
-        "SELECT id, name FROM branch WHERE org_id = ? AND id <> ? AND is_active ORDER BY name", (org, br))]
+        "SELECT id, name FROM branch WHERE org_id = ? AND id <> ? AND is_active AND deleted_at IS NULL ORDER BY name", (org, br))]
     stock = {r["item_id"]: float(r["on_hand"]) for r in db.all("SELECT item_id, on_hand FROM branch_stock WHERE branch_id = ?", (br,))}
     return {"role": SALES_ROLE.get(p.actor.role), "purchases": purchases, "waste": waste, "expenses": expenses,
             "customInventory": custom, "audit": audit, "restock": s.restock_list(db, br),

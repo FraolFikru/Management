@@ -484,4 +484,15 @@ export const UI_STRINGS: Record<string, Entry> = {
   "{q} left after": { am: "ከዚያ በኋላ {q} ይቀራል", om: "Booda {q} hafa" },
   "{q} in store": { am: "{q} በመጋዘን", om: "{q} kuusaa keessa" },
   "Dispatch request": { am: "የማውጫ ጥያቄ", om: "Gaaffii ergaa" },
+  /* dispatch: branch and manager */
+  "Choose the manager who approves it.": { am: "የሚያጸድቀውን ሥራ አስኪያጅ ይምረጡ።", om: "Hoogganaa raggaasisu filadhu." },
+  "Goes to the manager of {branch} for approval.": { am: "ለማጽደቅ ወደ {branch} ሥራ አስኪያጅ ይሄዳል።", om: "Raggaasisaaf gara hoogganaa {branch} deema." },
+  "Branch": { am: "ቅርንጫፍ", om: "Damee" },
+  "this branch": { am: "ይህ ቅርንጫፍ", om: "damee kana" },
+  "A transfer: the stock leaves {from} when the manager approves, and {to}'s manager confirms it arrived.": { am: "ዝውውር፦ ሥራ አስኪያጁ ሲያጸድቅ ክምችቱ ከ{from} ይወጣል፤ የ{to} ሥራ አስኪያጅ መድረሱን ያረጋግጣል።", om: "Dabarsa: yeroo hoogganaan raggaasisu kuusaan {from} irraa ba'a, hoogganaan {to} ga'uu isaa mirkaneessa." },
+  "Where in {branch}": { am: "በ{branch} ውስጥ የት", om: "{branch} keessatti eessa" },
+  "Send to manager": { am: "ወደ ሥራ አስኪያጅ ላክ", om: "Gara hoogganaatti ergi" },
+  "{branch} has no manager yet. Ask the System Admin to add one in the Admin app; until then the Owner or a System Admin can approve.": { am: "{branch} እስካሁን ሥራ አስኪያጅ የለውም። የሲስተም አስተዳዳሪውን በAdmin መተግበሪያ እንዲጨምር ይጠይቁ፤ እስከዚያው ባለቤቱ ወይም የሲስተም አስተዳዳሪ ማጽደቅ ይችላሉ።", om: "{branch} ammallee hoogganaa hin qabu. Bulchaa Sirnaa appii Admin keessatti akka dabalu gaafadhu; hanga sanaatti abbaan qabeenyaa ykn Bulchaan Sirnaa raggaasisuu danda'u." },
+  "The server needs an update": { am: "ሰርቨሩ መዘመን ያስፈልገዋል", om: "Sarvariin haaromsa barbaada" },
+  "It doesn't send this branch's managers and the other branches yet. Ask whoever runs the server to redeploy it, then reload this page.": { am: "የዚህን ቅርንጫፍ ሥራ አስኪያጆችና ሌሎቹን ቅርንጫፎች ገና አይልክም። ሰርቨሩን የሚያስተዳድረውን ሰው እንደገና እንዲያሰማራው ይጠይቁ፤ ከዚያ ይህን ገጽ እንደገና ይጫኑ።", om: "Hoogganoota damee kanaa fi damee biroo ammallee hin ergu. Nama sarvarii bulchu akka irra deebi'ee hojiirra oolchu gaafadhu, achiis fuula kana haaromsi." },
 };
