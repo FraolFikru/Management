@@ -125,6 +125,33 @@ export interface PurchaseRecord extends InventoryPurchaseRecord {
   paymentMethod: ExpensePaymentMethod;
   userId: string;
   note: string;
+  /** bought for this manager restock request */
+  restockRequestId?: string;
+}
+
+/** OPEN = waiting · ORDERED = on its way · DONE = bought · DECLINED = can't be bought · CANCELLED = the manager withdrew it */
+export type RestockStatus = "OPEN" | "ORDERED" | "DONE" | "DECLINED" | "CANCELLED";
+
+/** A manager's request for the Purchases team to buy an item. */
+export interface RestockRequest {
+  id: string;
+  itemId: string;
+  nameKey: string;
+  name?: string | null;
+  quantity: number;
+  unit: string;
+  note: string;
+  status: RestockStatus;
+  /** bought so far, in the item's unit */
+  bought: number;
+  requestedBy: string;
+  requestedByName: string;
+  requestedAt: string;
+  handledBy?: string | null;
+  handledByName?: string;
+  handledAt?: string | null;
+  reason: string;
+  doneAt?: string | null;
 }
 
 export interface WasteRecord extends WasteReportRecord {

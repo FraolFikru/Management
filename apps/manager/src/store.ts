@@ -10,7 +10,7 @@
 
 import type {
   AuditAction, AuditEntry, COGSCategory, DispatchRecord, ExpenseRecord, FieldErrors, InventoryItem, MenuCategory,
-  PaymentMethod, PaymentSummary, PeriodId, ReviewStatus, Shift, StaffAccount, SupportedLanguage, ViewId, WasteLog, WasteReason,
+  PaymentMethod, PaymentSummary, PeriodId, RestockRequest, ReviewStatus, Shift, StaffAccount, SupportedLanguage, ViewId, WasteLog, WasteReason,
 } from "./types";
 import { DASHBOARD_ROLES, MENU, STAFF } from "./catalog";
 import { registerText, tkText } from "./i18n";
@@ -24,6 +24,7 @@ export type Modal =
   | { kind: "waste" }
   | { kind: "reject"; id: string }
   | { kind: "flag"; id: string }
+  | { kind: "restock" }
   | null;
 
 export interface UiState {
@@ -104,6 +105,8 @@ export const db = {
   waste: seed.waste,
   expenses: seed.expenses,
   audit: seed.audit,
+  /** restock requests sent to the Purchases team (live: from the backend; demo: only this browser) */
+  restock: [] as RestockRequest[],
 };
 
 /* ---------- session ---------- */
@@ -159,6 +162,7 @@ export async function loadFromBackend(): Promise<void> {
   db.waste = b.waste;
   db.expenses = b.expenses;
   db.audit = b.audit.sort((x, y) => (x.timestamp < y.timestamp ? 1 : -1));
+  db.restock = b.restock ?? [];
   const me = b.staff.find((s) => s.userId === u.id);
   liveUser = { userId: u.id, name: u.name, role: b.role, branchId: b.branch.id, initials: me?.initials ?? u.name.slice(0, 2).toUpperCase() };
   state.userId = u.id;
@@ -444,4 +448,63 @@ export function removeExpense(id: string): void {
   db.expenses = db.expenses.filter((e) => e !== rec);
   const a = log("UNDO", { text: rec.reason, amount: rec.amount });
   push(() => remote.removeExpense(id), () => { db.expenses.unshift(rec); unlog(a); });
+}
+
+/* ---------- restock requests: the manager asks, the Purchases team buys ---------- */
+
+export const RESTOCK_WAITING: readonly RestockRequest["status"][] = ["OPEN", "ORDERED"];
+/** The request still waiting for this item, if any. */
+export const openRestockFor = (itemId: string): RestockRequest | undefined =>
+  db.restock.find((r) => r.itemId === itemId && RESTOCK_WAITING.includes(r.status));
+
+/** Send items to the Purchases team. One request per item; an item already waiting gets its quantity updated. */
+export function sendRestock(lines: { itemId: string; quantity: number }[], note: string): Promise<boolean> {
+  const before = db.restock.map((r) => ({ ...r }));
+  const now = new Date().toISOString();
+  const me = user();
+  const temp = new Set<string>();
+  for (const l of lines) {
+    const it = item(l.itemId);
+    if (!it) continue;
+    const prev = openRestockFor(l.itemId);
+    if (prev) { prev.quantity = l.quantity; if (note) prev.note = note; continue; }
+    const id = newId("rst");
+    temp.add(id);
+    db.restock.unshift({ id, itemId: it.id, nameKey: it.nameKey, quantity: l.quantity, unit: it.unit, note, status: "OPEN",
+      bought: 0, requestedBy: me.userId, requestedByName: me.name, requestedAt: now, reason: "" });
+  }
+  if (!isLive) return Promise.resolve(true);
+  return remote.sendRestock(lines, note).then((saved) => {
+    const ids = new Set(saved.map((r) => r.id));
+    db.restock = [...saved, ...db.restock.filter((x) => !temp.has(x.id) && !ids.has(x.id))];
+    return true;
+  }, (err: unknown) => {
+    db.restock = before;
+    syncError(err instanceof Error ? err.message : String(err));
+    return false;
+  });
+}
+
+function patchRestock(id: string, change: Partial<RestockRequest>, call: () => Promise<RestockRequest>): void {
+  const r = db.restock.find((x) => x.id === id);
+  if (!r) return;
+  const before = { ...r };
+  Object.assign(r, change);
+  push(() => call().then((saved) => Object.assign(r, saved)), () => Object.assign(r, before));
+}
+
+export const cancelRestock = (id: string): void =>
+  patchRestock(id, { status: "CANCELLED", doneAt: new Date().toISOString() }, () => remote.cancelRestock(id));
+
+export const reopenRestock = (id: string): void =>
+  patchRestock(id, { status: "OPEN", reason: "", handledBy: null, handledByName: "", doneAt: null }, () => remote.reopenRestock(id));
+
+/** Live mode: fetch the latest statuses (Purchases may have bought, ordered or declined). True when anything changed. */
+export async function refreshRestock(): Promise<boolean> {
+  if (!isLive || !liveUser) return false;
+  const next = await remote.listRestock();
+  const sig = (l: RestockRequest[]): string => l.map((r) => `${r.id}:${r.status}:${r.bought}:${r.quantity}`).join("|");
+  if (sig(next) === sig(db.restock)) return false;
+  db.restock = next;
+  return true;
 }

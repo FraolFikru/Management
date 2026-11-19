@@ -9,7 +9,7 @@ import { renderHelp } from "./views/help";
 import "./style.css";
 import type { ViewId } from "./types";
 import { isLanguage, setLanguage, t } from "./i18n";
-import { canView, currentUser, loadFromBackend, onSyncError, savePrefs, signIn, signOut, state } from "./store";
+import { canView, currentUser, loadFromBackend, onSyncError, refreshRestock, savePrefs, signIn, signOut, state } from "./store";
 import { isLive, sessionUser, signIn as apiSignIn, signOut as apiSignOut } from "./api";
 import { $ } from "./ui/dom";
 import { wireApp, type ActionMap } from "./ui/app";
@@ -57,6 +57,17 @@ async function startLive(): Promise<void> {
   live.busy = false;
   rebuild();
 }
+
+/* New requests from the manager: check every 30 s while this tab is visible. */
+setInterval(() => {
+  if (document.hidden || !currentUser()) return;
+  refreshRestock().then((changed) => {
+    if (!changed) return;
+    const typing = document.activeElement?.matches("input, textarea, select");
+    if (typing) { renderNav(); return; }
+    if (state.view === "dashboard" || state.view === "purchases") render(); else renderNav();
+  }, () => { /* offline: try again next time */ });
+}, 30_000);
 
 onSyncError((message) => {
   toast(t("Not saved: {reason}", { reason: message }));

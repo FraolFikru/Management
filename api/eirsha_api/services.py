@@ -553,7 +553,7 @@ def log_purchase(db: Db, actor: Actor, branch_id: str, item_id: str, quantity: A
                  vendor_id: str | None = None, vendor_name: str | None = None, payment_method: str | None = "CASH",
                  settlement: str = "PAID_NOW", vat_amount: Any = 0, has_vat_receipt: bool = False, receipt_no: str | None = None,
                  note: str = "", client_ref: str | None = None, purchased_at: str | None = None,
-                 id: str | None = None, unit: str | None = None) -> dict:
+                 id: str | None = None, unit: str | None = None, restock_request_id: str | None = None) -> dict:
     if client_ref:
         prev = db.one("SELECT * FROM purchase WHERE org_id = ? AND client_ref = ?", (actor.org_id, client_ref))
         if prev:
@@ -586,7 +586,132 @@ def log_purchase(db: Db, actor: Actor, branch_id: str, item_id: str, quantity: A
            {"entity": "purchase", "id": pid, "itemId": item_id, "totalCost": str(money(q * uc))})
     audit(db, actor, "SALES", "purchase.create", "purchase", pid, "Purchase {name} {quantity} {unit}",
           {"name": it["name_key"], "quantity": str(q), "unit": it["unit_code"], "amount": str(money(q * uc))}, branch_id=branch_id)
+    link_restock(db, actor, branch_id, pid, item_id, restock_request_id)
     return db.one("SELECT * FROM purchase WHERE id = ?", (pid,))
+
+
+# ---------- restock requests: Manager asks, the Purchases team buys ----------
+
+RESTOCK_LIVE = ("OPEN", "ORDERED")
+
+
+def request_restock(db: Db, actor: Actor, branch_id: str, items: list[dict], note: str | None = None) -> list[dict]:
+    """One request per item. Asking again for an item that is still waiting updates that request instead of adding a second."""
+    if not items:
+        raise Invalid("pick at least one item")
+    batch = new_id("rsb")
+    out = []
+    for it in items:
+        q = D(it.get("quantity"))
+        if q <= 0:
+            raise Invalid("quantity must be positive")
+        row = db.one("SELECT id, name_key, unit_code FROM inventory_item WHERE id = ? AND org_id = ? AND deleted_at IS NULL",
+                     (it.get("itemId"), actor.org_id))
+        if not row:
+            raise NotFound("inventory item not found", item_id=it.get("itemId"))
+        line_note = (it.get("note") or note or "").strip() or None
+        prev = db.one(f"""SELECT * FROM restock_request WHERE branch_id = ? AND item_id = ? AND status IN {RESTOCK_LIVE}
+                          ORDER BY requested_at LIMIT 1""", (branch_id, row["id"]))
+        if prev:
+            db.update("restock_request", {"id": prev["id"]}, {"quantity": q, "note": line_note or prev["note"]})
+            rid = prev["id"]
+        else:
+            rid = new_id("rst")
+            db.insert("restock_request", {"id": rid, "org_id": actor.org_id, "branch_id": branch_id, "batch_id": batch,
+                                          "item_id": row["id"], "quantity": q, "unit_code": row["unit_code"], "note": line_note,
+                                          "status": "OPEN", "requested_by": actor.user_id, "requested_at": now_iso()})
+        audit(db, actor, "MGR", "restock_request.create", "restock_request", rid, "Restock request {name} {quantity} {unit}",
+              {"name": row["name_key"], "quantity": str(q), "unit": row["unit_code"]}, branch_id=branch_id)
+        outbox(db, actor.org_id, branch_id, "restock", "created", "restock_request", rid, {"id": rid, "itemId": row["id"]})
+        restock_refresh(db, rid)
+        out.append(rid)
+    return restock_list(db, branch_id, ids=out)
+
+
+def update_restock(db: Db, actor: Actor, rid: str, action: str, reason: str | None = None) -> dict:
+    r = _get(db, "restock_request", rid, actor.org_id)
+    if action == "CANCEL":
+        if r["status"] not in RESTOCK_LIVE:
+            raise Conflict("this request is already closed", status=r["status"])
+        db.update("restock_request", {"id": rid}, {"status": "CANCELLED", "done_at": now_iso()})
+    elif action == "ORDERED":
+        if r["status"] not in RESTOCK_LIVE:
+            raise Conflict("this request is already closed", status=r["status"])
+        db.update("restock_request", {"id": rid}, {"status": "ORDERED", "handled_by": actor.user_id, "handled_at": now_iso(), "reason": reason})
+    elif action == "DECLINE":
+        if r["status"] not in RESTOCK_LIVE:
+            raise Conflict("this request is already closed", status=r["status"])
+        if not (reason or "").strip():
+            raise Invalid("say why it can't be bought")
+        db.update("restock_request", {"id": rid}, {"status": "DECLINED", "handled_by": actor.user_id, "handled_at": now_iso(),
+                                                   "reason": reason.strip(), "done_at": now_iso()})
+    elif action == "REOPEN":
+        if r["status"] not in ("DECLINED", "CANCELLED"):
+            raise Conflict("only a declined or cancelled request can be reopened", status=r["status"])
+        db.update("restock_request", {"id": rid}, {"status": "OPEN", "handled_by": None, "handled_at": None, "reason": None, "done_at": None})
+    else:
+        raise Invalid("unknown action", action=action)
+    module = "MGR" if action in ("CANCEL", "REOPEN") else "SALES"
+    audit(db, actor, module, f"restock_request.{action.lower()}", "restock_request", rid, "Restock request {status}",
+          {"status": action, "reason": reason, "itemKey": r["item_id"]}, branch_id=r["branch_id"])
+    outbox(db, actor.org_id, r["branch_id"], "restock", "updated", "restock_request", rid, {"id": rid, "action": action})
+    return restock_list(db, r["branch_id"], ids=[rid])[0]
+
+
+def link_restock(db: Db, actor: Actor, branch_id: str, purchase_id: str, item_id: str, restock_id: str | None) -> None:
+    """A purchase fills the request it was bought for; with none named, the oldest waiting request for the same item."""
+    rid = None
+    if restock_id:
+        rid = db.scalar(f"SELECT id FROM restock_request WHERE id = ? AND org_id = ? AND item_id = ? AND status IN {RESTOCK_LIVE}",
+                        (restock_id, actor.org_id, item_id))
+    if not rid:
+        rid = db.scalar(f"""SELECT id FROM restock_request WHERE branch_id = ? AND item_id = ? AND status IN {RESTOCK_LIVE}
+                            ORDER BY requested_at LIMIT 1""", (branch_id, item_id))
+    if rid:
+        db.update("purchase", {"id": purchase_id}, {"restock_request_id": rid})
+        restock_refresh(db, rid)
+
+
+def restock_refresh(db: Db, rid: str | None) -> None:
+    """Recount what was bought for a request (deleted and rejected purchases don't count) and close it once it is covered."""
+    if not rid:
+        return
+    r = db.one("SELECT * FROM restock_request WHERE id = ?", (rid,))
+    if not r:
+        return
+    bought = Decimal(0)
+    for p in db.all("""SELECT item_id, quantity, unit_code, unit_cost FROM purchase
+                       WHERE restock_request_id = ? AND deleted_at IS NULL AND review_status <> 'REJECTED'""", (rid,)):
+        q, _ = in_item_units(db, p["item_id"], D(p["quantity"]), p["unit_code"], D(p["unit_cost"]))
+        bought += q
+    st = r["status"]
+    change: dict[str, Any] = {"bought_quantity": bought}
+    if st in RESTOCK_LIVE and bought >= D(r["quantity"]):
+        change |= {"status": "DONE", "done_at": now_iso()}
+    elif st == "DONE" and bought < D(r["quantity"]):
+        change |= {"status": "ORDERED" if r["handled_by"] else "OPEN", "done_at": None}
+    db.update("restock_request", {"id": rid}, change)
+
+
+def restock_list(db: Db, branch_id: str, *, days: int = 14, ids: list[str] | None = None) -> list[dict]:
+    names = {u["id"]: u["full_name"] for u in db.all("SELECT id, full_name FROM app_user WHERE org_id = (SELECT org_id FROM branch WHERE id = ?)", (branch_id,))}
+    if ids:
+        rows = db.all(f"""SELECT r.*, i.name_key, i.custom_name FROM restock_request r JOIN inventory_item i ON i.id = r.item_id
+                          WHERE r.id IN ({','.join('?' * len(ids))}) ORDER BY r.requested_at DESC""", ids)
+    else:
+        since = (date.today() - timedelta(days=days)).isoformat()
+        rows = db.all(f"""SELECT r.*, i.name_key, i.custom_name FROM restock_request r JOIN inventory_item i ON i.id = r.item_id
+                          WHERE r.branch_id = ? AND (r.status IN {RESTOCK_LIVE} OR r.requested_at >= ?)
+                          ORDER BY r.requested_at DESC""", (branch_id, since))
+    out = []
+    for r in rows:
+        out.append({"id": r["id"], "itemId": r["item_id"], "nameKey": r["name_key"], "name": r["custom_name"],
+                    "quantity": float(r["quantity"]), "unit": r["unit_code"], "note": r["note"] or "", "status": r["status"],
+                    "bought": float(r["bought_quantity"] or 0), "requestedBy": r["requested_by"],
+                    "requestedByName": names.get(r["requested_by"], ""), "requestedAt": _iso(r["requested_at"]),
+                    "handledBy": r["handled_by"], "handledByName": names.get(r["handled_by"], "") if r["handled_by"] else "",
+                    "handledAt": _iso(r["handled_at"]), "reason": r["reason"] or "", "doneAt": _iso(r["done_at"])})
+    return out
 
 
 def in_item_units(db: Db, item_id: str, qty: Decimal, unit_code: str, unit_cost: Decimal) -> tuple[Decimal, Decimal]:
@@ -658,6 +783,7 @@ def review_purchase(db: Db, actor: Actor, purchase_id: str, decision: str, reaso
     audit(db, actor, "MGR", f"purchase.{decision.lower()}", "purchase", purchase_id, "Purchase {status}: {item}",
           {"status": status, "item": p["item_id"], "amount": str(p["total_cost"]), "reason": reason},
           before={"review_status": p["review_status"]}, after={"review_status": status}, branch_id=p["branch_id"])
+    restock_refresh(db, p.get("restock_request_id"))
     return result
 
 
@@ -851,6 +977,8 @@ def delete_record(db: Db, actor: Actor, entity: str, record_id: str, can_manage:
                   entity, record_id, on=str(r["business_date"]), branch_id=r["branch_id"])
     audit(db, actor, "SALES", f"{entity}.delete", entity, record_id, f"Deleted {entity.replace('_report', '')}",
           {"amount": str(r[amount_col]) if amount_col else str(r.get("loss_value"))}, branch_id=r["branch_id"])
+    if entity == "purchase":
+        restock_refresh(db, r.get("restock_request_id"))
     return db.one(f"SELECT * FROM {table} WHERE id = ?", (record_id,))
 
 
@@ -866,6 +994,8 @@ def restore_record(db: Db, actor: Actor, entity: str, record_id: str, can_manage
         cash_move(db, actor, r["money_account_id"], -money(r[amount_col]), cash_kind, f"Restored {entity}",
                   entity, record_id, on=str(r["business_date"]), branch_id=r["branch_id"])
     audit(db, actor, "SALES", f"{entity}.restore", entity, record_id, f"Restored {entity.replace('_report', '')}", {}, branch_id=r["branch_id"])
+    if entity == "purchase":
+        restock_refresh(db, r.get("restock_request_id"))
     return db.one(f"SELECT * FROM {table} WHERE id = ?", (record_id,))
 
 
@@ -912,6 +1042,8 @@ def undo_decision(db: Db, actor: Actor, entity: str, record_id: str) -> dict:
     outbox(db, actor.org_id, r["branch_id"], "mgr.review", "reopened", entity, record_id, {"entity": entity, "id": record_id, "status": "PENDING"})
     audit(db, actor, "MGR", f"{entity}.undo", entity, record_id, "Undid {status} decision", {"status": status},
           before={status_col: status}, after={status_col: "PENDING"}, branch_id=r["branch_id"])
+    if entity == "purchase":
+        restock_refresh(db, r.get("restock_request_id"))
     return db.one(f"SELECT * FROM {table} WHERE id = ?", (record_id,))
 
 

@@ -13,6 +13,9 @@ database (db_init) and a live one end up identical.
       the Owner app is the Owner's alone (owner.* removed from every other role)
       the Owner gets every System Admin permission too (the Owner is above the Admin)
       an organization with no Owner: its oldest active System Admin becomes the Owner
+  M5  Restock requests (Manager → Purchases team)
+      restock_request         one row per item the manager asks for
+      purchase                + restock_request_id (the purchase that filled it)
 """
 from __future__ import annotations
 
@@ -136,6 +139,33 @@ def owner_planning(db: Db) -> None:
     )""")
 
 
+def restock_requests(db: Db) -> None:
+    pg = db.dialect == "postgres"
+    ts = "timestamptz" if pg else "TEXT"
+    now = "timestamptz NOT NULL DEFAULT now()" if pg else "TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))"
+    qty = "numeric(14,3)" if pg else "NUMERIC"
+    db.execute(f"""CREATE TABLE IF NOT EXISTS restock_request (
+        id              text PRIMARY KEY,
+        org_id          text NOT NULL REFERENCES organization(id),
+        branch_id       text NOT NULL,
+        batch_id        text,
+        item_id         text NOT NULL REFERENCES inventory_item(id),
+        quantity        {qty} NOT NULL,
+        unit_code       text NOT NULL,
+        note            text,
+        status          text NOT NULL DEFAULT 'OPEN',
+        bought_quantity {qty} NOT NULL DEFAULT 0,
+        requested_by    text NOT NULL REFERENCES app_user(id),
+        requested_at    {now},
+        handled_by      text REFERENCES app_user(id),
+        handled_at      {ts},
+        reason          text,
+        done_at         {ts}
+    )""")
+    db.execute("CREATE INDEX IF NOT EXISTS ix_restock_branch_status ON restock_request (branch_id, status)")
+    _add_column(db, "purchase", "restock_request_id", "text REFERENCES restock_request(id)", "text REFERENCES restock_request(id)")
+
+
 def migrate() -> None:
     db = Db.from_env()
     try:
@@ -144,6 +174,7 @@ def migrate() -> None:
             rebrand(db)
             owner_chain(db)
             owner_planning(db)
+            restock_requests(db)
     except Exception:
         log.exception("seer: migration failed")
         raise

@@ -9,7 +9,8 @@ import "./style.css";
 import type { ViewId } from "./types";
 import { isLanguage, setLanguage, t } from "./i18n";
 import { isPeriod } from "./catalog";
-import { loadFromBackend, onSyncError, savePrefs, signOut, signedIn, state, switchUser, user } from "./store";
+import { loadFromBackend, onSyncError, refreshRestock, savePrefs, signOut, signedIn, state, switchUser, user } from "./store";
+import { restockActions, submitRestock } from "./views/restock";
 import { isLive, sessionUser, signIn as apiSignIn, signOut as apiSignOut } from "./api";
 import { $ } from "./ui/dom";
 import { wireApp, type ActionMap } from "./ui/app";
@@ -22,7 +23,7 @@ import { cogsActions, renderCogs } from "./views/cogs";
 import { renderWaste, wasteActions } from "./views/waste";
 import { expenseActions, onExpenseInput, renderExpenses, submitExpense } from "./views/expenses";
 import { auditActions, onAuditInput, renderAudit } from "./views/audit";
-import { closeModal, modalActions, modalKeydown, onModalInput, renderModal, submitReason, submitWaste } from "./views/modals";
+import { closeModal, modalActions, modalKeydown, onModalInput, openModal, renderModal, submitReason, submitWaste } from "./views/modals";
 
 const VIEWS: Record<ViewId, { title: string; render: () => string }> = {
   help: { title: "Help & support", render: renderHelp },
@@ -60,6 +61,16 @@ async function startLive(): Promise<void> {
   live.busy = false;
   rebuild();
 }
+
+/* Restock statuses change in the Purchases app: check every 30 s (only while this tab is visible). */
+setInterval(() => {
+  if (document.hidden || !signedIn()) return;
+  refreshRestock().then((changed) => {
+    if (!changed || state.modal) return;
+    const typing = document.activeElement?.matches("input, textarea, select");
+    if (!typing) render();
+  }, () => { /* offline: try again next time */ });
+}, 30_000);
 
 onSyncError((message) => {
   toast(t("Not saved: {reason}", { reason: message }));
@@ -174,7 +185,8 @@ const shellActions: ActionMap = {
   },
 };
 
-const ACTIONS: ActionMap = { ...shellActions, ...salesActions, ...dispatchActions, ...cogsActions, ...wasteActions, ...expenseActions, ...auditActions, ...modalActions };
+const ACTIONS: ActionMap = { ...shellActions, ...restockActions,
+  "restock-open": (el) => openModal({ kind: "restock" }, el), ...salesActions, ...dispatchActions, ...cogsActions, ...wasteActions, ...expenseActions, ...auditActions, ...modalActions };
 
 /* ---------- event delegation ---------- */
 
@@ -203,6 +215,7 @@ document.addEventListener("submit", (e) => {
   }
   else if (id === "wasteForm") submitWaste();
   else if (id === "reasonForm") submitReason();
+  else if (id === "restockForm") submitRestock(closeModal);
   else if (id === "expenseForm") submitExpense();
 });
 

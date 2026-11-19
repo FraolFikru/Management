@@ -8,7 +8,7 @@
    ========================================================= */
 
 import { wakeFetch } from "./wake";
-import type {
+import type { RestockRequest,
   AuditEntry, CogsPurchase, DispatchRecord, ExpenseRecord, InventoryItem, MenuItem, SaleLine, StaffAccount, UserRole, WasteLog,
 } from "./types";
 
@@ -102,6 +102,7 @@ export interface Bootstrap {
   waste: (WasteLog & { pending?: boolean })[];
   expenses: ExpenseRecord[];
   audit: AuditEntry[];
+  restock: RestockRequest[];
 }
 
 export async function loadAll(): Promise<Omit<Bootstrap, "sales"> & { sales: SaleLine[] }> {
@@ -141,4 +142,10 @@ export const remote = {
     pettyCash: e.source === "PETTY_CASH", note: e.note, timestamp: e.timestamp, clientRef: e.id,
   }),
   removeExpense: (id: string) => api(`/expenses/${enc(id)}`, { method: "DELETE" }),
+  /** Ask the Purchases team to buy these items. */
+  sendRestock: (items: { itemId: string; quantity: number }[], note: string) =>
+    post<RestockRequest[]>("/manager/restock", { items, note: note || null }),
+  cancelRestock: (id: string) => post<RestockRequest>(`/manager/restock/${enc(id)}/cancel`, {}),
+  reopenRestock: (id: string) => post<RestockRequest>(`/manager/restock/${enc(id)}/reopen`, {}),
+  listRestock: () => api<RestockRequest[]>("/restock"),
 };

@@ -5,7 +5,7 @@
    and each one has a matching audit entry.
    ========================================================= */
 
-import type {
+import type { RestockRequest,
   AuditEntry, CustomExpenseRecord, ExpensePaymentMethod, ExpenseTag, PurchaseRecord,
   StaffAccount, WasteReason, WasteRecord,
 } from "./types";
@@ -36,12 +36,13 @@ export interface SeedData {
   waste: WasteRecord[];
   expenses: CustomExpenseRecord[];
   audit: AuditEntry[];
+  restock: RestockRequest[];
 }
 
 export function generateSeed(): SeedData {
   const r = rng(20261106);
   const now = today();
-  const out: SeedData = { purchases: [], waste: [], expenses: [], audit: [] };
+  const out: SeedData = { purchases: [], waste: [], expenses: [], audit: [], restock: [] };
   const between = (a: number, b: number): number => Math.round(a + r() * (b - a));
   const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(r() * arr.length)];
   const nowMs = Date.now();
@@ -171,6 +172,15 @@ export function generateSeed(): SeedData {
       if (new Date(ts).getTime() <= nowMs) audit({ action: "SIGN_IN", entity: "SESSION", entityId: uid, summary: "Signed in", detail: {}, userId: uid, timestamp: ts }, staff(uid));
     }
   }
+
+  // two things the manager asked for this morning (demo)
+  const asked = stamp(now, 8, 40);
+  out.restock.push(
+    { id: "rst-demo-1", itemId: "tomato", nameKey: "inv.tomato", quantity: 20, unit: "kg", note: "Weekend is busy", status: "OPEN", bought: 0,
+      requestedBy: "u-hanna", requestedByName: "Hanna Tesfaye", requestedAt: asked, reason: "" },
+    { id: "rst-demo-2", itemId: "oil", nameKey: "inv.oil", quantity: 10, unit: "liters", note: "", status: "OPEN", bought: 0,
+      requestedBy: "u-hanna", requestedByName: "Hanna Tesfaye", requestedAt: asked, reason: "" },
+  );
 
   out.audit.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
   return out;

@@ -872,3 +872,33 @@ b, strong { font-weight: 600; }
 :root[data-theme="light"] .role-tag.r-admin { color: #6d5f72; background: #f1eef2; }
 :root[data-theme="light"] .role-tag.r-branch_manager { color: #4f5966; background: #eef0f2; }
 :root[data-theme="light"] .role-tag.r-inventory_clerk { color: #3f625b; background: #e9f1ef; }
+
+/* ---------- restock requests from the manager ---------- */
+.pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 500; }
+.pill.pending { background: var(--warn-bg); color: var(--warn); }
+.pill.ordered { background: var(--surface-2); color: var(--text); border: 1px solid var(--line); }
+.reqs { margin-bottom: 16px; border-color: color-mix(in srgb, var(--warn) 40%, var(--line)); }
+.req-list { list-style: none; margin: 0; padding: 0; }
+.req { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.req:first-child { border-top: 0; padding-top: 4px; }
+.req.active .req-top strong { text-decoration: underline; text-underline-offset: 4px; }
+.req-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.req-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.req-top .num { font-family: var(--mono, "IBM Plex Mono", monospace); }
+.req-note { margin: 0; color: var(--muted); font-size: 13px; }
+.req-act { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.req-decline { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: var(--r-sm, 8px);
+  background: var(--surface-2); border: 1px solid var(--line); }
+.req-decline .chip-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.req-decline .form-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.for-req { display: flex; align-items: center; gap: 8px; padding: 8px 12px; margin-bottom: 12px; border-radius: var(--r-sm, 8px);
+  background: var(--warn-bg); color: var(--text); font-size: 13px; }
+.for-req span { flex: 1; min-width: 0; }
+.for-req svg { flex: none; width: 16px; height: 16px; }
+@media (max-width: 640px) {
+  .req { grid-template-columns: minmax(0, 1fr); }
+  .req-act { justify-content: flex-start; }
+}
+.btn.danger { background: var(--bad-bg); border-color: transparent; color: var(--bad); }
+.btn.danger:hover { background: var(--bad); color: var(--surface); }
+.req-top strong, .req-top .num { color: var(--text); }

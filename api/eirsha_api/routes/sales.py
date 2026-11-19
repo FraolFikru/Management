@@ -31,6 +31,12 @@ class PurchaseIn(BaseModel):
     receiptNo: str | None = None
     note: str = ""
     clientRef: str | None = None                   # offline queue idempotency
+    restockRequestId: str | None = None            # bought for this manager request
+
+
+class RestockAction(BaseModel):
+    action: Literal["ORDERED", "DECLINE"]
+    reason: str | None = None
 
 
 class WasteIn(BaseModel):
@@ -112,7 +118,21 @@ def create_purchase(body: PurchaseIn, p: Principal = Depends(require("purchase.l
         return s.log_purchase(db, p.actor, branch_of(p), body.itemId, body.quantity, body.unitCost, vendor_id=body.vendorId,
                               vendor_name=body.vendor, payment_method=body.paymentMethod, settlement=body.settlement,
                               vat_amount=body.vatAmount, has_vat_receipt=body.hasVatReceipt, receipt_no=body.receiptNo,
-                              note=body.note, client_ref=body.clientRef, purchased_at=body.timestamp, id=body.id, unit=body.unit)
+                              note=body.note, client_ref=body.clientRef, purchased_at=body.timestamp, id=body.id, unit=body.unit,
+                              restock_request_id=body.restockRequestId)
+
+
+@router.get("/restock")
+def list_restock(p: Principal = Depends(require("purchase.log", "mgr.dashboard")), db: Db = Depends(get_db)):
+    """Restock requests for this branch: everything still waiting, plus the last two weeks."""
+    return s.restock_list(db, branch_of(p))
+
+
+@router.post("/restock/{rid}")
+def handle_restock(rid: str, body: RestockAction, p: Principal = Depends(require("purchase.log")), db: Db = Depends(get_db)):
+    """The Purchases team: mark a request ordered (on its way) or say it can't be bought (with a reason)."""
+    with db.tx():
+        return s.update_restock(db, p.actor, rid, body.action, body.reason)
 
 
 @router.get("/purchases")
@@ -222,7 +242,8 @@ def sales_bootstrap(days: int = 60, p: Principal = Depends(require("purchase.log
     purchases = [{"id": r["id"], "category": r["cost_category_code"], "itemName": r["name_key"], "quantity": float(r["quantity"]), "unit": r["unit_code"],
                   "unitCost": float(r["unit_cost"]), "totalCost": float(r["total_cost"]), "loggedBy": names.get(r["logged_by"], r["logged_by"]),
                   "timestamp": iso(r["purchased_at"]), "itemId": r["item_id"], "vendor": r["vendor_name"], "paymentMethod": r["payment_method_code"] or "CASH",
-                  "userId": r["logged_by"], "note": r["note"] or "", "reviewStatus": r["review_status"]}
+                  "userId": r["logged_by"], "note": r["note"] or "", "reviewStatus": r["review_status"],
+                  **({"restockRequestId": r["restock_request_id"]} if r.get("restock_request_id") else {})}
                  for r in db.all("""SELECT p.*, i.name_key FROM purchase p JOIN inventory_item i ON i.id = p.item_id
                                     WHERE p.branch_id = ? AND p.business_date >= ? AND p.deleted_at IS NULL ORDER BY p.purchased_at""", (br, since))]
     waste = [{"id": r["id"], "itemId": r["item_id"], "itemName": r["name_key"], "quantityLost": float(r["quantity_lost"]), "unit": r["unit_code"],
@@ -267,4 +288,4 @@ def sales_bootstrap(days: int = 60, p: Principal = Depends(require("purchase.log
                       "detail": detail, "userId": a["actor_user_id"] or "", "userName": a["actor_name"] or names.get(a["actor_user_id"], ""),
                       "role": SALES_ROLE.get(a["actor_role"] or "", "INVENTORY_CLERK"), "timestamp": iso(a["occurred_at"])})
     return {"role": SALES_ROLE.get(p.actor.role), "purchases": purchases, "waste": waste, "expenses": expenses,
-            "customInventory": custom, "audit": audit}
+            "customInventory": custom, "audit": audit, "restock": s.restock_list(db, br)}

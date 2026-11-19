@@ -12,6 +12,7 @@ import { attachCombobox, type ComboOption } from "../ui/combobox";
 import { clearErrors, dot, errText, invalid, qtyUnit, roleName, showErrors, stampOf, unitName } from "../ui/shared";
 import { toast } from "../ui/toast";
 import { rerender, type ActionMap } from "../ui/app";
+import { freshRestock, mountRestock, restockForm } from "./restock";
 
 const FLAG_REASONS: readonly string[] = ["Price higher than last week", "Receipt missing", "Quantity does not match delivery note", "Wrong item delivered"];
 
@@ -30,6 +31,7 @@ export function openModal(m: Exclude<Modal, null>, from: HTMLElement): void {
   state.modal = m;
   state.errors = {};
   if (m.kind === "waste") w = freshWaste();
+  if (m.kind === "restock") freshRestock();
   reason = "";
   reasonText = "";
   renderModal();
@@ -154,12 +156,13 @@ export function renderModal(): void {
   const m = state.modal;
   if (!root) return;
   if (!m) { root.innerHTML = ""; return; }
-  const title = m.kind === "waste" ? t("Log waste / shrinkage") : m.kind === "reject" ? t("Reject with Reason") : t("Flag purchase");
+  const title = m.kind === "waste" ? t("Log waste / shrinkage") : m.kind === "restock" ? t("Send restock request")
+    : m.kind === "reject" ? t("Reject with Reason") : t("Flag purchase");
   root.innerHTML = `<div class="modal-backdrop" data-action="modal-close"></div>
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="modal-head"><h2 id="modalTitle">${title}</h2>
         <button type="button" class="btn icon-btn ghost" data-action="modal-close" aria-label="${t("Close")}">${icon("x")}</button></div>
-      ${m.kind === "waste" ? wasteForm() : reasonForm(m.kind, m.id)}
+      ${m.kind === "waste" ? wasteForm() : m.kind === "restock" ? restockForm() : reasonForm(m.kind, m.id)}
     </div>`;
   document.body.classList.add("modal-open");
   if (m.kind === "waste") {
@@ -167,6 +170,8 @@ export function renderModal(): void {
     const list = $<HTMLUListElement>("#wItemList");
     if (input && list) attachCombobox(input, list, source, (o) => pickItem(o.value));
     $<HTMLElement>(w.itemId ? "#wQty" : "#wItem")?.focus();
+  } else if (m.kind === "restock") {
+    mountRestock(renderModal);
   } else {
     $<HTMLElement>('[data-action="r-pick"]')?.focus();
   }
@@ -231,7 +236,7 @@ export function submitWaste(): void {
 
 export function submitReason(): void {
   const m = state.modal;
-  if (!m || m.kind === "waste") return;
+  if (!m || m.kind === "waste" || m.kind === "restock") return;
   const text = reasonText.trim() || (reason ? reason : "");
   if (!text) {
     showErrors({ reason: t("Pick a reason or write one.") }, ["reason"]);

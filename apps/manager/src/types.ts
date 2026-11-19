@@ -230,3 +230,29 @@ export interface AuditEntry {
 }
 
 export type FieldErrors = Partial<Record<string, string>>;
+
+/* ---------- restock requests (Manager → Purchases team) ---------- */
+
+/** OPEN = waiting for Purchases · ORDERED = on its way · DONE = bought · DECLINED = Purchases can't get it · CANCELLED = withdrawn */
+export type RestockStatus = "OPEN" | "ORDERED" | "DONE" | "DECLINED" | "CANCELLED";
+
+export interface RestockRequest {
+  id: string;
+  itemId: string;
+  nameKey: string;
+  name?: string | null;
+  quantity: number;
+  unit: string;
+  note: string;
+  status: RestockStatus;
+  /** bought so far, in the item's unit */
+  bought: number;
+  requestedBy: string;
+  requestedByName: string;
+  requestedAt: string;
+  handledBy?: string | null;
+  handledByName?: string;
+  handledAt?: string | null;
+  reason: string;
+  doneAt?: string | null;
+}
