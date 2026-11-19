@@ -47,6 +47,9 @@ def migrated(db: Db) -> Db:
         m.table_service(db)
         m.owner_planning(db)
         m.restock_requests(db)
+        m.dispatch_client_ref(db)
+        m.dispatch_senders(db)
+        m.lower_minimums(db)
     return db
 
 
@@ -353,8 +356,73 @@ def test_restock_manager_to_purchases(db: Db) -> None:
     assert s.restock_list(db, BOLE, ids=[beef["id"]])[0]["status"] == "DONE"
 
 
+def test_dispatch_from_purchases(db: Db) -> None:
+    dawit = who(db, "Dawit Alemu")               # Purchases team, Bole
+    hanna = who(db, "Hanna Tesfaye")             # Bole's manager
+    s.review_purchase(db, hanna, s.log_purchase(db, dawit, BOLE, "beef", 10, 650, vendor_name="Akaki Butchery")["id"], "APPROVE")
+    d = s.request_dispatch(db, dawit, BOLE, "beef", 2, to_location="KITCHEN_LINE", note="for lunch", client_ref="c-1")
+    again = s.request_dispatch(db, dawit, BOLE, "beef", 2, to_location="KITCHEN_LINE", note="for lunch", client_ref="c-1")
+    assert again["id"] == d["id"], "a retried send is saved once"
+    lst = s.dispatch_list(db, BOLE, "2000-01-01")
+    assert [x["id"] for x in lst] == [d["id"]] and lst[0]["note"] == "for lunch" and lst[0]["requestedByName"] == "Dawit Alemu"
+    assert lst[0]["destination"] == "KITCHEN_LINE" and lst[0]["status"] == "PENDING"
+    assert d["id"] in [r["entity_id"] for r in db.all("SELECT entity_id FROM v_manager_queue WHERE branch_id = ?", (BOLE,))]
+    assert not s.dispatch_list(db, PIA, "2000-01-01"), "only this branch's manager sees it"
+    for bad in ({"to_location": "STORE_ROOM"}, {"to_location": "NOWHERE"}, {"to_branch_id": BOLE}, {"to_branch_id": "BR-XYZ"}, {},
+                {"to_location": "BAR", "to_branch_id": PIA}):
+        try:
+            s.request_dispatch(db, dawit, BOLE, "beef", 1, **bad)
+            raise AssertionError(f"accepted {bad}")
+        except s.Invalid:
+            pass
+    t = s.request_dispatch(db, dawit, BOLE, "beef", 1, to_branch_id=PIA)
+    tl = next(x for x in s.dispatch_list(db, BOLE, "2000-01-01") if x["id"] == t["id"])
+    assert tl["toBranchId"] == PIA and tl["toBranchName"]
+    # only the sender cancels, only while pending
+    try:
+        s.cancel_dispatch(db, hanna, t["id"])
+        raise AssertionError("someone else cancelled it")
+    except s.ServiceError:
+        pass
+    s.cancel_dispatch(db, dawit, t["id"])
+    assert t["id"] not in [x["id"] for x in s.dispatch_list(db, BOLE, "2000-01-01")]
+    on = D(db.scalar("SELECT on_hand FROM branch_stock WHERE branch_id = ? AND item_id = 'beef'", (BOLE,)))
+    try:
+        s.decide_dispatch(db, dawit, d["id"], True)
+        raise AssertionError("the clerk approved their own dispatch")
+    except s.ServiceError as e:
+        assert "manager" in str(e)
+    s.decide_dispatch(db, hanna, d["id"], True)
+    assert D(db.scalar("SELECT on_hand FROM branch_stock WHERE branch_id = ? AND item_id = 'beef'", (BOLE,))) == on - 2
+    try:
+        s.cancel_dispatch(db, dawit, d["id"])
+        raise AssertionError("cancelled after the decision")
+    except s.Conflict:
+        pass
+    x = next(x for x in s.dispatch_list(db, BOLE, "2000-01-01") if x["id"] == d["id"])
+    assert x["status"] == "APPROVED" and x["approvedByName"] == "Hanna Tesfaye"
+
+
+def test_restock_minimums(db: Db) -> None:
+    hanna = who(db, "Hanna Tesfaye")
+    db.execute("INSERT INTO branch_stock (org_id, branch_id, item_id, on_hand, reorder_point) VALUES ('STORE-01', ?, 'onion', 12, 20)", (BOLE,))
+    assert db.scalar("SELECT is_low_stock FROM v_branch_stock_status WHERE branch_id = ? AND item_id = 'onion'", (BOLE,))
+    out = s.set_minimums(db, hanna, BOLE, [{"itemId": "onion", "minimum": 10}, {"itemId": "oil", "minimum": 1}])
+    assert {o["itemId"] for o in out} == {"onion", "oil"}
+    assert not db.scalar("SELECT is_low_stock FROM v_branch_stock_status WHERE branch_id = ? AND item_id = 'onion'", (BOLE,)), "12 kg is above 10"
+    assert D(db.scalar("SELECT reorder_point FROM branch_stock WHERE branch_id = ? AND item_id = 'oil'", (BOLE,))) == 1, "row created"
+    assert s.set_minimums(db, hanna, BOLE, [{"itemId": "onion", "minimum": 10}]) == [], "unchanged → nothing"
+    assert s.set_minimums(db, hanna, BOLE, [{"itemId": "onion", "minimum": 0}])[0]["minimum"] == 0, "0 is allowed"
+    try:
+        s.set_minimums(db, hanna, BOLE, [{"itemId": "onion", "minimum": -1}])
+        raise AssertionError("negative accepted")
+    except s.Invalid:
+        pass
+
+
 TESTS = [test_pos_to_kds_to_zreport, test_purchase_review_bill_withholding, test_waste_dispatch_expense,
-         test_hr_attendance_payroll_finance, test_permissions_and_identity, test_restock_manager_to_purchases]
+         test_hr_attendance_payroll_finance, test_permissions_and_identity, test_restock_manager_to_purchases,
+         test_dispatch_from_purchases, test_restock_minimums]
 
 if __name__ == "__main__":
     failed = 0

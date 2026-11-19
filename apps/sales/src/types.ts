@@ -63,7 +63,7 @@ export type Role = UserSession["role"];
 /** How a purchase or expense was paid. */
 export type ExpensePaymentMethod = "CASH" | "TELEBIRR" | "CBE_BIRR";
 export type ThemeMode = "dark" | "light";
-export type ViewId = "dashboard" | "purchases" | "waste" | "expenses" | "audit" | "help";
+export type ViewId = "dashboard" | "purchases" | "dispatch" | "waste" | "expenses" | "audit" | "help";
 export type PeriodId = "today" | "7d" | "30d";
 export type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
 /** What staff pick first when recording a purchase (e.g. Vegetables → Onion). Each maps to one COGS category. */
@@ -176,7 +176,7 @@ export interface CustomExpenseRecord {
 }
 
 export type AuditAction = "SIGN_IN" | "SIGN_OUT" | "CREATE" | "DELETE" | "RESTORE" | "APPROVE" | "REJECT";
-export type AuditEntity = "SESSION" | "PURCHASE" | "WASTE" | "EXPENSE" | "ITEM";
+export type AuditEntity = "SESSION" | "PURCHASE" | "WASTE" | "EXPENSE" | "ITEM" | "DISPATCH";
 
 export interface AuditEntry {
   id: string;
@@ -204,3 +204,30 @@ export interface PeriodTotals {
 }
 
 export type FieldErrors = Partial<Record<string, string>>;
+
+/* ---------- dispatch: stock leaving the store room, approved by the branch manager ---------- */
+
+/** a place in this branch that stock can go to */
+export type DispatchPlace = "BAR" | "KITCHEN_LINE" | "TAKEAWAY_COUNTER" | "CATERING" | "EVENT_HALL";
+
+export interface DispatchRequest {
+  id: string;
+  itemId: string;
+  itemName: string;
+  name?: string | null;
+  quantity: number;
+  unit: string;
+  /** a place in this branch; for a transfer to another branch see toBranchId */
+  destination: string;
+  toBranchId?: string;
+  toBranchName?: string;
+  note?: string;
+  requestedBy: string;
+  requestedByName: string;
+  timestamp: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  rejectionReason?: string;
+  approvedBy?: string;
+  approvedByName?: string;
+  decidedAt?: string;
+}

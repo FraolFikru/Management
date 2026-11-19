@@ -119,13 +119,15 @@ const GROUP_MAIN: Record<string, MainCategory> = {
   TAKEOUT: "PACKAGING", SERVICEWARE: "PACKAGING", FOOD_CONTACT: "KITCHEN", DETERGENTS: "CLEANING", TOOLS: "CLEANING",
 };
 
+/** Restock minimum per item (the low-stock alert fires at or below it), kept small: 10 kg onion, 1 liter oil, 2 chickens. */
+export const RESTOCK_MINIMUM: Record<string, number> = { "onion": 10, "tomato": 10, "potato": 10, "garlic": 2, "ginger": 2, "green-pepper": 3, "collard": 5, "cabbage": 10, "berbere": 2, "mitmita": 1, "korerima": 0.5, "shiro": 3, "lentils": 3, "rice": 3, "teff": 5, "wheat-flour": 5, "salt": 2, "coffee": 2, "tea": 1, "beef": 3, "lamb": 2, "fish": 2, "kibbeh": 1, "ayib": 2, "chicken": 2, "eggs": 30, "injera": 20, "oil": 1, "olive-oil": 1, "milk": 5, "tej": 5, "syrup": 1, "beer": 2, "soft-drinks": 2, "wine": 3, "water": 2, "ice": 3, "detergent": 2, "degreaser": 1, "dish-soap": 2, "food-sanitizer": 1, "surface-sanitizer": 1, "mops": 2, "food-lube": 1, "bags": 2, "cups-lids": 2, "cutlery": 2, "foil-sheets": 1, "napkins": 3, "straws": 2, "takeout-box": 2, "wrappers": 2, "foil-roll": 1, "paper-towels": 3, "parchment": 1, "plastic-wrap": 1, "trash-liners": 2 };
+
 const inventory: InventoryItem[] = [];
 function inv(id: string, category: COGSCategory, group: string, unit: string, unitCost: number, name: LocalizedText, aliases: string[] = []): void {
   const nameKey = `inv.${id}`;
   registerText(nameKey, name);
   const main: MainCategory = group === "WRAPS" ? (category === "PACKAGING_DISPOSABLES" ? "PACKAGING" : "KITCHEN") : GROUP_MAIN[group];
-  // reorder point: roughly two days of use, cheaper bulk items held deeper
-  const reorderPoint = unitCost < 40 ? 60 : unitCost < 200 ? 20 : unitCost < 600 ? 8 : 4;
+  const reorderPoint = RESTOCK_MINIMUM[id] ?? 2;
   inventory.push({ id, nameKey, category, main, groupKey: `group.${group}`, unit, unitCost, aliases, currentQuantity: 0, reorderPoint });
 }
 
@@ -239,9 +241,10 @@ export const DESTINATIONS = reg<Destination>("dest", {
   BAR: L("Bar counter", "ባር ቆጣሪ", "Gabatee baarii"),
   KITCHEN_LINE: L("Kitchen line", "የወጥ ቤት መስመር", "Sarara kushinaa"),
   TAKEAWAY_COUNTER: L("Takeaway counter", "የመውሰጃ ቆጣሪ", "Gabatee fudhatamu"),
-  CATERING: L("Catering order · Bole office", "የካተሪንግ ትዕዛዝ · ቦሌ ቢሮ", "Ajaja keetarinii · Waajjira Boolee"),
+  CATERING: L("Catering", "ካተሪንግ", "Keetarinii"),
   BRANCH_PIASSA: L("Piassa branch", "ፒያሳ ቅርንጫፍ", "Damee Piyaassaa"),
   EVENT_HALL: L("Event hall", "የዝግጅት አዳራሽ", "Galma sagantaa"),
+  BRANCH: L("Another branch", "ሌላ ቅርንጫፍ", "Damee biraa"),
 });
 
 /** Reasons offered when rejecting a dispatch (free text is also allowed). */
@@ -289,6 +292,7 @@ export const STAFF: StaffAccount[] = [   // live mode: replaced with the branch 
   { userId: "BM-001", name: "Hanna Tesfaye", role: "BRANCH_MANAGER", branchId: BRANCH.id, initials: "HT" },
   { userId: "AD-001", name: "Abebe Kebede", role: "ADMIN", branchId: BRANCH.id, initials: "AK" },
   { userId: "IC-201", name: "Dawit Alemu", role: "INVENTORY_CLERK", branchId: BRANCH.id, initials: "DA" },
+  { userId: "IC-301", name: "Kebede Asfaw", role: "INVENTORY_CLERK", branchId: BRANCH.id, initials: "KA" },
   { userId: "SS-104", name: "Meron Girma", role: "SALES_STAFF", branchId: BRANCH.id, initials: "MG" },
   { userId: "SS-117", name: "Chaltu Bekele", role: "SALES_STAFF", branchId: BRANCH.id, initials: "CB" },
   { userId: "SS-122", name: "Yonas Tadesse", role: "SALES_STAFF", branchId: BRANCH.id, initials: "YT" },

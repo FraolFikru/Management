@@ -337,7 +337,7 @@ def owner_bootstrap(p: Principal = Depends(require_owner("owner.dashboard")), db
     goals = [
         {"key": "revenue", "title": "Monthly Revenue Target", "current": round(cur_rev), "target": round(target("revenue")), "unit": "ETB",
          "deadline": month_end, "custom": "revenue" in saved},
-        {"key": "foodCost", "title": "Food Cost under 30%", "current": round(food / cur_rev * 100, 1) if cur_rev else 0, "target": target("foodCost"),
+        {"key": "foodCost", "title": "Food cost (% of revenue)", "current": round(food / cur_rev * 100, 1) if cur_rev else 0, "target": target("foodCost"),
          "unit": "%", "deadline": month_end, "lowerIsBetter": True, "custom": "foodCost" in saved},
         {"key": "aov", "title": "Average Order Value", "current": round(_f(gross_m) / n_orders) if n_orders else 0,
          "target": round(target("aov")), "unit": "ETB", "deadline": month_end, "custom": "aov" in saved},
@@ -456,7 +456,7 @@ GOAL_KEYS = {"revenue", "foodCost", "aov"}
 
 
 class GoalIn(BaseModel):
-    target: float = Field(gt=0, le=1_000_000_000)
+    target: float = Field(ge=0, le=1_000_000_000)   # any value the owner likes
 
 
 @router.put("/goals/{key}")

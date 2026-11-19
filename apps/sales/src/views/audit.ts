@@ -26,10 +26,11 @@ const ENTITY_TEXT: Record<AuditEntity, string> = {
   WASTE: "Waste report",
   EXPENSE: "Other expense",
   ITEM: "Catalog item",
+  DISPATCH: "Dispatch request",
 };
 
 const ENTITY_ICON: Record<AuditEntity, IconName> = {
-  SESSION: "user", PURCHASE: "box", WASTE: "trash", EXPENSE: "coin", ITEM: "tags",
+  SESSION: "user", PURCHASE: "box", WASTE: "trash", EXPENSE: "coin", ITEM: "tags", DISPATCH: "truck",
 };
 
 /** Localized description of the record an entry refers to. */
@@ -57,7 +58,7 @@ export function renderAudit(): string {
   const rows = db.audit.filter((a) =>
     (state.auditUser === "ALL" || a.userId === state.auditUser) && (state.auditEntity === "ALL" || a.entity === state.auditEntity));
   const shown = rows.slice(0, state.auditLimit);
-  const entities: AuditEntity[] = ["PURCHASE", "WASTE", "EXPENSE", "SESSION"];
+  const entities: AuditEntity[] = ["PURCHASE", "DISPATCH", "WASTE", "EXPENSE", "SESSION"];
   const perUser = STAFF.map((s) => ({ s, n: db.audit.filter((a) => a.userId === s.userId && localDay(a.timestamp) === localDay(new Date().toISOString())).length }));
 
   return `

@@ -590,6 +590,33 @@ def log_purchase(db: Db, actor: Actor, branch_id: str, item_id: str, quantity: A
     return db.one("SELECT * FROM purchase WHERE id = ?", (pid,))
 
 
+# ---------- restock minimums: the low-stock alert fires at or below them ----------
+
+def set_minimums(db: Db, actor: Actor, branch_id: str, items: list[dict]) -> list[dict]:
+    """The manager sets the restock minimum (reorder point) of items at this branch. Any value from 0 up."""
+    out = []
+    for it in items:
+        m = D(it.get("minimum"))
+        if m < 0:
+            raise Invalid("a minimum can't be below 0")
+        row = db.one("SELECT id, name_key, unit_code FROM inventory_item WHERE id = ? AND org_id = ? AND deleted_at IS NULL",
+                     (it.get("itemId"), actor.org_id))
+        if not row:
+            raise NotFound("inventory item not found", item_id=it.get("itemId"))
+        prev = db.scalar("SELECT reorder_point FROM branch_stock WHERE branch_id = ? AND item_id = ?", (branch_id, row["id"]))
+        if prev is None:
+            db.insert("branch_stock", {"org_id": actor.org_id, "branch_id": branch_id, "item_id": row["id"], "on_hand": 0, "reorder_point": m})
+        else:
+            if D(prev) == m:
+                continue
+            db.update("branch_stock", {"branch_id": branch_id, "item_id": row["id"]}, {"reorder_point": m, "updated_at": now_iso()})
+        audit(db, actor, "MGR", "stock.minimum", "inventory_item", row["id"], "Restock minimum {name}: {before} → {after} {unit}",
+              {"name": row["name_key"], "before": str(prev) if prev is not None else None, "after": str(m), "unit": row["unit_code"]},
+              branch_id=branch_id)
+        out.append({"itemId": row["id"], "minimum": float(m)})
+    return out
+
+
 # ---------- restock requests: Manager asks, the Purchases team buys ----------
 
 RESTOCK_LIVE = ("OPEN", "ORDERED")
@@ -883,27 +910,84 @@ def decide_waste(db: Db, actor: Actor, waste_id: str, approve: bool, reason: str
 
 
 def request_dispatch(db: Db, actor: Actor, branch_id: str, item_id: str, quantity: Any, *, to_location: str | None = None,
-                     to_branch_id: str | None = None, note: str | None = None) -> dict:
-    it = _get(db, "inventory_item", item_id, actor.org_id)
+                     to_branch_id: str | None = None, note: str | None = None, client_ref: str | None = None) -> dict:
+    """The Purchases team asks this branch's manager to let stock leave the store room (to the kitchen, bar, … or another branch)."""
+    it = db.one("SELECT * FROM inventory_item WHERE id = ? AND org_id = ? AND deleted_at IS NULL", (item_id, actor.org_id))
+    if not it:
+        raise NotFound("inventory item not found", item_id=item_id)
+    q = D(quantity)
+    if q <= 0:
+        raise Invalid("quantity must be positive")
+    if bool(to_location) == bool(to_branch_id):
+        raise Invalid("choose one destination: a place in this branch or another branch")
     loc = None
     if to_location:
-        loc = db.scalar("SELECT id FROM stock_location WHERE branch_id = ? AND code = ?", (branch_id, to_location))
+        loc = db.scalar("SELECT id FROM stock_location WHERE branch_id = ? AND code = ? AND NOT is_store_room", (branch_id, to_location))
         if not loc:
             raise Invalid("unknown destination", to_location=to_location)
+    if to_branch_id:
+        if to_branch_id == branch_id:
+            raise Invalid("a transfer must go to another branch")
+        if not db.scalar("SELECT 1 FROM branch WHERE id = ? AND org_id = ?", (to_branch_id, actor.org_id)):
+            raise Invalid("unknown branch", to_branch_id=to_branch_id)
+    if client_ref:
+        prev = db.one("SELECT * FROM dispatch_request WHERE org_id = ? AND client_ref = ?", (actor.org_id, client_ref))
+        if prev:
+            return prev
     did = new_id("dsp")
-    db.insert("dispatch_request", {"id": did, "org_id": actor.org_id, "branch_id": branch_id, "item_id": item_id, "quantity": D(quantity),
+    text = (note or "").strip()
+    db.insert("dispatch_request", {"id": did, "org_id": actor.org_id, "branch_id": branch_id, "item_id": item_id, "quantity": q,
                                    "unit_code": it["unit_code"], "to_location_id": loc, "to_branch_id": to_branch_id,
-                                   "requested_by": actor.user_id, "note": note})
+                                   "requested_by": actor.user_id, "note": text or None, "client_ref": client_ref})
     outbox(db, actor.org_id, branch_id, "mgr.review", "created", "dispatch_request", did, {"entity": "dispatch_request", "id": did})
     audit(db, actor, "SALES", "dispatch_request.create", "dispatch_request", did, "Dispatch request {name} {quantity}",
-          {"name": it["name_key"], "quantity": str(quantity)}, branch_id=branch_id)
+          {"name": it["name_key"], "quantity": str(q), "unit": it["unit_code"], "destination": to_location or "BRANCH"}, branch_id=branch_id)
     return db.one("SELECT * FROM dispatch_request WHERE id = ?", (did,))
+
+
+def cancel_dispatch(db: Db, actor: Actor, dispatch_id: str) -> dict:
+    """The person who sent a dispatch request takes it back while the manager hasn't decided."""
+    d = _get(db, "dispatch_request", dispatch_id, actor.org_id)
+    if d["status"] != "PENDING":
+        raise Conflict("the manager already decided", status=d["status"])
+    if d["requested_by"] != actor.user_id:
+        raise ServiceError("only the person who sent it can cancel it")
+    db.update("dispatch_request", {"id": dispatch_id}, {"status": "CANCELLED"})
+    outbox(db, actor.org_id, d["branch_id"], "mgr.review", "cancelled", "dispatch_request", dispatch_id, {"entity": "dispatch_request", "id": dispatch_id})
+    audit(db, actor, "SALES", "dispatch_request.cancel", "dispatch_request", dispatch_id, "Dispatch request cancelled", {}, branch_id=d["branch_id"])
+    return db.one("SELECT * FROM dispatch_request WHERE id = ?", (dispatch_id,))
+
+
+def dispatch_list(db: Db, branch_id: str, since: str, *, requested_by: str | None = None) -> list[dict]:
+    """Dispatch requests of a branch, shaped for the Manager and Purchases apps."""
+    names = {u["id"]: u["full_name"] for u in db.all("SELECT id, full_name FROM app_user WHERE org_id = (SELECT org_id FROM branch WHERE id = ?)", (branch_id,))}
+    rows = db.all("""SELECT d.*, i.name_key, i.custom_name, l.code AS dest, b.name AS to_branch_name
+                     FROM dispatch_request d JOIN inventory_item i ON i.id = d.item_id
+                     LEFT JOIN stock_location l ON l.id = d.to_location_id LEFT JOIN branch b ON b.id = d.to_branch_id
+                     WHERE d.branch_id = ? AND (d.requested_at >= ? OR d.status = 'PENDING') AND d.status <> 'CANCELLED'
+                       AND (CAST(? AS text) IS NULL OR d.requested_by = ?)
+                     ORDER BY d.requested_at DESC""", (branch_id, since, requested_by, requested_by))
+    out = []
+    for r in rows:
+        note = r["note"] or ""
+        out.append({"id": r["id"], "itemId": r["item_id"], "itemName": r["name_key"], "name": r["custom_name"], "quantity": float(r["quantity"]),
+                    "unit": r["unit_code"], "requestedBy": r["requested_by"], "requestedByName": names.get(r["requested_by"], ""),
+                    "status": "APPROVED" if r["status"] == "RECEIVED" else r["status"],
+                    "destination": r["dest"] or ("BRANCH_PIASSA" if r["to_branch_id"] else "KITCHEN_LINE"),
+                    **({"toBranchId": r["to_branch_id"], "toBranchName": r["to_branch_name"]} if r["to_branch_id"] else {}),
+                    "timestamp": _iso(r["requested_at"]), **({"note": note} if note else {}),
+                    **({"rejectionReason": r["rejection_reason"]} if r["rejection_reason"] else {}),
+                    **({"approvedBy": r["decided_by"], "approvedByName": names.get(r["decided_by"], ""), "decidedAt": _iso(r["decided_at"])}
+                       if r["decided_by"] else {})})
+    return out
 
 
 def decide_dispatch(db: Db, actor: Actor, dispatch_id: str, approve: bool, reason: str | None = None) -> dict:
     d = _get(db, "dispatch_request", dispatch_id, actor.org_id)
     if d["status"] != "PENDING":
         raise Conflict("already decided", status=d["status"])
+    if actor.role not in ("BRANCH_MANAGER", "ADMIN", "OWNER"):
+        raise ServiceError("only the branch manager decides dispatch requests")
     if not approve and not reason:
         raise Invalid("a rejection needs a reason")
     st = "APPROVED" if approve else "REJECTED"

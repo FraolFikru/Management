@@ -16,6 +16,14 @@ database (db_init) and a live one end up identical.
   M5  Restock requests (Manager → Purchases team)
       restock_request         one row per item the manager asks for
       purchase                + restock_request_id (the purchase that filled it)
+  M6  Dispatch requests sent from the Purchases app
+      dispatch_request        + client_ref (a retried send is saved once)
+  M7  Dispatch requests come only from people allowed to send them
+      a waiting request whose sender lacks dispatch.request is cancelled;
+      the demo data's requests (made by sales staff) move to the demo
+      branch's Purchases clerks
+  M8  Lower restock minimums (reorder points) on items still at the old
+      demo values; values someone changed are left alone
 """
 from __future__ import annotations
 
@@ -166,6 +174,91 @@ def restock_requests(db: Db) -> None:
     _add_column(db, "purchase", "restock_request_id", "text REFERENCES restock_request(id)", "text REFERENCES restock_request(id)")
 
 
+def dispatch_client_ref(db: Db) -> None:
+    _add_column(db, "dispatch_request", "client_ref", "text", "text")
+    db.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_dispatch_client_ref ON dispatch_request (org_id, client_ref) WHERE client_ref IS NOT NULL")
+
+
+def dispatch_senders(db: Db) -> None:
+    # the demo data: Bole's sales staff "sent" dispatches; the Purchases clerks do that
+    for old, new in (("U-014", "U-005"), ("U-015", "U-011"), ("U-016", "U-005")):
+        db.execute("""UPDATE dispatch_request SET requested_by = ?
+                      WHERE org_id = 'STORE-01' AND branch_id = 'BR-BOLE' AND requested_by = ?
+                        AND EXISTS (SELECT 1 FROM app_user WHERE id = ? AND role_code = 'SALES_STAFF')
+                        AND EXISTS (SELECT 1 FROM app_user WHERE id = ? AND role_code = 'INVENTORY_CLERK')""", (new, old, old, new))
+    db.execute("""UPDATE dispatch_request SET status = 'CANCELLED'
+                  WHERE status = 'PENDING' AND NOT EXISTS (
+                    SELECT 1 FROM app_user u JOIN role_permission rp ON rp.org_id = u.org_id AND rp.role_code = u.role_code
+                    WHERE u.id = dispatch_request.requested_by AND rp.permission_code = 'dispatch.request')""")
+
+
+# item: (old demo minimum, new minimum). The old ones came from a price rule (cheap items 60, e.g. 60 kg of tomato).
+RESTOCK_MINIMUMS = {
+    "ayib": (8, 2),
+    "bags": (20, 2),
+    "beef": (4, 3),
+    "beer": (4, 2),
+    "berbere": (8, 2),
+    "cabbage": (60, 10),
+    "chicken": (8, 2),
+    "coffee": (8, 2),
+    "collard": (60, 5),
+    "cups-lids": (8, 2),
+    "cutlery": (20, 2),
+    "degreaser": (8, 1),
+    "detergent": (20, 2),
+    "dish-soap": (20, 2),
+    "eggs": (60, 30),
+    "fish": (8, 2),
+    "foil-roll": (8, 1),
+    "foil-sheets": (8, 1),
+    "food-lube": (8, 1),
+    "food-sanitizer": (8, 1),
+    "garlic": (20, 2),
+    "ginger": (20, 2),
+    "green-pepper": (20, 3),
+    "ice": (20, 3),
+    "injera": (60, 20),
+    "kibbeh": (4, 1),
+    "korerima": (4, 0.5),
+    "lamb": (4, 2),
+    "lentils": (20, 3),
+    "milk": (20, 5),
+    "mitmita": (4, 1),
+    "mops": (8, 2),
+    "napkins": (20, 3),
+    "oil": (8, 1),
+    "olive-oil": (4, 1),
+    "onion": (20, 10),
+    "paper-towels": (20, 3),
+    "parchment": (20, 1),
+    "plastic-wrap": (8, 1),
+    "potato": (60, 10),
+    "rice": (20, 3),
+    "salt": (60, 2),
+    "shiro": (20, 3),
+    "soft-drinks": (4, 2),
+    "straws": (20, 2),
+    "surface-sanitizer": (20, 1),
+    "syrup": (8, 1),
+    "takeout-box": (8, 2),
+    "tea": (8, 1),
+    "teff": (20, 5),
+    "tej": (20, 5),
+    "tomato": (60, 10),
+    "trash-liners": (20, 2),
+    "water": (8, 2),
+    "wheat-flour": (20, 5),
+    "wine": (8, 3),
+    "wrappers": (20, 2),
+}
+
+
+def lower_minimums(db: Db) -> None:
+    for item, (old, new) in RESTOCK_MINIMUMS.items():
+        db.execute("UPDATE branch_stock SET reorder_point = ? WHERE item_id = ? AND reorder_point = ?", (new, item, old))
+
+
 def migrate() -> None:
     db = Db.from_env()
     try:
@@ -175,6 +268,9 @@ def migrate() -> None:
             owner_chain(db)
             owner_planning(db)
             restock_requests(db)
+            dispatch_client_ref(db)
+            dispatch_senders(db)
+            lower_minimums(db)
     except Exception:
         log.exception("seer: migration failed")
         raise

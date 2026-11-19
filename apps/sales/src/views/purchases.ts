@@ -136,6 +136,12 @@ function requestsCard(): string {
   </section>`;
 }
 
+/** Redraw just the manager's requests (new ones arrived while someone is typing in the form). */
+export function refreshRequests(): void {
+  const el = $("#reqArea");
+  if (el && !el.contains(document.activeElement)) el.innerHTML = requestsCard();
+}
+
 function forRequestBanner(): string {
   const r = d.restockId ? db.restock.find((x) => x.id === d.restockId) : undefined;
   if (!r) return "";
@@ -204,7 +210,7 @@ export function renderPurchases(): string {
     <div class="page-head"><div><h1>${t("Purchases")}</h1><p>${t("Record what was bought for the kitchen and bar. This app is for buying only.")}</p></div>
       ${periodSeg()}</div>
     ${metricsBar()}
-    ${requestsCard()}
+    <div id="reqArea">${requestsCard()}</div>
     <div class="split">
       <form class="card form" id="purchaseForm" novalidate aria-labelledby="pfTitle">
         <h2 id="pfTitle" class="sec-title">${t("New purchase")}</h2>

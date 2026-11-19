@@ -11,6 +11,7 @@ import { isLanguage, setLanguage, t } from "./i18n";
 import { isPeriod } from "./catalog";
 import { loadFromBackend, onSyncError, refreshRestock, savePrefs, signOut, signedIn, state, switchUser, user } from "./store";
 import { restockActions, submitRestock } from "./views/restock";
+import { submitMinimums } from "./views/minimums";
 import { isLive, sessionUser, signIn as apiSignIn, signOut as apiSignOut } from "./api";
 import { $ } from "./ui/dom";
 import { wireApp, type ActionMap } from "./ui/app";
@@ -186,7 +187,8 @@ const shellActions: ActionMap = {
 };
 
 const ACTIONS: ActionMap = { ...shellActions, ...restockActions,
-  "restock-open": (el) => openModal({ kind: "restock" }, el), ...salesActions, ...dispatchActions, ...cogsActions, ...wasteActions, ...expenseActions, ...auditActions, ...modalActions };
+  "restock-open": (el) => openModal({ kind: "restock" }, el),
+  "minimums-open": (el) => openModal({ kind: "minimums" }, el), ...salesActions, ...dispatchActions, ...cogsActions, ...wasteActions, ...expenseActions, ...auditActions, ...modalActions };
 
 /* ---------- event delegation ---------- */
 
@@ -216,6 +218,7 @@ document.addEventListener("submit", (e) => {
   else if (id === "wasteForm") submitWaste();
   else if (id === "reasonForm") submitReason();
   else if (id === "restockForm") submitRestock(closeModal);
+  else if (id === "minimumsForm") submitMinimums(closeModal);
   else if (id === "expenseForm") submitExpense();
 });
 

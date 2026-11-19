@@ -53,7 +53,9 @@ export function lowStockWidget(limit = 8): string {
   const low = lowStock();
   if (!low.length) {
     return `<section class="card stock-ok" aria-labelledby="lowTitle"><div class="card-head"><div><h2 id="lowTitle">${icon("check")} ${t("Stock levels OK")}</h2>
-      <p>${t("Every item is above its reorder point.")}</p></div></div></section>`;
+      <p>${t("Every item is above its reorder point.")}</p></div>
+      <div class="head-actions"><button type="button" class="btn small" data-action="minimums-open">${icon("sliders")} ${t("Restock minimums")}</button>
+      <button type="button" class="btn small" data-action="restock-open">${icon("truck")} ${t("Send restock request")}</button></div></div></section>`;
   }
   const out = low.filter((i) => stockLevel(i) === "OUT").length;
   const critical = low.filter((i) => stockLevel(i) === "CRITICAL").length;
@@ -61,7 +63,8 @@ export function lowStockWidget(limit = 8): string {
     <div class="card-head"><div><h2 id="lowTitle">${icon("alert")} ${t("Low stock warning")}</h2>
       <p>${t("{n} items at or below their reorder point", { n: low.length })}${out ? ` · <strong class="bad-text">${t("{n} out of stock", { n: out })}</strong>` : ""}${
         critical ? ` · ${t("{n} critical", { n: critical })}` : ""}</p></div>
-      <button type="button" class="btn small primary" data-action="restock-open">${icon("truck")} ${t("Send restock request")}</button></div>
+      <div class="head-actions"><button type="button" class="btn small" data-action="minimums-open">${icon("sliders")} ${t("Restock minimums")}</button>
+      <button type="button" class="btn small primary" data-action="restock-open">${icon("truck")} ${t("Send restock request")}</button></div></div>
     <ul class="low-grid">${low.slice(0, limit).map((i) => {
       const lvl = stockLevel(i);
       const fill = Math.min(100, (i.currentQuantity / Math.max(i.reorderPoint, 1)) * 100);

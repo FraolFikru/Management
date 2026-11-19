@@ -1196,3 +1196,12 @@ b, strong { font-weight: 600; }
 .rs-qty.affix.right .input { padding-right: 72px; }
 .rs-qty.affix.right > span { max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 560px) { .rs-row { grid-template-columns: minmax(0, 1fr) 128px; } .rs-qty.affix.right .input { padding-right: 60px; } }
+.dsp-note { margin: 0; color: var(--muted); font-size: 13px; }
+
+/* ---------- restock minimums ---------- */
+.head-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.min-list { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 48vh; overflow-y: auto; }
+.min-row { display: grid; grid-template-columns: minmax(0, 1fr) 156px; align-items: center; gap: 12px; padding: 6px 12px; border-radius: var(--r-sm); border: 1px solid transparent; }
+.min-row:nth-child(odd) { background: var(--surface-2); }
+.min-row.edited { border-color: var(--warn); }
+@media (max-width: 560px) { .min-row { grid-template-columns: minmax(0, 1fr) 128px; } }

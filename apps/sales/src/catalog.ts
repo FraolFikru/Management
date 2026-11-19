@@ -7,6 +7,7 @@
 
 import type {
   COGSCategory,
+  DispatchPlace,
   ExpensePaymentMethod,
   ExpenseTag,
   InventoryItem,
@@ -188,6 +189,17 @@ inv("paper-towels", "CLEANING_SANITATION", "TOOLS", "rolls", 70, L("Paper Towels
 
 export const BASE_INVENTORY: readonly InventoryItem[] = inventory;
 
+/* ---------- dispatch destinations (places inside a branch) ---------- */
+
+export const DISPATCH_PLACES = reg<DispatchPlace>("dest", {
+  KITCHEN_LINE: L("Kitchen line", "የወጥ ቤት መስመር", "Sarara kushinaa"),
+  BAR: L("Bar counter", "ባር ቆጣሪ", "Gabatee baarii"),
+  TAKEAWAY_COUNTER: L("Takeaway counter", "የመውሰጃ ቆጣሪ", "Gabatee fudhatamu"),
+  CATERING: L("Catering", "ካተሪንግ", "Keetarinii"),
+  EVENT_HALL: L("Event hall", "የዝግጅት አዳራሽ", "Galma sagantaa"),
+});
+export const PLACE_IDS = Object.keys(DISPATCH_PLACES) as DispatchPlace[];
+
 /* ---------- waste reasons ---------- */
 
 export const WASTE_REASONS = reg<WasteReason>("waste", {
@@ -231,6 +243,7 @@ export const ROLES = reg<Role>("role", {
 export const VIEW_ACCESS: Record<ViewId, readonly Role[]> = {
   dashboard: ["INVENTORY_CLERK", "MANAGER", "ADMIN"],
   purchases: ["INVENTORY_CLERK", "MANAGER", "ADMIN"],
+  dispatch: ["INVENTORY_CLERK", "MANAGER", "ADMIN"],
   waste: ["INVENTORY_CLERK", "MANAGER", "ADMIN"],
   expenses: ["INVENTORY_CLERK", "MANAGER", "ADMIN"],
   audit: ["MANAGER", "ADMIN"],

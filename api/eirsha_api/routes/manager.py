@@ -5,7 +5,7 @@ from datetime import date, timedelta
 from typing import Literal
 
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .. import services as s
 from . import Db, Depends, Principal, branch_of, get_db, period_range, require
@@ -90,16 +90,7 @@ def manager_bootstrap(days: int = 31, p: Principal = Depends(require("mgr.dashbo
                  for r in db.all("SELECT * FROM purchase WHERE branch_id = ? AND (business_date >= ? OR review_status = 'PENDING') AND deleted_at IS NULL",
                                  (br, since))]
     branches = {b["id"]: b for b in db.all("SELECT id, code FROM branch WHERE org_id = ?", (org,))}
-    dispatches = []
-    for r in db.all("""SELECT d.*, i.name_key, l.code AS dest FROM dispatch_request d JOIN inventory_item i ON i.id = d.item_id
-                       LEFT JOIN stock_location l ON l.id = d.to_location_id
-                       WHERE d.branch_id = ? AND (d.requested_at >= ? OR d.status = 'PENDING') AND d.status <> 'CANCELLED'""", (br, since)):
-        dest = r["dest"] or ("BRANCH_PIASSA" if r["to_branch_id"] else "KITCHEN_LINE")
-        dispatches.append({"id": r["id"], "itemId": r["item_id"], "itemName": r["name_key"], "quantity": float(r["quantity"]), "unit": r["unit_code"],
-                           "requestedBy": r["requested_by"], "status": "APPROVED" if r["status"] == "RECEIVED" else r["status"],
-                           "destination": dest, "timestamp": iso(r["requested_at"]),
-                           **({"rejectionReason": r["rejection_reason"]} if r["rejection_reason"] else {}),
-                           **({"approvedBy": r["decided_by"], "decidedAt": iso(r["decided_at"])} if r["decided_by"] else {})})
+    dispatches = s.dispatch_list(db, br, since)
     waste = [{"id": r["id"], "itemId": r["item_id"], "itemName": r["name_key"], "quantityLost": float(r["quantity_lost"]), "unit": r["unit_code"],
               "lossValue": float(r["loss_value"]), "reason": r["reason_code"], **({"customNotes": r["notes"]} if r["notes"] else {}),
               "reportedBy": r["reported_by"], "loggedBy": r["logged_by"], "timestamp": iso(r["occurred_at"]),
@@ -157,6 +148,22 @@ def manager_bootstrap(days: int = 31, p: Principal = Depends(require("mgr.dashbo
     return {"role": MGR_ROLE.get(p.actor.role), "branch": {"id": branch["id"], "name": branch["name"]}, "staff": staff, "menu": menu, "inventory": inventory, "sales": {"cols": sale_cols, "rows": sale_rows},
             "purchases": purchases, "dispatches": dispatches, "waste": waste, "expenses": expenses, "audit": audit,
             "restock": s.restock_list(db, br)}
+
+
+class MinimumLine(BaseModel):
+    itemId: str
+    minimum: float = Field(ge=0, le=1_000_000)
+
+
+class MinimumsIn(BaseModel):
+    items: list[MinimumLine]
+
+
+@router.post("/stock/minimums")
+def set_minimums(body: MinimumsIn, p: Principal = Depends(require("mgr.dashboard")), db: Db = Depends(get_db)):
+    """Restock minimums for this branch: the low-stock alert fires at or below them."""
+    with db.tx():
+        return s.set_minimums(db, p.actor, branch_of(p), [i.model_dump() for i in body.items])
 
 
 class RestockLine(BaseModel):
@@ -225,6 +232,12 @@ def review(pid: str, body: Review, p: Principal = Depends(require("purchase.revi
 def waste_decision(wid: str, body: Decision, p: Principal = Depends(require("waste.approve")), db: Db = Depends(get_db)):
     with db.tx():
         return s.decide_waste(db, p.actor, wid, body.approve, body.reason)
+
+
+@router.get("/dispatches")
+def dispatches_now(p: Principal = Depends(require("mgr.dashboard")), db: Db = Depends(get_db)):
+    """The Dispatch page's list, for the app's refresh (new requests from the Purchases team)."""
+    return s.dispatch_list(db, branch_of(p), (date.today() - timedelta(days=31)).isoformat())
 
 
 @router.get("/dispatch")

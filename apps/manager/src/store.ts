@@ -25,6 +25,7 @@ export type Modal =
   | { kind: "reject"; id: string }
   | { kind: "flag"; id: string }
   | { kind: "restock" }
+  | { kind: "minimums" }
   | null;
 
 export interface UiState {
@@ -502,9 +503,23 @@ export const reopenRestock = (id: string): void =>
 /** Live mode: fetch the latest statuses (Purchases may have bought, ordered or declined). True when anything changed. */
 export async function refreshRestock(): Promise<boolean> {
   if (!isLive || !liveUser) return false;
-  const next = await remote.listRestock();
+  const [next, disp] = await Promise.all([remote.listRestock(), remote.listDispatches()]);
   const sig = (l: RestockRequest[]): string => l.map((r) => `${r.id}:${r.status}:${r.bought}:${r.quantity}`).join("|");
-  if (sig(next) === sig(db.restock)) return false;
-  db.restock = next;
-  return true;
+  const dsig = (l: DispatchRecord[]): string => l.map((d) => `${d.id}:${d.status}`).sort().join("|");
+  let changed = false;
+  if (sig(next) !== sig(db.restock)) { db.restock = next; changed = true; }
+  // new dispatch requests from the Purchases team (or ones they cancelled)
+  if (dsig(disp) !== dsig(db.dispatches)) { db.dispatches = disp; changed = true; }
+  return changed;
+}
+
+/* ---------- restock minimums ---------- */
+
+/** Change the restock minimum of these items (instantly here; sent to the backend in live mode). */
+export function setMinimums(changes: { itemId: string; minimum: number }[]): void {
+  const before = changes.map((c) => ({ itemId: c.itemId, minimum: item(c.itemId)?.reorderPoint ?? 0 }));
+  for (const c of changes) { const it = item(c.itemId); if (it) it.reorderPoint = c.minimum; }
+  push(() => remote.setMinimums(changes), () => {
+    for (const b of before) { const it = item(b.itemId); if (it) it.reorderPoint = b.minimum; }
+  });
 }

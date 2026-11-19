@@ -168,11 +168,17 @@ export interface CogsPurchase {
 
 /* --- dispatch queue --- */
 
-export type Destination = "BAR" | "KITCHEN_LINE" | "TAKEAWAY_COUNTER" | "CATERING" | "BRANCH_PIASSA" | "EVENT_HALL";
+export type Destination = "BAR" | "KITCHEN_LINE" | "TAKEAWAY_COUNTER" | "CATERING" | "BRANCH_PIASSA" | "EVENT_HALL" | "BRANCH";
 
 export interface DispatchRecord extends DispatchRequest {
   itemId: string;
   destination: Destination;
+  /** a transfer to another branch (destination is then BRANCH_PIASSA for older records) */
+  toBranchId?: string;
+  toBranchName?: string;
+  /** what the Purchases team wrote when sending it */
+  note?: string;
+  requestedByName?: string;
   /** staff ID of the manager who approved or rejected */
   approvedBy?: string;
   decidedAt?: string;

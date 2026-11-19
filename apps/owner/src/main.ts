@@ -1643,7 +1643,7 @@ const typing = (): boolean => {
 };
 
 function redraw(): void {
-  if (!LIVE_PAGES.includes(state.activeNav) || document.querySelector("dialog[open], .modal.open, #investmentForm, #goalForm, #adminForm")) return;
+  if (!LIVE_PAGES.includes(state.activeNav) || document.querySelector("dialog[open], .modal.open, #investmentForm, .goal-edit.dirty, #adminForm")) return;
   const y = window.scrollY;
   quietRedraw = true;
   try { renderPage(); } finally { quietRedraw = false; }
