@@ -259,6 +259,27 @@ def lower_minimums(db: Db) -> None:
         db.execute("UPDATE branch_stock SET reorder_point = ? WHERE item_id = ? AND reorder_point = ?", (new, item, old))
 
 
+def owner_changes(db: Db) -> None:
+    pg = db.dialect == "postgres"
+    ts = "timestamptz" if pg else "TEXT"
+    db.execute(f"""CREATE TABLE IF NOT EXISTS owner_change (
+        id              text PRIMARY KEY,
+        org_id          text NOT NULL REFERENCES organization(id),
+        kind            text NOT NULL,
+        target_user_id  text REFERENCES app_user(id),
+        payload         text,
+        summary         text NOT NULL,
+        requested_by    text NOT NULL REFERENCES app_user(id),
+        requested_at    {ts} NOT NULL,
+        status          text NOT NULL DEFAULT 'PENDING',
+        wait_until      {ts},
+        decided_by      text REFERENCES app_user(id),
+        decided_at      {ts},
+        reason          text
+    )""")
+    db.execute("CREATE INDEX IF NOT EXISTS ix_owner_change_org_status ON owner_change (org_id, status)")
+
+
 def migrate() -> None:
     db = Db.from_env()
     try:
@@ -271,6 +292,7 @@ def migrate() -> None:
             dispatch_client_ref(db)
             dispatch_senders(db)
             lower_minimums(db)
+            owner_changes(db)
     except Exception:
         log.exception("seer: migration failed")
         raise

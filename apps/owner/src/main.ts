@@ -11,7 +11,7 @@ import {
   stats,
   topDishes,
   transactions,
-  user,
+  user, ownerInbox,
   type BudgetLine,
   type Category,
   type PaymentMethod,
@@ -22,6 +22,7 @@ import {
 import { icon } from "./icons";
 import { getLiveSeries, loadLive } from "./live";
 import { adminsClick, adminsSubmit, renderAdmins } from "./admins";
+import { ownersClick, ownersEnter, ownersSubmit, renderOwners } from "./owners";
 import { initPlanning, planningClick, planningLeave, planningSubmit, renderGoals, renderInvestments, renderReports } from "./planning";
 import { renderSupport } from "./help";
 import { isLive, saveBudget as apiSaveBudget, sessionUser, signIn as apiSignIn, signOut as apiSignOut } from "./api";
@@ -53,6 +54,7 @@ type Page =
   | "Goals"
   | "Reports"
   | "System Admins"
+  | "Owners"
   | "Settings"
   | "Help & Support";
 
@@ -207,6 +209,7 @@ const mainNav: { label: Page; icon: string }[] = [
   { label: "Investments", icon: "trend-up" },
   { label: "Goals", icon: "target" },
   { label: "Reports", icon: "file" },
+  { label: "Owners", icon: "users" },
   { label: "System Admins", icon: "users" },
 ];
 
@@ -216,7 +219,8 @@ const supportNav: { label: Page; icon: string }[] = [
 ];
 
 const navLink = (n: { label: Page; icon: string }): string =>
-  `<a href="#" data-nav="${escapeHtml(n.label)}" class="${n.label === state.activeNav ? "active" : ""}">${icon(n.icon)}<span>${t(n.label)}</span></a>`;
+  `<a href="#" data-nav="${escapeHtml(n.label)}" class="${n.label === state.activeNav ? "active" : ""}">${icon(n.icon)}<span>${t(n.label)}</span>${
+    n.label === "Owners" && ownerInbox.waiting ? `<span class="nav-count" aria-label="${t("{n} waiting for your decision", { n: ownerInbox.waiting })}">${ownerInbox.waiting}</span>` : ""}</a>`;
 
 function renderShell(): void {
   const hasFailed = transactions.some((x) => x.status === "Failed");
@@ -947,6 +951,9 @@ function renderPage(): void {
     case "System Admins":
       content.innerHTML = renderAdmins(t, () => { if (state.activeNav === "System Admins") renderPage(); });
       break;
+    case "Owners":
+      content.innerHTML = renderOwners(t, () => { if (state.activeNav === "Owners") { renderPage(); refreshOwnerCount(); } });
+      break;
     case "Settings":
       content.innerHTML = renderSettings();
       break;
@@ -957,8 +964,17 @@ function renderPage(): void {
   updateGlow();
 }
 
+/** The waiting count next to "Owners" in the menu. */
+function refreshOwnerCount(): void {
+  const a = document.querySelector<HTMLElement>('[data-nav="Owners"]');
+  if (!a) return;
+  a.querySelector(".nav-count")?.remove();
+  if (ownerInbox.waiting) a.insertAdjacentHTML("beforeend", `<span class="nav-count" aria-label="${t("{n} waiting for your decision", { n: ownerInbox.waiting })}">${ownerInbox.waiting}</span>`);
+}
+
 function go(page: Page): void {
   if (page !== state.activeNav) planningLeave();
+  if (page === "Owners") ownersEnter();
   state.activeNav = page;
   state.editingBudget = null;
   state.budgetError = "";
@@ -1412,6 +1428,7 @@ function onClick(e: MouseEvent): void {
   }
 
   if (state.activeNav === "System Admins" && adminsClick(el, t)) return;
+  if (state.activeNav === "Owners" && ownersClick(el, t)) return;
   if (planningClick(el)) return;
 
   const themeBtn = hit("[data-theme-btn]");
@@ -1710,6 +1727,7 @@ function onSignInSubmit(e: Event): void {
 document.addEventListener("submit", (e) => {
   const form = e.target as HTMLFormElement;
   if (form.id === "adminForm") { e.preventDefault(); adminsSubmit(form, t); }
+  if (form.id === "ownerAddForm" || form.id === "ownerPassForm") { e.preventDefault(); ownersSubmit(form, t); }
   else if (planningSubmit(form)) e.preventDefault();
 });
 

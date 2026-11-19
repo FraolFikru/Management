@@ -11,6 +11,7 @@ from ..db import new_id, now_iso
 from ..auth import hash_secret
 from .admin import _check_username, _staff_code
 from . import PROTECTED_ROLES, Db, Depends, Principal, get_db, require, require_owner
+from .. import owners as owners_mod
 
 router = APIRouter(prefix="/owner", tags=["owner"])
 
@@ -348,6 +349,7 @@ def owner_bootstrap(p: Principal = Depends(require_owner("owner.dashboard")), db
             "user": {"name": me.get("full_name", ""), "email": me.get("email") or "", "restaurant": org_row.get("trade_name") or org_row.get("legal_name") or ""},
             "cashFlow": cash_flow, "daily": daily, "weekly": weekly, "monthToDate": month_to_date, "paymentMethods": payment_methods, "transactions": tx[:400],
             "topDishes": top, "peakHours": peak, "budgets": budgets, "goals": goals,
+            "ownerRequests": owners_mod.waiting_for(db, p.actor),
             "investments": investments}
 
 
@@ -448,6 +450,45 @@ def edit_admin(uid: str, body: AdminIn, p: Principal = Depends(require_owner()),
         s.audit(db, p.actor, "OWNER", what, "app_user", uid, text, {"name": body.fullName},
                 before={"active": bool(u["is_active"])}, after={"active": body.isActive})
         return _admin_row(db, uid)
+
+
+# ---------- Owners: changing who is an Owner needs another Owner's approval (see owners.py) ----------
+
+class OwnerChangeIn(BaseModel):
+    kind: str                                  # ADD | REMOVE | RESET_PASSWORD
+    userId: str | None = None                  # REMOVE / RESET_PASSWORD, or ADD an existing account
+    fullName: str | None = None                # ADD a new account
+    username: str | None = None
+    branchId: str | None = None
+    phone: str | None = None
+    password: str | None = None                # ADD a new account / RESET_PASSWORD
+
+
+class OwnerDecisionIn(BaseModel):
+    reason: str | None = None
+
+
+@router.get("/owners")
+def list_owners(p: Principal = Depends(require_owner()), db: Db = Depends(get_db)):
+    return owners_mod.overview(db, p.actor)
+
+
+@router.post("/owners/changes", status_code=201)
+def ask_owner_change(body: OwnerChangeIn, p: Principal = Depends(require_owner()), db: Db = Depends(get_db)):
+    with db.tx():
+        return owners_mod.request_change(db, p.actor, body.kind, target_user_id=body.userId, full_name=body.fullName,
+                                         username=body.username, branch_id=body.branchId, phone=body.phone, password=body.password)
+
+
+@router.post("/owners/changes/{cid}/{action}")
+def decide_owner_change(cid: str, action: str, body: OwnerDecisionIn | None = None, p: Principal = Depends(require_owner()),
+                        db: Db = Depends(get_db)):
+    fn = {"approve": lambda: owners_mod.approve(db, p.actor, cid), "reject": lambda: owners_mod.reject(db, p.actor, cid, body.reason if body else None),
+          "cancel": lambda: owners_mod.cancel(db, p.actor, cid), "apply": lambda: owners_mod.apply_after_wait(db, p.actor, cid)}.get(action)
+    if not fn:
+        raise s.NotFound("unknown action")
+    with db.tx():
+        return fn()
 
 
 # ---------- Goals: targets the owner sets ----------

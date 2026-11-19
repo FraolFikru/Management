@@ -1323,4 +1323,11 @@ export const UI_STRINGS: Record<string, Entry> = {
   "{perm} turned {state} for {role}": { am: "{perm} ለ{role} {state} ሆኗል", om: "{perm} {role}'f {state} ta'eera" },
   "{p}% on": { am: "{p}% በርቷል", om: "{p}% banaa" },
   "{w} mm · {n} characters per line": { am: "{w} ሚሜ · በአንድ መስመር {n} ፊደሎች", om: "{w} mm · sarara tokkotti qubee {n}" },
+  /* owners are managed in the Owner app */
+  "Owners are added on the Owners page of the Owner app; another Owner approves.": { am: "ባለቤቶች በOwner መተግበሪያ የባለቤቶች ገጽ ላይ ይጨመራሉ፤ ሌላ ባለቤት ያጸድቃል።", om: "Abbootiin qabeenyaa fuula Abbootii appii Owner irratti dabalamu; abbaan qabeenyaa biraa raggaasisa." },
+  "System Admin accounts are created by the Owner in the Owner app. Owners are added on its Owners page.": { am: "የሲስተም አስተዳዳሪ መለያዎች በባለቤቱ በOwner መተግበሪያ ውስጥ ይፈጠራሉ። ባለቤቶች በዚያው የባለቤቶች ገጽ ላይ ይጨመራሉ።", om: "Herregoonni Bulchaa Sirnaa abbaa qabeenyaatiin appii Owner keessatti uumamu. Abbootiin qabeenyaa fuula Abbootii isaa irratti dabalamu." },
+  "Owner accounts are managed on the Owners page of the Owner app.": { am: "የባለቤት መለያዎች የሚተዳደሩት በOwner መተግበሪያ የባለቤቶች ገጽ ላይ ነው።", om: "Herregoonni abbaa qabeenyaa fuula Abbootii appii Owner irratti bulchamu." },
+  "Managed on the Owners page of the Owner app": { am: "በOwner መተግበሪያ የባለቤቶች ገጽ ላይ ይተዳደራል", om: "Fuula Abbootii appii Owner irratti bulchama" },
+  "Owner app · Owners": { am: "Owner መተግበሪያ · ባለቤቶች", om: "Appii Owner · Abbootii" },
+  "Owner accounts are changed on the Owners page of the Owner app, where another Owner approves.": { am: "የባለቤት መለያዎች የሚቀየሩት በOwner መተግበሪያ የባለቤቶች ገጽ ላይ ሲሆን ሌላ ባለቤት ያጸድቃል።", om: "Herregoonni abbaa qabeenyaa fuula Abbootii appii Owner irratti jijjiiramu, achittis abbaan qabeenyaa biraa raggaasisa." },
 };

@@ -32,10 +32,10 @@ function usersTable(): string {
         <td>${esc(branchName(u.assignedBranchId))}</td>
         <td>${ll ? `<time class="nowrap" datetime="${esc(ll)}">${esc(relDay(localDay(ll)))} · ${esc(fmtTime(ll))}</time>` : `<span class="meta">${t("Never")}</span>`}</td>
         <td>${canManageUser(u) && u.id !== state.userId ? switchBtn("user-active", u.isActive, t("{name} active", { name: u.fullName }), u.id)
-          : `<span class="lock-cell ${u.isActive ? "on" : ""}" title="${esc(u.id === state.userId ? t("You can't deactivate your own account.") : t("Managed by the Owner"))}">${icon(u.isActive ? "check" : "lock")}</span>`}</td>
+          : `<span class="lock-cell ${u.isActive ? "on" : ""}" title="${esc(u.id === state.userId ? t("You can't deactivate your own account.") : u.role === "OWNER" ? t("Managed on the Owners page of the Owner app") : t("Managed by the Owner"))}">${icon(u.isActive ? "check" : "lock")}</span>`}</td>
         <td>${canManageUser(u) || u.id === state.userId
           ? `<button type="button" class="btn small ghost" data-action="edit-user" data-value="${u.id}">${icon("edit")} ${u.id === state.userId && !canManageUser(u) ? t("My account") : t("Edit")}</button>`
-          : `<span class="meta nowrap">${icon("lock")} ${t("Managed by the Owner")}</span>`}</td>
+          : `<span class="meta nowrap">${icon("lock")} ${u.role === "OWNER" ? t("Owner app · Owners") : t("Managed by the Owner")}</span>`}</td>
       </tr>`;
     }).join("")}</tbody></table></div>`;
 }
@@ -65,7 +65,8 @@ export function renderAccess(): string {
     <div class="page-head"><div><h1 tabindex="-1">${t("Users & roles")}</h1>
       <p>${t("Who can sign in, their role and branch, and what each role is allowed to do.")}</p></div>
       <div class="head-controls"><button type="button" class="btn primary" data-action="add-user">${icon("plus")} ${t("Add user")}</button></div></div>
-    ${isOwner() ? "" : `<p class="note-line">${icon("lock")} ${t("You create and manage staff accounts. Owner and System Admin accounts are managed by the Owner in the Owner app.")}</p>`}
+    <p class="note-line">${icon("lock")} ${isOwner() ? t("Owner accounts are changed on the Owners page of the Owner app, where another Owner approves.")
+      : t("You create and manage staff accounts. Owner and System Admin accounts are managed by the Owner in the Owner app.")}</p>
     <div class="role-strip">${ROLE_IDS.map((r) => `<button type="button" class="role-stat" data-action="user-filter" data-value="${state.userFilter === r ? "ALL" : r}" aria-pressed="${state.userFilter === r}">
       <strong>${counts(r)}</strong><span>${esc(tk(`role.${r}`))}</span></button>`).join("")}</div>
     <section class="card" aria-labelledby="usTitle">
@@ -104,7 +105,7 @@ export const accessActions: ActionMap = {
     const u = db.users.find((x) => x.id === el.dataset.value);
     if (!u) return;
     if (u.isActive && u.id === state.userId) { toast(t("You can't deactivate your own account.")); return; }
-    if (!canManageUser(u)) { toast(t("Only the Owner can change Owner or System Admin accounts.")); return; }
+    if (!canManageUser(u)) { toast(u.role === "OWNER" ? t("Owner accounts are managed on the Owners page of the Owner app.") : t("Only the Owner can change Owner or System Admin accounts.")); return; }
     const undo = setActive(u.id, !u.isActive);
     rerender(`[data-action="user-active"][data-value="${u.id}"]`);
     renderNav();
