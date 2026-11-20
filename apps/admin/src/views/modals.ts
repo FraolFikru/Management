@@ -71,7 +71,8 @@ const input = (id: string, bind: string, label: string, value: string, key: stri
 /* ---------- branch ---------- */
 
 function branchForm(id: string | null): string {
-  const managers = db.users.filter((u) => u.isActive && (u.role === "BRANCH_MANAGER" || u.role === "ADMIN"));
+  // the manager is optional: on a new setup nobody but the Owner exists yet; pick the manager later with Edit
+  const managers = db.users.filter((u) => u.isActive && (u.role === "BRANCH_MANAGER" || u.role === "ADMIN" || u.role === "OWNER"));
   return `<form id="branchForm" class="form" novalidate>
     <div class="row">
       ${input("bName", "branch.name", t("Branch name"), bd.name, "name", `placeholder="${t("e.g. Sarbet Branch")}"`)}
@@ -81,7 +82,7 @@ function branchForm(id: string | null): string {
     <div class="row">
       ${input("bPhone", "branch.phone", t("Phone number"), bd.phone, "phone", 'inputmode="tel" placeholder="+251 911 000 000"')}
       <div class="field"><label for="bMgr">${t("Manager")}</label><select id="bMgr" class="input" data-bind="branch.managerId" ${invalid(state.errors, "managerId")}>
-        <option value="">${t("Choose…")}</option>${managers.map((u) => `<option value="${u.id}" ${bd.managerId === u.id ? "selected" : ""}>${esc(u.fullName)} (${esc(tk(`role.${u.role}`))})</option>`).join("")}</select>${errText(state.errors, "managerId")}</div>
+        <option value="">${t("No manager yet")}</option>${managers.map((u) => `<option value="${u.id}" ${bd.managerId === u.id ? "selected" : ""}>${esc(u.fullName)} (${esc(tk(`role.${u.role}`))})</option>`).join("")}</select>${errText(state.errors, "managerId")}</div>
     </div>
     ${id ? `<label class="check-line"><input type="checkbox" data-bind="branch.isActive" ${bd.isActive ? "checked" : ""}> ${t("Branch is open")}</label>` : ""}
     ${foot(id ? t("Save branch") : t("Add branch"))}
@@ -97,7 +98,6 @@ function submitBranch(id: string | null): void {
   else if (db.branches.some((b) => b.id !== id && b.code === code)) e.code = t("Code already used.");
   if (bd.address.trim().length < 5) e.address = t("Enter the address.");
   if (!/^(\+251|0)\s?[79]\d{2}\s?\d{3}\s?\d{3}$/.test(bd.phone.trim())) e.phone = t("Use an Ethiopian number, e.g. +251 911 234 567.");
-  if (!bd.managerId) e.managerId = t("Choose a manager.");
   if (showErrors(e, ["name", "code", "address", "phone", "managerId"])) return;
   const { branch, undo } = saveBranch({ ...bd, id, name: bd.name.trim(), code, address: bd.address.trim(), phone: bd.phone.trim() });
   closeModal();

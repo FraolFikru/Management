@@ -134,10 +134,10 @@ export const saveBudget = (month: string, group: Category, allocated: number) =>
 /* ---------- System Admin accounts (Owner only) ---------- */
 
 export interface AdminAccount {
-  id: string; staff_code: string | null; full_name: string; username: string; home_branch_id: string;
+  id: string; staff_code: string | null; full_name: string; username: string; home_branch_id: string | null;
   phone: string | null; is_active: boolean | number; last_login_at: string | null; created_at: string;
 }
-export interface AdminInput { fullName: string; username: string; branchId: string; phone?: string | null; isActive: boolean; password?: string }
+export interface AdminInput { fullName: string; username: string; branchId: string | null; phone?: string | null; isActive: boolean; password?: string }
 
 export const listAdmins = () => api<{ admins: AdminAccount[]; branches: { id: string; name: string }[] }>("/owner/admins");
 export const createAdmin = (body: AdminInput) => api<AdminAccount>("/owner/admins", { method: "POST", body: JSON.stringify(body) });
@@ -147,7 +147,7 @@ export const updateAdmin = (id: string, body: AdminInput) =>
 /* ---------- Owners (changing who is an Owner needs another Owner's approval) ---------- */
 
 export interface OwnerAccount {
-  id: string; staff_code: string | null; full_name: string; username: string; home_branch_id: string; phone: string | null;
+  id: string; staff_code: string | null; full_name: string; username: string; home_branch_id: string | null; phone: string | null;
   is_active: boolean | number; last_login_at: string | null; created_at: string | null;
 }
 export type OwnerChangeKind = "ADD" | "REMOVE" | "RESET_PASSWORD";

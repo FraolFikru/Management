@@ -165,7 +165,7 @@ function ownerRow(a: OwnerAccount, t: T): string {
     <span class="avatar">${esc(a.full_name.split(" ").map((p) => p[0]).slice(0, 2).join(""))}</span>
     <div class="admin-who">
       <strong>${esc(a.full_name)}${me ? ` <span class="badge">${t("You")}</span>` : ""}</strong>
-      <small>@${esc(a.username)}${a.staff_code ? ` · ${esc(a.staff_code)}` : ""} · ${esc(branchName(a.home_branch_id))}</small>
+      <small>@${esc(a.username)}${a.staff_code ? ` · ${esc(a.staff_code)}` : ""} · ${esc(a.home_branch_id ? branchName(a.home_branch_id) : t("All branches"))}</small>
       <small class="muted-note">${a.last_login_at ? t("Last signed in {date}", { date: fmtDay(a.last_login_at) }) : t("Never signed in")}</small>
     </div>
     <span class="badge ${on ? "up" : "down"}">${on ? t("Active") : t("Deactivated")}</span>
@@ -188,7 +188,7 @@ function addForm(f: AddForm, t: T): string {
       <label class="signin-field"><span>${t("Full name")}</span><input id="oaName" value="${esc(f.fullName)}" autocomplete="off" maxlength="80"></label>
       <label class="signin-field"><span>${t("Username")}</span><input id="oaUser" value="${esc(f.username)}" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="40"></label>
       <label class="signin-field"><span>${t("Home branch")}</span>
-        <select id="oaBranch">${d.branches.map((b) => `<option value="${esc(b.id)}" ${b.id === f.branchId ? "selected" : ""}>${esc(b.name)}</option>`).join("")}</select></label>
+        <select id="oaBranch"><option value="" ${f.branchId ? "" : "selected"}>${t("All branches")}</option>${d.branches.map((b) => `<option value="${esc(b.id)}" ${b.id === f.branchId ? "selected" : ""}>${esc(b.name)}</option>`).join("")}</select></label>
       <label class="signin-field"><span>${t("Phone (optional)")}</span><input id="oaPhone" value="${esc(f.phone)}" inputmode="tel" autocomplete="off"></label>
       <label class="signin-field admin-form-wide"><span>${t("Password (at least 8 characters)")}</span>
         <input id="oaPass" type="password" autocomplete="new-password" value="${esc(f.password)}"></label>
@@ -291,11 +291,11 @@ async function submitAdd(t: T): Promise<void> {
     ? (!f.staffId ? t("Choose who becomes an Owner.") : "")
     : f.fullName.length < 2 ? t("Enter their full name.")
       : !/^[a-z0-9._-]{3,40}$/.test(f.username) ? t("Username: 3–40 letters, numbers, dots, dashes or underscores.")
-        : !f.branchId ? t("Choose a home branch.") : f.password.length < 8 ? t("The password needs at least 8 characters.") : "";
+        : f.password.length < 8 ? t("The password needs at least 8 characters.") : "";
   if (f.error) { rerender(); return; }
   f.busy = true; rerender();
   const body: OwnerChangeInput = f.mode === "staff" ? { kind: "ADD", userId: f.staffId }
-    : { kind: "ADD", fullName: f.fullName, username: f.username, branchId: f.branchId, phone: f.phone || null, password: f.password };
+    : { kind: "ADD", fullName: f.fullName, username: f.username, branchId: f.branchId || undefined, phone: f.phone || null, password: f.password };
   try {
     const r = await askOwnerChange(body);
     ui.add = null;
@@ -350,7 +350,7 @@ export function ownersClick(el: HTMLElement, t: T): boolean {
   if (hit("[data-own-reload]")) { ui.error = ""; void load(); rerender(); return true; }
   if (hit("[data-own-add]")) {
     ui.notice = ""; ui.confirm = null; ui.pass = null;
-    ui.add = { mode: "new", fullName: "", username: "", branchId: ui.data?.branches[0]?.id ?? "", phone: "", password: "", staffId: "", error: "", busy: false };
+    ui.add = { mode: "new", fullName: "", username: "", branchId: "", phone: "", password: "", staffId: "", error: "", busy: false };
     rerender(); document.querySelector<HTMLInputElement>("#oaName")?.focus(); return true;
   }
   const mode = hit("[data-own-mode]");

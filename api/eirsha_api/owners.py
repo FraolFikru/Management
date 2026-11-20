@@ -105,8 +105,9 @@ def request_change(db: Db, actor: s.Actor, kind: str, *, target_user_id: str | N
                 raise s.Invalid("username: 3–40 letters, numbers, dots, dashes or underscores")
             if not password or len(password) < 8:
                 raise s.Invalid("the password needs at least 8 characters")
-            if not branch_id or not db.scalar("SELECT 1 FROM branch WHERE org_id = ? AND id = ?", (org, branch_id)):
-                raise s.Invalid("choose a home branch")
+            # an Owner covers every branch: the home branch is optional (there may be no branch yet)
+            if branch_id and not db.scalar("SELECT 1 FROM branch WHERE org_id = ? AND id = ?", (org, branch_id)):
+                raise s.Invalid("unknown branch", branch=branch_id)
             _username_free(db, org, user)
             payload = {"fullName": name, "username": user, "branchId": branch_id, "phone": (phone or "").strip() or None,
                        "passwordHash": hash_secret(password)}
@@ -212,7 +213,7 @@ def _apply(db: Db, actor: s.Actor, cid: str, waited: bool = False, alone: bool =
             tid = new_id("usr")
             from .routes.admin import _staff_code
             db.insert("app_user", {"id": tid, "org_id": org, "full_name": p["fullName"], "username": p["username"], "role_code": "OWNER",
-                                   "home_branch_id": p["branchId"], "phone": p.get("phone"), "is_active": True,
+                                   "home_branch_id": p.get("branchId") or None, "phone": p.get("phone"), "is_active": True,
                                    "initials": "".join(w[0] for w in p["fullName"].split()[:2]).upper(),
                                    "staff_code": _staff_code(db, org, "OWNER"), "password_hash": p["passwordHash"]})
             db.update("owner_change", {"id": cid}, {"target_user_id": tid})

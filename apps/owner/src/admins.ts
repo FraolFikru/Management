@@ -65,7 +65,7 @@ function formHtml(f: FormState, t: T): string {
       <label class="signin-field"><span>${t("Username")}</span>
         <input id="afUser" value="${esc(f.username)}" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="40"></label>
       <label class="signin-field"><span>${t("Home branch")}</span>
-        <select id="afBranch">${ui.branches.map((b) => `<option value="${esc(b.id)}" ${b.id === f.branchId ? "selected" : ""}>${esc(b.name)}</option>`).join("")}</select></label>
+        <select id="afBranch"><option value="" ${f.branchId ? "" : "selected"}>${t("All branches")}</option>${ui.branches.map((b) => `<option value="${esc(b.id)}" ${b.id === f.branchId ? "selected" : ""}>${esc(b.name)}</option>`).join("")}</select></label>
       <label class="signin-field"><span>${t("Phone (optional)")}</span>
         <input id="afPhone" value="${esc(f.phone)}" inputmode="tel" autocomplete="off"></label>
       <label class="signin-field admin-form-wide"><span>${editing ? t("New password (leave blank to keep the current one)") : t("Password (at least 8 characters)")}</span>
@@ -87,7 +87,7 @@ function rowHtml(a: AdminAccount, t: T): string {
     <span class="avatar">${esc(a.full_name.split(" ").map((p) => p[0]).slice(0, 2).join(""))}</span>
     <div class="admin-who">
       <strong>${esc(a.full_name)}</strong>
-      <small>@${esc(a.username)}${a.staff_code ? ` · ${esc(a.staff_code)}` : ""} · ${esc(branchName(a.home_branch_id))}</small>
+      <small>@${esc(a.username)}${a.staff_code ? ` · ${esc(a.staff_code)}` : ""} · ${esc(a.home_branch_id ? branchName(a.home_branch_id) : t("All branches"))}</small>
       <small class="muted-note">${esc(since(a.last_login_at, t))}</small>
     </div>
     <span class="badge ${on ? "up" : "down"}">${on ? t("Active") : t("Deactivated")}</span>
@@ -143,7 +143,7 @@ function readForm(): FormState | null {
 }
 
 function payload(f: FormState, isActive: boolean): AdminInput {
-  return { fullName: f.fullName, username: f.username, branchId: f.branchId, phone: f.phone || null, isActive, ...(f.password ? { password: f.password } : {}) };
+  return { fullName: f.fullName, username: f.username, branchId: f.branchId || null, phone: f.phone || null, isActive, ...(f.password ? { password: f.password } : {}) };
 }
 
 async function submit(t: T): Promise<void> {
@@ -152,7 +152,6 @@ async function submit(t: T): Promise<void> {
   f.error =
     f.fullName.length < 2 ? t("Enter their full name.") :
     !/^[a-z0-9._-]{3,40}$/.test(f.username) ? t("Username: 3–40 letters, numbers, dots, dashes or underscores.") :
-    !f.branchId ? t("Choose a home branch.") :
     !f.id && f.password.length < 8 ? t("The password needs at least 8 characters.") :
     f.id && f.password && f.password.length < 8 ? t("The password needs at least 8 characters.") : "";
   if (f.error) { rerender(); return; }
@@ -196,7 +195,7 @@ export function adminsClick(el: HTMLElement, t: T): boolean {
   if (hit("[data-admin-reload]")) { ui.error = ""; void load(); rerender(); return true; }
   if (hit("[data-admin-add]")) {
     ui.notice = ""; ui.confirm = null;
-    ui.form = { id: null, fullName: "", username: "", branchId: ui.branches[0]?.id ?? "", phone: "", password: "", error: "", busy: false };
+    ui.form = { id: null, fullName: "", username: "", branchId: "", phone: "", password: "", error: "", busy: false };
     rerender(); document.querySelector<HTMLInputElement>("#afName")?.focus(); return true;
   }
   const edit = hit("[data-admin-edit]");
@@ -204,7 +203,7 @@ export function adminsClick(el: HTMLElement, t: T): boolean {
     const a = ui.admins.find((x) => x.id === edit.dataset.adminEdit);
     if (a) {
       ui.notice = ""; ui.confirm = null;
-      ui.form = { id: a.id, fullName: a.full_name, username: a.username, branchId: a.home_branch_id, phone: a.phone ?? "", password: "", error: "", busy: false };
+      ui.form = { id: a.id, fullName: a.full_name, username: a.username, branchId: a.home_branch_id ?? "", phone: a.phone ?? "", password: "", error: "", busy: false };
       rerender(); window.scrollTo({ top: 0, behavior: "smooth" });
     }
     return true;

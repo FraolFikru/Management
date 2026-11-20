@@ -400,7 +400,7 @@ def save_group_budget(month: str, body: GroupBudgetIn, p: Principal = Depends(re
 class AdminIn(BaseModel):
     fullName: str = Field(min_length=2, max_length=80)
     username: str = Field(min_length=3, max_length=40, pattern=r"^[A-Za-z0-9._-]+$")
-    branchId: str
+    branchId: str | None = None        # optional: a System Admin works across every branch (and there may be none yet)
     phone: str | None = None
     isActive: bool = True
     password: str | None = Field(default=None, min_length=8)
@@ -427,10 +427,10 @@ def add_admin(body: AdminIn, p: Principal = Depends(require_owner()), db: Db = D
     with db.tx():
         uid = new_id("usr")
         _check_username(db, p.actor.org_id, body.username, uid)
-        if not db.scalar("SELECT 1 FROM branch WHERE org_id = ? AND id = ?", (p.actor.org_id, body.branchId)):
+        if body.branchId and not db.scalar("SELECT 1 FROM branch WHERE org_id = ? AND id = ?", (p.actor.org_id, body.branchId)):
             raise s.Invalid("unknown branch", branch=body.branchId)
         db.insert("app_user", {"id": uid, "org_id": p.actor.org_id, "full_name": body.fullName.strip(), "username": body.username.lower(),
-                               "role_code": "ADMIN", "home_branch_id": body.branchId, "phone": body.phone, "is_active": body.isActive,
+                               "role_code": "ADMIN", "home_branch_id": body.branchId or None, "phone": body.phone, "is_active": body.isActive,
                                "initials": "".join(w[0] for w in body.fullName.split()[:2]).upper(),
                                "staff_code": _staff_code(db, p.actor.org_id, "ADMIN"), "password_hash": hash_secret(body.password)})
         s.audit(db, p.actor, "OWNER", "app_user.create", "app_user", uid, "User {name} created as {role}",
@@ -445,7 +445,9 @@ def edit_admin(uid: str, body: AdminIn, p: Principal = Depends(require_owner()),
         if not u or u["role_code"] != "ADMIN":
             raise s.NotFound("System Admin not found")
         _check_username(db, p.actor.org_id, body.username, uid)
-        changes = {"full_name": body.fullName.strip(), "username": body.username.lower(), "home_branch_id": body.branchId,
+        if body.branchId and not db.scalar("SELECT 1 FROM branch WHERE org_id = ? AND id = ?", (p.actor.org_id, body.branchId)):
+            raise s.Invalid("unknown branch", branch=body.branchId)
+        changes = {"full_name": body.fullName.strip(), "username": body.username.lower(), "home_branch_id": body.branchId or None,
                    "phone": body.phone, "is_active": body.isActive}
         if body.password:
             changes.update(password_hash=hash_secret(body.password), failed_logins=0, locked_until=None)

@@ -1330,4 +1330,5 @@ export const UI_STRINGS: Record<string, Entry> = {
   "Managed on the Owners page of the Owner app": { am: "በOwner መተግበሪያ የባለቤቶች ገጽ ላይ ይተዳደራል", om: "Fuula Abbootii appii Owner irratti bulchama" },
   "Owner app · Owners": { am: "Owner መተግበሪያ · ባለቤቶች", om: "Appii Owner · Abbootii" },
   "Owner accounts are changed on the Owners page of the Owner app, where another Owner approves.": { am: "የባለቤት መለያዎች የሚቀየሩት በOwner መተግበሪያ የባለቤቶች ገጽ ላይ ሲሆን ሌላ ባለቤት ያጸድቃል።", om: "Herregoonni abbaa qabeenyaa fuula Abbootii appii Owner irratti jijjiiramu, achittis abbaan qabeenyaa biraa raggaasisa." },
+  "No manager yet": { am: "እስካሁን ሥራ አስኪያጅ የለም", om: "Ammaaf hoogganaan hin jiru" },
 };

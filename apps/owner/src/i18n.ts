@@ -682,6 +682,7 @@ const dict: Record<string, Entry> = {
   "Counter": { am: "ቆጣሪ", om: "Gabatee" },
   "Takeaway": { am: "ለመውሰድ", om: "Fudhatanii deemuu" },
   "On credit": { am: "በዱቤ", om: "Liqiidhaan" },
+  "All branches": { am: "ሁሉም ቅርንጫፎች", om: "Damee hunda" },
 };
 
 export function translate(key: string, lang: Lang, vars?: Record<string, string | number>): string {

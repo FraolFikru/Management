@@ -20,7 +20,7 @@ function directory(): string {
       <h3>${esc(b.name)}</h3>
       <p class="meta">${esc(b.address)}</p>
       <dl class="mini-dl">
-        <div><dt>${t("Manager")}</dt><dd>${esc(userName(b.managerId))}</dd></div>
+        <div><dt>${t("Manager")}</dt><dd>${b.managerId ? esc(userName(b.managerId)) : t("No manager yet")}</dd></div>
         <div><dt>${t("Phone")}</dt><dd class="mono">${esc(b.phone)}</dd></div>
         <div><dt>${t("Active staff")}</dt><dd>${staff}</dd></div>
         <div><dt>${t("Opened")}</dt><dd>${esc(fmtDay(b.openedOn))}</dd></div>
