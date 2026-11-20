@@ -583,16 +583,33 @@ def test_reset_keeps_setup_and_one_login(db: Db) -> None:
     menu, items = db.scalar("SELECT count(*) FROM menu_item"), db.scalar("SELECT count(*) FROM inventory_item")
     recipes, vendors = db.scalar("SELECT count(*) FROM recipe_component"), db.scalar("SELECT count(*) FROM vendor")
     db.conn.commit()                                   # the reset opens its own transaction
-    erase.erase_demo(db, keep, ("system.reset", "reset-test"))
+    erase.erase_demo(db, keep, ("system.reset", "reset-test"), branches=True)
     for t in erase.HISTORY:
         if erase._has_table(db, t):
             assert db.scalar(f"SELECT count(*) FROM {t}") == 0, t
     assert [r["username"] for r in db.all("SELECT username FROM app_user")] == [keep]
     assert db.scalar("SELECT count(*) FROM menu_item") == menu and db.scalar("SELECT count(*) FROM inventory_item") == items
     assert db.scalar("SELECT count(*) FROM recipe_component") == recipes and db.scalar("SELECT count(*) FROM vendor") == vendors
-    assert db.scalar("SELECT count(*) FROM branch_stock WHERE on_hand <> 0") == 0
     assert db.scalar("SELECT 1 FROM audit_log WHERE action = 'system.reset' AND entity_id = 'reset-test'")
-    assert erase.RESETS == [("reset-2026-11-20", "fraol.f")]
+    assert erase.RESETS == [("reset-2026-11-20b", "fraol.f", True)]
+    # the branches went too, with everything that belonged to them; the kept account belongs to no branch
+    for t in ("branch", "branch_stock", "stock_location", "dining_table", "menu_item_branch_price", "receipt_config", "auth_session"):
+        assert db.scalar(f"SELECT count(*) FROM {t}") == 0, t
+    assert db.scalar("SELECT count(*) FROM money_account WHERE branch_id IS NOT NULL") == 0
+    assert db.scalar("SELECT count(*) FROM money_account") > 0                       # head-office accounts stay
+    kid = db.one("SELECT * FROM app_user")
+    assert kid["home_branch_id"] is None
+    assert db.scalar("SELECT count(*) FROM v_user_permission WHERE user_id = ? AND permission_code = 'admin.branches_manage'", (kid["id"],))
+    # a branch added by hand gets everything it needs
+    with db.tx():
+        db.insert("branch", {"id": "br-new", "org_id": kid["org_id"], "code": "BOL", "name": "Bole", "is_active": True, "opened_on": "2026-11-20"})
+        s.setup_branch(db, kid["org_id"], "br-new", "bol", "Bole")
+        s.setup_branch(db, kid["org_id"], "br-new", "bol", "Bole")                   # safe to repeat
+    assert db.scalar("SELECT count(*) FROM stock_location WHERE branch_id = 'br-new'") == 6
+    assert db.scalar("SELECT count(*) FROM money_account WHERE branch_id = 'br-new'") == 2
+    assert db.scalar("SELECT count(*) FROM branch_stock WHERE branch_id = 'br-new'") == items - 5    # every item but the 5 retired
+    assert D(db.scalar("SELECT reorder_point FROM branch_stock WHERE branch_id = 'br-new' AND item_id = 'onion'")) == 10
+    assert db.scalar("SELECT count(*) FROM v_branch_menu WHERE branch_id = 'br-new'") == menu        # the menu is there at once
 
 
 test_reset_keeps_setup_and_one_login.own_tx = True    # type: ignore[attr-defined]

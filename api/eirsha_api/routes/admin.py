@@ -211,16 +211,7 @@ def add_branch(body: BranchIn, p: Principal = Depends(require("admin.branches_ma
         db.insert("branch", {"id": bid, "org_id": p.actor.org_id, "code": body.code.upper(), "name": body.name, "address": body.address,
                              "phone": body.phone, "is_active": body.isActive, "opened_on": s.business_date(),
                              "manager_user_id": body.managerId or None})
-        for c in ("STORE_ROOM", "BAR", "KITCHEN_LINE", "TAKEAWAY_COUNTER", "CATERING", "EVENT_HALL"):
-            db.insert("stock_location", {"id": f"LOC-{body.code.upper()}-{c}", "org_id": p.actor.org_id, "branch_id": bid, "code": c,
-                                         "name_key": f"dest.{c}", "is_store_room": c == "STORE_ROOM"})
-        for kind, label in (("CASH_DRAWER", "cash drawer"), ("PETTY_CASH", "petty cash")):
-            db.insert("money_account", {"id": f"ACC-{body.code.upper()}-{'DRAWER' if kind == 'CASH_DRAWER' else 'PETTY'}", "org_id": p.actor.org_id,
-                                        "branch_id": bid, "kind": kind, "name": f"{body.name} {label}"})
-        tmpl = db.one("SELECT * FROM receipt_config WHERE org_id = ? LIMIT 1", (p.actor.org_id,)) or {}
-        db.insert("receipt_config", {"org_id": p.actor.org_id, "branch_id": bid, "paper_width_mm": tmpl.get("paper_width_mm", 80),
-                                     "header_message": tmpl.get("header_message", ""), "footer_message": tmpl.get("footer_message", ""),
-                                     "show_tin": tmpl.get("show_tin", True), "show_vat_breakdown": tmpl.get("show_vat_breakdown", True)})
+        s.setup_branch(db, p.actor.org_id, bid, body.code, body.name)
         s.audit(db, p.actor, "ADMIN", "branch.create", "branch", bid, "Added branch {name}", {"name": body.name}, branch_id=bid)
         return db.one("SELECT * FROM branch WHERE id = ?", (bid,))
 

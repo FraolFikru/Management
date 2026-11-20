@@ -208,6 +208,33 @@ def fmt_qty(q: Decimal, unit: str) -> str:
     return f"{n}{short}" if short in ("kg", "g", "L", "ml") else f"{n} {short}"
 
 
+def setup_branch(db: Db, org_id: str, branch_id: str, code: str, name: str) -> None:
+    """Everything a branch added in the Admin app needs: places in it (dispatch destinations), its cash drawer and
+    petty cash, a receipt setup, and a stock row for every item with a small restock minimum (so the Manager and
+    Purchases screens list the items and the low-stock alert works from day one)."""
+    from .catalogue import rows as catalogue_rows
+    minimums = {r["id"]: r["minimum"] for r in catalogue_rows()}
+    code = code.upper()
+    for c in ("STORE_ROOM", "BAR", "KITCHEN_LINE", "TAKEAWAY_COUNTER", "CATERING", "EVENT_HALL"):
+        if not db.scalar("SELECT 1 FROM stock_location WHERE branch_id = ? AND code = ?", (branch_id, c)):
+            db.insert("stock_location", {"id": f"LOC-{code}-{c}", "org_id": org_id, "branch_id": branch_id, "code": c,
+                                         "name_key": f"dest.{c}", "is_store_room": c == "STORE_ROOM"})
+    for kind, label in (("CASH_DRAWER", "cash drawer"), ("PETTY_CASH", "petty cash")):
+        if not db.scalar("SELECT 1 FROM money_account WHERE branch_id = ? AND kind = ?", (branch_id, kind)):
+            db.insert("money_account", {"id": f"ACC-{code}-{'DRAWER' if kind == 'CASH_DRAWER' else 'PETTY'}", "org_id": org_id,
+                                        "branch_id": branch_id, "kind": kind, "name": f"{name} {label}"})
+    if not db.scalar("SELECT 1 FROM receipt_config WHERE branch_id = ?", (branch_id,)):
+        tmpl = db.one("SELECT * FROM receipt_config WHERE org_id = ? LIMIT 1", (org_id,)) or {}
+        db.insert("receipt_config", {"org_id": org_id, "branch_id": branch_id, "paper_width_mm": tmpl.get("paper_width_mm", 80),
+                                     "header_message": tmpl.get("header_message", ""), "footer_message": tmpl.get("footer_message", ""),
+                                     "show_tin": tmpl.get("show_tin", True), "show_vat_breakdown": tmpl.get("show_vat_breakdown", True)})
+    have = {r["item_id"] for r in db.all("SELECT item_id FROM branch_stock WHERE branch_id = ?", (branch_id,))}
+    for it in db.all("SELECT id FROM inventory_item WHERE org_id = ? AND deleted_at IS NULL", (org_id,)):
+        if it["id"] not in have:
+            db.insert("branch_stock", {"org_id": org_id, "branch_id": branch_id, "item_id": it["id"], "on_hand": 0,
+                                       "reorder_point": minimums.get(it["id"], 1)})
+
+
 # ================================================================== POS → KDS
 
 def _shift_for(db: Db, org_id: str, branch_id: str, at: datetime) -> str:

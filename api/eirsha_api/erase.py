@@ -32,7 +32,13 @@ HISTORY = [
 
 # One-time resets that run by themselves at the next start (each RUN id only once, recorded in audit_log).
 # 2026-11-20: the owner asked to start again from nothing but the setup, keeping only his own login.
-RESETS = [("reset-2026-11-20", "fraol.f")]
+# The second asks for the branches to go too (they are added again by hand in the Admin app).
+# (run id, account to keep, erase branches too)
+RESETS = [("reset-2026-11-20b", "fraol.f", True)]
+
+# Setup that belongs to one branch: removed with the branches (children first).
+BRANCH_SETUP = ["user_branch_role", "receipt_config", "device", "dining_table", "menu_item_branch_price", "branch_stock",
+                "stock_location"]
 
 
 def _has_table(db: Db, table: str) -> bool:
@@ -58,7 +64,7 @@ def _user_fks(db: Db) -> list[tuple[str, str]]:
     return out
 
 
-def erase_demo(db: Db, keep_username: str, marker: tuple[str, str] = ("system.erase_demo", "")) -> dict:
+def erase_demo(db: Db, keep_username: str, marker: tuple[str, str] = ("system.erase_demo", ""), branches: bool = False) -> dict:
     keep = db.one("SELECT id, org_id FROM app_user WHERE lower(username) = lower(?)", (keep_username,))
     if not keep:
         raise ValueError(f"no account with username {keep_username!r}: nothing erased")
@@ -90,10 +96,22 @@ def erase_demo(db: Db, keep_username: str, marker: tuple[str, str] = ("system.er
         counts["user_branch_role"] = db.execute("DELETE FROM user_branch_role WHERE user_id <> ?", (kid,)).rowcount
         counts["employee"] = db.execute("DELETE FROM employee WHERE user_id <> ?", (kid,)).rowcount
         counts["app_user"] = db.execute("DELETE FROM app_user WHERE id <> ?", (kid,)).rowcount
+        if branches:
+            # the kept account belongs to no branch now; it signs in again (old sessions name a deleted branch)
+            db.execute("UPDATE app_user SET home_branch_id = NULL WHERE id = ?", (kid,))
+            counts["auth_session"] += db.execute("DELETE FROM auth_session").rowcount
+            for t in BRANCH_SETUP:
+                if _has_table(db, t):
+                    counts[t] = db.execute(f"DELETE FROM {t}").rowcount
+            counts["money_account"] = db.execute("DELETE FROM money_account WHERE branch_id IS NOT NULL").rowcount
+            counts["shift_template"] = db.execute("DELETE FROM shift_template WHERE branch_id IS NOT NULL").rowcount
+            db.execute("UPDATE branch SET manager_user_id = NULL")
+            counts["branch"] = db.execute("DELETE FROM branch").rowcount
         action, run = marker
         db.insert("audit_log", {"org_id": keep["org_id"], "module": "SYSTEM", "action": action,
                                 "entity_type": "organization", "entity_id": run or keep["org_id"], "actor_user_id": kid,
-                                "summary_template": "All data erased; started from scratch (setup kept)", "vars": "{}"})
+                                "summary_template": "All data erased; started from scratch" + (" (branches too)" if branches else " (setup kept)"),
+                                "vars": "{}"})
     return counts
 
 
@@ -119,10 +137,10 @@ def reset_once() -> None:
     exist, nothing is erased (and it tries again at the next start)."""
     db = Db.from_env()
     try:
-        for run, keep in RESETS:
+        for run, keep, branches in RESETS:
             if db.scalar("SELECT 1 FROM audit_log WHERE action = 'system.reset' AND entity_id = ?", (run,)):
                 continue
-            counts = erase_demo(db, keep, ("system.reset", run))
+            counts = erase_demo(db, keep, ("system.reset", run), branches=branches)
             log.warning("seer: %s done, kept account %s: %s", run, keep, {k: v for k, v in counts.items() if v})
     except Exception:
         log.exception("seer: the one-time reset failed; nothing was changed")
