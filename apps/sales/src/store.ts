@@ -131,9 +131,14 @@ export const currentUser = (): StaffAccount | null =>
 let syncError: (message: string) => void = () => {};
 export function onSyncError(fn: (message: string) => void): void { syncError = fn; }
 
+let inFlight = 0;
+/** A save is still on its way to the server (auto-refresh waits for it). */
+export const syncing = (): boolean => inFlight > 0;
+const track = <T,>(p: Promise<T>): Promise<T> => { inFlight++; return p.finally(() => { inFlight--; }); };
+
 function push(task: () => Promise<unknown>, rollback: () => void): Promise<void> {
   if (!isLive) return Promise.resolve();
-  return task().then(() => undefined, (err: unknown) => {
+  return track(task()).then(() => undefined, (err: unknown) => {
     rollback();
     syncError(err instanceof Error ? err.message : String(err));
   });

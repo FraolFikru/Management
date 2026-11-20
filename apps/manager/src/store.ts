@@ -9,7 +9,7 @@
    ========================================================= */
 
 import type {
-  AuditAction, AuditEntry, COGSCategory, DispatchRecord, ExpenseRecord, FieldErrors, InventoryItem, MenuCategory,
+  AuditAction, AuditEntry, COGSCategory, CogsPurchase, DispatchRecord, ExpenseRecord, FieldErrors, InventoryItem, MenuCategory,
   PaymentMethod, PaymentSummary, PeriodId, RestockRequest, ReviewStatus, Shift, StaffAccount, SupportedLanguage, ViewId, WasteLog, WasteReason,
 } from "./types";
 import { DASHBOARD_ROLES, MENU, STAFF } from "./catalog";
@@ -125,12 +125,17 @@ export const user = (): StaffAccount => (isLive && liveUser) || STAFF.find((s) =
 let syncError: (message: string) => void = () => {};
 export function onSyncError(fn: (message: string) => void): void { syncError = fn; }
 
+let inFlight = 0;
+/** A save is still on its way to the server (auto-refresh waits for it). */
+export const syncing = (): boolean => inFlight > 0;
+
 function push(task: () => Promise<unknown>, rollback: () => void): void {
   if (!isLive) return;
+  inFlight++;
   task().catch((err: unknown) => {
     rollback();
     syncError(err instanceof Error ? err.message : String(err));
-  });
+  }).finally(() => { inFlight--; });
 }
 
 /** Put an object back exactly as it was (fields added since are removed). */
@@ -280,23 +285,51 @@ export const pendingDispatches = (): DispatchRecord[] =>
 
 /* ---------- writes: dispatches ---------- */
 
-export type DispatchResult = { ok: true; before: number; after: number } | { ok: false; reason: "stock" | "missing" };
+export type DispatchResult = { ok: true; before: number; after: number; purchases?: number } | { ok: false; reason: "stock" | "missing" };
 
-/** Approving moves stock out to the destination. Blocked when stock is short. */
+/** A purchase's quantity in the item's own unit (g → kg, ml → liters); other units are taken as they are. */
+function inItemUnit(p: CogsPurchase, it: InventoryItem): number {
+  if (p.unit === it.unit) return p.quantity;
+  const f: Record<string, number> = { g: 0.001, kg: 1, ml: 0.001, liters: 1 };
+  return f[p.unit] && f[it.unit] ? p.quantity * (f[p.unit] / f[it.unit]) : p.quantity;
+}
+
+/** Purchases of this item still waiting for review. Approving a dispatch of the item approves them too. */
+export const waitingPurchases = (itemId: string): CogsPurchase[] =>
+  db.purchases.filter((p) => p.itemId === itemId && p.status === "PENDING");
+
+/** Stock that arrives when these purchases are approved. */
+export function incomingFor(itemId: string): number {
+  const it = item(itemId);
+  return it ? round2(waitingPurchases(itemId).reduce((s, p) => s + inItemUnit(p, it), 0)) : 0;
+}
+
+/** Approving moves stock out to the destination, after approving the purchases of the item still waiting
+    (the stock arrives, then leaves: nothing stays pending). Blocked when even that isn't enough. */
 export function approveDispatch(id: string): DispatchResult {
   const d = db.dispatches.find((x) => x.id === id && x.status === "PENDING");
   const it = d ? item(d.itemId) : undefined;
   if (!d || !it) return { ok: false, reason: "missing" };
-  if (it.currentQuantity < d.quantity) return { ok: false, reason: "stock" };
+  const waiting = waitingPurchases(d.itemId);
+  const incoming = incomingFor(d.itemId);
+  if (it.currentQuantity + incoming < d.quantity) return { ok: false, reason: "stock" };
   const before = it.currentQuantity;
   const was = { ...d };
-  it.currentQuantity = round2(it.currentQuantity - d.quantity);
+  const wasP = waiting.map((p) => ({ ...p }));
+  const now = new Date().toISOString();
+  for (const p of waiting) { p.status = "APPROVED"; p.reviewedBy = state.userId; p.reviewedAt = now; }
+  it.currentQuantity = round2(it.currentQuantity + incoming - d.quantity);
   d.status = "APPROVED";
   d.approvedBy = state.userId;
-  d.decidedAt = new Date().toISOString();
+  d.decidedAt = now;
   const e = log("APPROVE_DISPATCH", { itemKey: it.nameKey, quantity: d.quantity, unit: d.unit, destination: d.destination });
-  push(() => remote.decideDispatch(id, true), () => { reset(d, was); it.currentQuantity = before; unlog(e); });
-  return { ok: true, before, after: it.currentQuantity };
+  push(() => remote.decideDispatch(id, true), () => {
+    reset(d, was);
+    waiting.forEach((p, i) => reset(p, wasP[i] as CogsPurchase));
+    it.currentQuantity = before;
+    unlog(e);
+  });
+  return { ok: true, before, after: it.currentQuantity, purchases: waiting.length };
 }
 
 export function rejectDispatch(id: string, reason: string): boolean {

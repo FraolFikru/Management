@@ -90,7 +90,7 @@ export type FeedEvent =
 
 /** Commands the KDS sends to the backend. Every command carries who did it and when. */
 export type FeedCommand =
-  | { type: "status"; ticketId: string; status: KDSOrderStatus; at: string; by: string }
+  | { type: "status"; ticketId: string; status: KDSOrderStatus; at: string; by: string; usage?: IngredientUse[] }
   | { type: "item"; ticketId: string; itemId: string; isCompleted: boolean; at: string; by: string }
   /** some dishes are ticked done, not all: tell the waiter those are ready, leave the rest cooking */
   | { type: "notify"; ticketId: string; at: string; by: string }
@@ -101,6 +101,23 @@ export interface OrderFeed {
   readonly kind: "demo" | "live";
   connect(onEvent: (e: FeedEvent) => void, onState: (s: ConnectionState) => void): void;
   disconnect(): void;
-  /** Resolves when the backend accepts the command; rejects so the UI can roll back. */
-  send(cmd: FeedCommand): Promise<void>;
+  /** Resolves (with the server's answer, live mode) when the backend accepts the command; rejects so the UI can roll back. */
+  send(cmd: FeedCommand): Promise<unknown>;
 }
+
+/* --- "Ingredients used": confirmed when a ticket is marked ready (live mode) --- */
+
+/** What one dish really used of one stock item, in `unit`. */
+export interface IngredientUse { ticketItemId: string; itemId: string; actual: number; unit: string }
+
+export interface IngredientLine { itemId: string; names: LocalizedText; unit: string; expected: number; onHand: number }
+export interface IngredientDish {
+  ticketItemId: string; menuItemId: string; dishName: string; dishNames: LocalizedText; quantity: number; ingredients: IngredientLine[];
+}
+export interface TicketIngredients {
+  ticketId: string; orderNumber: string; dishes: IngredientDish[]; needed: boolean;
+  items: { itemId: string; names: LocalizedText; unit: string }[];
+  units: Record<string, LocalizedText>;
+}
+/** Kitchen heads-up after confirming: the item is at (low) or within 20 % above its restock level. */
+export interface StockWarning { itemId: string; names: LocalizedText; unit: string; onHand: number; reorderPoint: number; low: boolean }

@@ -142,6 +142,8 @@ export interface InventoryItem {
   currentQuantity: number;
   /** reorder threshold: the item is LOW STOCK when currentQuantity <= reorderPoint */
   reorderPoint: number;
+  /** live mode: the kitchen's latest "Ingredients used" entry for this item (context for the low-stock alert) */
+  lastUse?: { dish: string; orderNumber: string; used: number; unit: string; text: string; at: string };
 }
 
 export type ReviewStatus = "PENDING" | "APPROVED" | "FLAGGED";

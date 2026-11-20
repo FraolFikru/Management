@@ -10,7 +10,8 @@ import "./style.css";
 import type { ViewId } from "./types";
 import { isLanguage, setLanguage, t, tk } from "./i18n";
 import { PERMISSIONS } from "./catalog";
-import { db, isAdmin, loadFromBackend, onRemoteChange, onSyncError, permsOf, savePrefs, signIn, state, user } from "./store";
+import { db, isAdmin, loadFromBackend, onRemoteChange, onSyncError, permsOf, savePrefs, signIn, state, syncing, user } from "./store";
+import { startAutoRefresh } from "./refresh";
 import { ApiError, isLive, sessionUser, signIn as apiSignIn, signOut } from "./api";
 import { $, esc, icon } from "./ui/dom";
 import { wireApp, type ActionMap } from "./ui/app";
@@ -71,6 +72,7 @@ function rebuild(focusSelector?: string): void {
   if (app) app.innerHTML = "";
   render(focusSelector);
   if (state.modal) renderModal();
+  auto.sync();
 }
 
 const applyTheme = (): void => { document.documentElement.dataset.theme = state.theme; };
@@ -196,8 +198,21 @@ async function startLive(): Promise<void> {
     return;
   }
   if (app) app.innerHTML = "";
+  adminLoaded = true;
   render();
+  auto.sync();
 }
+
+/* Changes made by other admins or the Owner: reload every 45 s while visible, and on the Refresh button. */
+let adminLoaded = false;
+const auto = startAutoRefresh({
+  enabled: () => isLive && adminLoaded && !!sessionUser(),
+  lang: () => state.lang,
+  busy: () => syncing() || !!state.modal,
+  everyMs: 45_000,
+  reload: async () => { await loadFromBackend(); return true; },
+  redraw: () => render(),
+});
 
 document.addEventListener("submit", (e) => {
   const form = e.target as HTMLFormElement;

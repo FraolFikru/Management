@@ -106,9 +106,14 @@ let deposits: Record<string, number> = {};
 let syncError: (message: string) => void = () => {};
 export function onSyncError(fn: (message: string) => void): void { syncError = fn; }
 
+let inFlight = 0;
+/** A save is still on its way to the server (auto-refresh waits for it). */
+export const syncing = (): boolean => inFlight > 0;
+const track = <T,>(p: Promise<T>): Promise<T> => { inFlight++; return p.finally(() => { inFlight--; }); };
+
 function push<T>(task: () => Promise<T>, rollback: () => void, then?: (r: T) => void): void {
   if (!isLive) return;
-  task().then((r) => then?.(r), (err: unknown) => {
+  track(task()).then((r) => then?.(r), (err: unknown) => {
     rollback();
     syncError(err instanceof Error ? err.message : String(err));
   });

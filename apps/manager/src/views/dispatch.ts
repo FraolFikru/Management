@@ -8,7 +8,7 @@
 import type { DispatchRecord } from "../types";
 import { t, tk } from "../i18n";
 import { fmtDay, fmtTime, localDay, today } from "../format";
-import { db, approveDispatch, isLowStock, item, pendingDispatches, reopenDispatch, state, stockLevel, user } from "../store";
+import { db, approveDispatch, incomingFor, isLowStock, item, pendingDispatches, reopenDispatch, state, stockLevel, user, waitingPurchases } from "../store";
 import { esc, icon } from "../ui/dom";
 import { empty, qtyUnit, seg, stampOf, staffCell, statusPill , destOf } from "../ui/shared";
 import { toast } from "../ui/toast";
@@ -22,8 +22,10 @@ const ago = (iso: string): number => Math.max(0, Math.round((Date.now() - new Da
 /** One pending request with everything needed to decide. */
 function requestCard(d: DispatchRecord): string {
   const it = item(d.itemId);
-  const short = it ? it.currentQuantity < d.quantity : true;
-  const after = it ? it.currentQuantity - d.quantity : 0;
+  const incoming = it ? incomingFor(d.itemId) : 0;
+  const waiting = it ? waitingPurchases(d.itemId).length : 0;
+  const short = it ? it.currentQuantity + incoming < d.quantity : true;
+  const after = it ? it.currentQuantity + incoming - d.quantity : 0;
   const goesLow = Boolean(it && !short && after <= it.reorderPoint);
   const waited = ago(d.timestamp);
   return `<li class="dispatch row-hover" id="dsp-${d.id}">
@@ -38,7 +40,8 @@ function requestCard(d: DispatchRecord): string {
     <div class="dsp-col stock-col">
       <span class="label">${t("Stock impact")}</span>
       ${it ? `<span class="stock-line num ${short ? "short" : ""}">${qtyUnit(it.currentQuantity, it.unit)}${short ? "" : ` → <strong>${qtyUnit(after, it.unit)}</strong>`}</span>
-        <small class="meta">${t("reorder at {x}", { x: qtyUnit(it.reorderPoint, it.unit) })}</small>` : "—"}
+        <small class="meta">${t("reorder at {x}", { x: qtyUnit(it.reorderPoint, it.unit) })}</small>
+        ${waiting ? `<small class="meta incoming">${icon("check")} ${t("Approving also approves {n} purchase(s) waiting in Purchases (COGS): +{q}", { n: waiting, q: qtyUnit(incoming, it.unit) })}</small>` : ""}` : "—"}
       ${short ? `<span class="flag bad">${icon("alert")} ${t("Not enough stock to approve.")}</span>`
         : goesLow ? `<span class="flag warn">${icon("alert")} ${t("Approving will put this item at low stock.")}</span>`
         : it && isLowStock(it) ? `<span class="flag warn">${icon("alert")} ${t("Already low stock")}</span>` : ""}
@@ -83,10 +86,10 @@ export function renderDispatch(): string {
   const decided = db.dispatches.filter((d) => d.decidedAt && localDay(d.decidedAt) === now);
   const approved = decided.filter((d) => d.status === "APPROVED").length;
   const rejected = decided.filter((d) => d.status === "REJECTED").length;
-  const blocked = pending.filter((d) => { const it = item(d.itemId); return !it || it.currentQuantity < d.quantity; }).length;
+  const blocked = pending.filter((d) => { const it = item(d.itemId); return !it || it.currentQuantity + incomingFor(d.itemId) < d.quantity; }).length;
   return `
     <div class="page-head"><div><h1 tabindex="-1">${t("Dispatch")}</h1>
-      <p>${t("Stock requests sent by the Purchases team. Approving moves the stock out; rejecting needs a reason.")}</p></div></div>
+      <p>${t("Stock requests sent by the Purchases team. Approving moves the stock out (and approves that item's purchases still waiting); rejecting needs a reason.")}</p></div></div>
     <div class="stat-row">
       <div class="stat"><span>${t("Waiting for you")}</span><strong class="num ${forMe.length ? "warn-text" : ""}">${forMe.length}</strong></div>
       <div class="stat"><span>${t("Approved today")}</span><strong class="num">${approved}</strong></div>
@@ -124,12 +127,13 @@ export const dispatchActions: ActionMap = {
       toast(res.reason === "stock" ? t("Not enough stock to approve.") : t("This request is no longer pending."));
       return;
     }
-    const next = pendingDispatches().find((x) => { const it = item(x.itemId); return it && it.currentQuantity >= x.quantity; });
+    const next = pendingDispatches().find((x) => { const it = item(x.itemId); return it && it.currentQuantity + incomingFor(x.itemId) >= x.quantity; });
     rerender(next ? `#dsp-${next.id} [data-action="approve-dispatch"]` : "#pendTitle");
     const it = item(d.itemId);
     const lvl = it ? stockLevel(it) : "OK";
     toast(t("Approved {item} · {q} → {dest} · by {name}", { item: tk(d.itemName), q: qtyUnit(d.quantity, d.unit), dest: destOf(d), name: user().name })
-      + ` · ${t("stock {a} → {b}", { a: String(res.before), b: String(res.after) })}` + (lvl !== "OK" ? ` · ${t("now low stock")}` : ""),
+      + ` · ${t("stock {a} → {b}", { a: String(res.before), b: String(res.after) })}` + (lvl !== "OK" ? ` · ${t("now low stock")}` : "")
+      + (res.purchases ? ` · ${t("{n} purchase(s) approved", { n: res.purchases })}` : ""),
       () => { reopenDispatch(id); rerender(); });
   },
   "dispatch-more": () => { historyLimit += 12; rerender(); },

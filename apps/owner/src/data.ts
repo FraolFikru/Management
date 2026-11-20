@@ -13,6 +13,8 @@ export interface Transaction {
   date: Date;
   amount: number;
   status: Status;
+  /** live mode: which record it is, for the details drawer */
+  ref?: { kind: string; id: string };
 }
 
 export interface MonthPoint {

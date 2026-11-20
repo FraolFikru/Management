@@ -254,8 +254,9 @@ def owner_bootstrap(p: Principal = Depends(require_owner("owner.dashboard")), db
         tx.append({"id": o["receipt_no"] or f"ORD-{o['order_number']}", "description": f"Order {o['order_number']} · {what}"
                    + (f" · {METHOD.get(o['method'], o['method'])}" if o["method"] else "") + where(o["branch_id"]),
                    "category": "Sales", "date": str(o["business_date"])[:10], "at": s._iso(o["paid_at"]) if o["paid_at"] else str(o["business_date"]),
-                   "amount": round(_f(o["total_gross"]), 2), "status": "Success"})
-    PURCHASE_STATUS = {"APPROVED": "Success", "REJECTED": "Failed"}
+                   "amount": round(_f(o["total_gross"]), 2), "status": "Success", "ref": {"kind": "order", "id": o["id"]}})
+    # the manager decided → never "Pending": approved = Success, flagged or rejected = Failed (details say which)
+    PURCHASE_STATUS = {"APPROVED": "Success", "REJECTED": "Failed", "FLAGGED": "Failed"}
     for r in db.all("""SELECT p.id, p.branch_id, p.quantity, p.unit_code, p.total_cost, p.vendor_name, p.payment_method_code, p.cost_category_code,
                               p.purchased_at, p.business_date, p.review_status, i.custom_name, i.name_key
                        FROM purchase p JOIN inventory_item i ON i.id = p.item_id
@@ -267,24 +268,27 @@ def owner_bootstrap(p: Principal = Depends(require_owner("owner.dashboard")), db
                    + (f" · {METHOD.get(r['payment_method_code'], r['payment_method_code'])}" if r["payment_method_code"] else "") + where(r["branch_id"]),
                    "category": GROUP_OF.get(r["cost_category_code"], "Food Cost"), "date": str(r["business_date"])[:10],
                    "at": s._iso(r["purchased_at"]) if r["purchased_at"] else str(r["business_date"]),
-                   "amount": -round(_f(r["total_cost"]), 2), "status": PURCHASE_STATUS.get(r["review_status"], "Pending")})
+                   "amount": -round(_f(r["total_cost"]), 2), "status": PURCHASE_STATUS.get(r["review_status"], "Pending"),
+                   "ref": {"kind": "purchase", "id": r["id"]}})
     for b in db.all("""SELECT * FROM v_bill_status WHERE org_id = ? AND display_status NOT IN ('VOID','DRAFT') AND issue_date >= ?
                        AND (source IS NULL OR source <> 'PURCHASE') ORDER BY issue_date DESC LIMIT 120""", (org, since90)):
         st = {"PAID": "Success", "OVERDUE": "Failed"}.get(b["display_status"], "Pending")
         tx.append({"id": b["bill_no"] or short("BILL", b["id"]), "description": f"{b['vendor_name']}" + (f" · {b['description']}" if b["description"] and len(b["description"]) < 40 else ""),
                    "category": GROUP_OF.get(b["cost_category_code"], "Supplies"), "date": str(b["issue_date"])[:10], "at": str(b["issue_date"])[:10],
-                   "amount": -round(_f(b["total"]), 2), "status": st})
+                   "amount": -round(_f(b["total"]), 2), "status": st, "ref": {"kind": "bill", "id": b["id"]}})
     for e in db.all("SELECT * FROM expense WHERE org_id = ? AND deleted_at IS NULL AND business_date >= ? ORDER BY spent_at DESC LIMIT 120", (org, since90)):
         tx.append({"id": short("EXP", e["id"]), "description": e["reason"] + (f" · {METHOD.get(e['payment_method_code'], e['payment_method_code'])}" if e["payment_method_code"] else "")
                    + where(e["branch_id"]),
                    "category": GROUP_OF.get(e["cost_category_code"], "Supplies"), "date": str(e["business_date"])[:10],
                    "at": s._iso(e["spent_at"]) if e["spent_at"] else str(e["business_date"]),
-                   "amount": -round(_f(e["amount"]), 2), "status": "Failed" if e["review_status"] == "REJECTED" else "Success"})
+                   "amount": -round(_f(e["amount"]), 2), "status": "Failed" if e["review_status"] == "REJECTED" else "Success",
+                   "ref": {"kind": "expense", "id": e["id"]}})
     for r in db.all("SELECT * FROM payroll_run WHERE org_id = ? AND status IN ('APPROVED','PAID') ORDER BY period_month DESC LIMIT 6", (org,)):
         m = str(r["period_month"])[:7]
         d = str(r["paid_on"] or r["approved_at"] or r["period_month"])[:10]
         tx.append({"id": f"PAY-{m}", "description": f"Staff payroll {m}", "category": "Labor", "date": d, "at": d,
-                   "amount": -round(_f(r["total_gross"]) + _f(r["total_pension_employer"]), 2), "status": "Success" if r["status"] == "PAID" else "Pending"})
+                   "amount": -round(_f(r["total_gross"]) + _f(r["total_pension_employer"]), 2), "status": "Success" if r["status"] == "PAID" else "Pending",
+                   "ref": {"kind": "payroll", "id": r["id"]}})
     tx.sort(key=lambda x: x["at"], reverse=True)
 
     # --- analytics: this month (or the last 30 days when the month has just started)
@@ -356,6 +360,12 @@ def owner_bootstrap(p: Principal = Depends(require_owner("owner.dashboard")), db
 class GroupBudgetIn(BaseModel):
     group: str               # "Food Cost", "Labor", … (the dashboard's spending groups)
     allocated: float
+
+
+@router.get("/transactions/{kind}/{tid}")
+def transaction_detail(kind: str, tid: str, p: Principal = Depends(require_owner("owner.dashboard")), db: Db = Depends(get_db)):
+    """Everything about one row of the Transactions table (the … button)."""
+    return s.transaction_detail(db, p.actor.org_id, kind, tid)
 
 
 @router.put("/budget-groups/{month}")

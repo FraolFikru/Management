@@ -25,6 +25,8 @@ import { adminsClick, adminsSubmit, renderAdmins } from "./admins";
 import { ownersClick, ownersEnter, ownersSubmit, renderOwners } from "./owners";
 import { initPlanning, planningClick, planningLeave, planningSubmit, renderGoals, renderInvestments, renderReports } from "./planning";
 import { renderSupport } from "./help";
+import { openTxDetail } from "./txdetail";
+import { startAutoRefresh } from "./refresh";
 import { isLive, saveBudget as apiSaveBudget, sessionUser, signIn as apiSignIn, signOut as apiSignOut } from "./api";
 import { LANGS, dayLong, dayShort, monthShort, translate, type Lang } from "./i18n";
 
@@ -1351,7 +1353,7 @@ function renderTable(): void {
         <td>${fmtDate(x.date)}</td>
         <td class="mono tx-amount ${x.amount >= 0 ? "in" : "out"}">${x.amount >= 0 ? "+" : "−"}${money(Math.abs(x.amount))}</td>
         <td><span class="status ${x.status.toLowerCase()}">${t(x.status)}</span></td>
-        <td><button class="icon-btn row-more" aria-label="${t("More")}">${icon("dots-h")}</button></td>
+        <td><button class="icon-btn row-more" data-tx="${transactions.indexOf(x)}" aria-haspopup="dialog" aria-label="${t("Details of {x}", { x: x.id })}">${icon("dots-h")}</button></td>
       </tr>`;
         })
         .join("")
@@ -1424,6 +1426,13 @@ function onClick(e: MouseEvent): void {
   if (nav) {
     e.preventDefault();
     go((nav.dataset.nav || nav.dataset.goto) as Page);
+    return;
+  }
+
+  const txBtn = hit("[data-tx]");
+  if (txBtn) {
+    const x = transactions[Number(txBtn.dataset.tx)];   // by position: order numbers repeat from day to day
+    if (x) openTxDetail(x, t, money, settings.lang);
     return;
   }
 
@@ -1668,26 +1677,22 @@ function redraw(): void {
   stampLive();
 }
 
-async function refreshLive(): Promise<void> {
-  if (!isLive || !started || refreshing || document.hidden || !sessionUser()) return;
-  refreshing = true;
-  try {
-    await loadLive();
-    lastLoaded = Date.now();
-  } catch {
-    return;                       // offline or asleep: keep showing the last numbers
-  } finally {
-    refreshing = false;
-  }
-  if (typing()) redrawWaiting = true;
-  else redraw();
-}
-
+/* Auto-refresh every minute while visible + the Refresh button (apps/shared/refresh.ts). A failed refresh keeps the
+   last numbers on screen and says so on the button. */
+const auto = startAutoRefresh({
+  enabled: () => isLive && started && !!sessionUser(),
+  lang: () => settings.lang,
+  busy: () => refreshing || !!document.querySelector("#investmentForm, .goal-edit.dirty, #adminForm, #txDetail"),
+  everyMs: REFRESH_MS,
+  reload: async () => {
+    refreshing = true;
+    try { await loadLive(); lastLoaded = Date.now(); } finally { refreshing = false; }
+    return true;
+  },
+  redraw: () => { if (typing()) redrawWaiting = true; else redraw(); },
+});
 if (isLive) {
-  window.setInterval(() => { void refreshLive(); stampLive(); }, REFRESH_MS);
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden && Date.now() - lastLoaded > 15_000) void refreshLive();
-  });
+  window.setInterval(stampLive, REFRESH_MS);
   document.addEventListener("focusout", () => {
     window.setTimeout(() => { if (redrawWaiting && !typing()) { redrawWaiting = false; redraw(); } }, 0);
   });
@@ -1703,6 +1708,7 @@ async function startLive(): Promise<void> {
     liveUi.busy = false;
     if (started) { renderShell(); applyAppearance(); renderPage(); }
     else { started = true; init(); }
+    auto.sync();
   } catch (err) {
     liveUi.message = liveMessage(err);
     liveUi.busy = false;

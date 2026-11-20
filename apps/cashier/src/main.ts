@@ -3,6 +3,7 @@ import {
   CATEGORIES, MENU, VAT_RATE, CASHIER_NAME, TABLE_COUNT, FIRST_CHECK_NO,
   findItem, formatMoney, round2, type CategoryId, type MenuItem,
 } from './data';
+import { startAutoRefresh } from './refresh';
 import { t, getLang, setLang, langName, nextLang, LANGS, type Lang } from './i18n';
 import { tx } from './text';
 import { icon } from './icons';
@@ -533,6 +534,8 @@ async function startLive(): Promise<void> {
     MENU.splice(0, MENU.length, ...items);
     renderShell();
     startFloorPolling();
+    menuLoaded = true;
+    auto.sync();
   } catch (err) {
     renderSignIn(err instanceof ApiError && err.status === 401 ? '' : t('signin.offline'));
   }
@@ -881,6 +884,24 @@ document.addEventListener('change', (e) => {
     renderOrder();
     $<HTMLSelectElement>('#table-select').focus();
   }
+});
+
+/* Prices and menu changes from the Admin app, and the floor: reload every 60 s and on the Refresh button.
+   Never in the middle of a sale (lines on the check or a payment open). */
+let menuLoaded = false;
+const auto = startAutoRefresh({
+  enabled: () => isLive && menuLoaded && !!currentUser(),
+  lang: getLang,
+  busy: () => state.lines.length > 0 || !!state.pay || !!pending,
+  everyMs: 60_000,
+  corner: 'left',
+  reload: async () => {
+    const items = await loadMenu();
+    MENU.splice(0, MENU.length, ...items);
+    await refreshFloor();
+    return true;
+  },
+  redraw: () => renderMenu(),
 });
 
 // Clock: update text only

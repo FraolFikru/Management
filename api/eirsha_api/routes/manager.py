@@ -76,6 +76,11 @@ def manager_bootstrap(days: int = 31, p: Principal = Depends(require("mgr.dashbo
                   "currentQuantity": float(r["on_hand"]), "reorderPoint": float(r["reorder_point"])}
                  for r in db.all("""SELECT v.*, i.custom_name FROM v_branch_stock_status v JOIN inventory_item i ON i.id = v.item_id
                                     WHERE v.branch_id = ?""", (br,))]
+    # the kitchen's latest "Ingredients used" entry per item: the low-stock card says which dish took it
+    for row in s.last_kitchen_use(db, br):
+        for x in inventory:
+            if x["id"] == row["itemId"]:
+                x["lastUse"] = row
     # sale lines are the bulk of the payload: sent as columns + rows (the app rebuilds the objects)
     sale_cols = ["id", "ticketNo", "menuItemId", "quantity", "unitPrice", "total", "paymentMethod", "shift", "loggedBy", "timestamp"]
     sale_rows = [[r["id"], r["ticket_no"], r["menu_item_id"], float(r["quantity"]), float(r["unit_price"]), float(r["total"]),
@@ -148,6 +153,28 @@ def manager_bootstrap(days: int = 31, p: Principal = Depends(require("mgr.dashbo
     return {"role": MGR_ROLE.get(p.actor.role), "branch": {"id": branch["id"], "name": branch["name"]}, "staff": staff, "menu": menu, "inventory": inventory, "sales": {"cols": sale_cols, "rows": sale_rows},
             "purchases": purchases, "dispatches": dispatches, "waste": waste, "expenses": expenses, "audit": audit,
             "restock": s.restock_list(db, br)}
+
+
+class RecipeLine(BaseModel):
+    itemId: str
+    quantity: float = Field(gt=0, le=100_000)
+    unit: str | None = None
+
+
+class RecipeIn(BaseModel):
+    items: list[RecipeLine]
+
+
+@router.get("/recipes/{menu_item_id}")
+def get_recipe(menu_item_id: str, p: Principal = Depends(require("mgr.dashboard", "menu.price_edit")), db: Db = Depends(get_db)):
+    return s.recipe_of(db, menu_item_id)
+
+
+@router.put("/recipes/{menu_item_id}")
+def put_recipe(menu_item_id: str, body: RecipeIn, p: Principal = Depends(require("mgr.dashboard", "menu.price_edit")), db: Db = Depends(get_db)):
+    """A dish's recipe per portion. The Kitchen's "Ingredients used" step pre-fills from it."""
+    with db.tx():
+        return s.set_recipe(db, p.actor, menu_item_id, [i.model_dump() for i in body.items])
 
 
 class MinimumLine(BaseModel):

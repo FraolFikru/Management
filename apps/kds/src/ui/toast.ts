@@ -3,7 +3,7 @@
 import { t } from "../i18n";
 import { esc } from "./dom";
 
-export type ToastKind = "info" | "good" | "bad" | "new";
+export type ToastKind = "info" | "good" | "bad" | "new" | "warn";
 
 export function toast(message: string, opts: { kind?: ToastKind; undo?: () => void; ms?: number } = {}): void {
   const wrap = document.getElementById("toastWrap");

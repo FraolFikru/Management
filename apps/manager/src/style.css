@@ -1207,3 +1207,8 @@ b, strong { font-weight: 600; }
 @media (max-width: 560px) { .min-row { grid-template-columns: minmax(0, 1fr) 128px; } }
 
 .sub-head { margin: 16px 0 4px; font-size: 14px; font-weight: 600; }
+
+/* kitchen context on a low-stock card ("500 g used in Doro Wat #021"), and purchases a dispatch approves */
+.low-ctx { display: flex; gap: 4px; align-items: center; color: var(--warn, #d9a35b); font-size: 12px; }
+.low-ctx .ico, .meta.incoming .ico { width: 13px; height: 13px; flex: none; }
+.meta.incoming { display: flex; gap: 4px; align-items: center; }

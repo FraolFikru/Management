@@ -50,6 +50,9 @@ export const COGS_COLOR: Record<COGSCategory, string> = {
 
 /* sub-groups inside each category */
 reg("group", {
+  CEREMONY: L("Coffee ceremony supplies", "የቡና ሥነ ሥርዓት ዕቃዎች", "Meeshaalee sirna bunaa"),
+  CONDIMENTS: L("Pastes & condiments", "ድልህ እና ማጣፈጫ", "Mi'eessituu jiidhaa"),
+  FRUITS: L("Fruits", "ፍራፍሬ", "Muduraa"),
   PROTEINS: L("Proteins", "ፕሮቲኖች", "Pirootiinii"),
   PRODUCE: L("Produce", "አትክልትና ፍራፍሬ", "Kuduraa fi Muduraa"),
   SPICES: L("Spices & Condiments", "ቅመማ ቅመም", "Mi'eessituu"),
@@ -117,10 +120,11 @@ const GROUP_MAIN: Record<string, MainCategory> = {
   PRODUCE: "VEGETABLES", PROTEINS: "MEAT_FISH", DAIRY: "DAIRY_EGGS", DRY_GOODS: "GRAINS_FLOUR", OILS: "OIL",
   SPICES: "SPICES", SPECIALTY: "SPICES", ALCOHOL: "DRINKS", SOFT: "DRINKS", MIXERS: "DRINKS", COFFEE_TEA: "COFFEE_TEA",
   TAKEOUT: "PACKAGING", SERVICEWARE: "PACKAGING", FOOD_CONTACT: "KITCHEN", DETERGENTS: "CLEANING", TOOLS: "CLEANING",
+  FRUITS: "VEGETABLES", CONDIMENTS: "SPICES", CEREMONY: "COFFEE_TEA",
 };
 
 /** Restock minimum per item (the low-stock alert fires at or below it), kept small: 10 kg onion, 1 liter oil, 2 chickens. */
-export const RESTOCK_MINIMUM: Record<string, number> = { "onion": 10, "tomato": 10, "potato": 10, "garlic": 2, "ginger": 2, "green-pepper": 3, "collard": 5, "cabbage": 10, "berbere": 2, "mitmita": 1, "korerima": 0.5, "shiro": 3, "lentils": 3, "rice": 3, "teff": 5, "wheat-flour": 5, "salt": 2, "coffee": 2, "tea": 1, "beef": 3, "lamb": 2, "fish": 2, "kibbeh": 1, "ayib": 2, "chicken": 2, "eggs": 30, "injera": 20, "oil": 1, "olive-oil": 1, "milk": 5, "tej": 5, "syrup": 1, "beer": 2, "soft-drinks": 2, "wine": 3, "water": 2, "ice": 3, "detergent": 2, "degreaser": 1, "dish-soap": 2, "food-sanitizer": 1, "surface-sanitizer": 1, "mops": 2, "food-lube": 1, "bags": 2, "cups-lids": 2, "cutlery": 2, "foil-sheets": 1, "napkins": 3, "straws": 2, "takeout-box": 2, "wrappers": 2, "foil-roll": 1, "paper-towels": 3, "parchment": 1, "plastic-wrap": 1, "trash-liners": 2 };
+export const RESTOCK_MINIMUM: Record<string, number> = { "onion": 10, "tomato": 10, "potato": 10, "garlic": 2, "ginger": 2, "green-pepper": 3, "collard": 5, "cabbage": 10, "berbere": 2, "mitmita": 1, "korerima": 0.5, "shiro": 3, "lentils": 3, "rice": 3, "teff": 5, "wheat-flour": 5, "salt": 2, "coffee": 2, "tea": 1, "beef": 3, "lamb": 2, "fish": 2, "kibbeh": 1, "ayib": 2, "chicken": 2, "eggs": 30, "injera": 20, "oil": 1, "olive-oil": 1, "milk": 5, "wine": 3, "water": 2, "detergent": 2, "degreaser": 1, "dish-soap": 2, "food-sanitizer": 1, "surface-sanitizer": 1, "mops": 2, "food-lube": 1, "bags": 2, "cups-lids": 2, "cutlery": 2, "foil-sheets": 1, "napkins": 3, "straws": 2, "takeout-box": 2, "wrappers": 2, "foil-roll": 1, "paper-towels": 3, "parchment": 1, "plastic-wrap": 1, "trash-liners": 2, "mixed-teff": 5, "roasted-chickpea": 2, "yellow-split-peas": 3, "brown-lentils": 2, "green-lentils": 2, "fava-beans": 2, "spaghetti": 2, "macaroni": 2, "roasted-barley": 1, "goat": 2, "carrot": 5, "beetroot": 3, "lettuce": 2, "cucumber": 2, "avocado": 3, "mango": 3, "papaya": 3, "banana": 3, "orange": 3, "lemon": 1, "strawberry": 1, "turmeric": 0.5, "black-pepper": 0.5, "cumin": 0.5, "fenugreek": 0.5, "sacred-basil": 0.2, "rue": 0.2, "lippia": 0.2, "sugar": 3, "awaze": 1, "datta": 0.5, "ketchup": 1, "mayonnaise": 1, "mustard": 0.5, "vinegar": 1, "mozzarella": 1, "yogurt": 2, "espresso-beans": 1, "cloves": 0.2, "cinnamon": 0.2, "mineral-water": 2, "frankincense": 0.2, "charcoal": 2, "sd-coca-cola": 1, "sd-sprite": 1, "sd-fanta-orange": 1, "sd-fanta-pineapple": 1, "sd-pepsi": 1, "sd-7up": 1, "sd-mirinda": 1, "sd-ambo": 1, "sd-sofi-malt": 1, "sd-negus": 1, "sd-malta-guinness": 1, "beer-st-george": 1, "beer-heineken": 1, "beer-walia": 1, "beer-bedele-regular": 1, "beer-bedele-special": 1, "beer-harar": 1, "beer-desperados": 1, "beer-dashen": 1, "beer-habesha": 1, "beer-arada-lime": 1, "beer-arada-pineapple": 1, "beer-arada-apple": 1 };
 
 const inventory: InventoryItem[] = [];
 function inv(id: string, category: COGSCategory, group: string, unit: string, unitCost: number, name: LocalizedText, aliases: string[] = []): void {
@@ -131,45 +135,114 @@ function inv(id: string, category: COGSCategory, group: string, unit: string, un
   inventory.push({ id, nameKey, category, main, groupKey: `group.${group}`, unit, unitCost, aliases, currentQuantity: 0, reorderPoint });
 }
 
-// Raw ingredients
-inv("onion", "RAW_INGREDIENTS", "PRODUCE", "kg", 45, L("Onion", "ሽንኩርት", "Shunkurtii"), ["shinkurt"]);
-inv("tomato", "RAW_INGREDIENTS", "PRODUCE", "kg", 38, L("Tomato", "ቲማቲም", "Timaatimii"), ["timatim"]);
-inv("garlic", "RAW_INGREDIENTS", "PRODUCE", "kg", 160, L("Garlic", "ነጭ ሽንኩርት", "Qullubbii Adii"), ["nech shinkurt"]);
-inv("ginger", "RAW_INGREDIENTS", "PRODUCE", "kg", 140, L("Ginger", "ዝንጅብል", "Jinjibila"), ["zinjibil"]);
-inv("green-pepper", "RAW_INGREDIENTS", "PRODUCE", "kg", 70, L("Green Pepper", "ቃሪያ", "Barbaree Magariisaa"), ["karia", "chili"]);
-inv("potato", "RAW_INGREDIENTS", "PRODUCE", "kg", 30, L("Potato", "ድንች", "Dinnicha"), ["dinch"]);
-inv("cabbage", "RAW_INGREDIENTS", "PRODUCE", "pcs", 25, L("Cabbage", "ጥቅል ጎመን", "Raafuu Marame"), ["tikil gomen"]);
-inv("collard", "RAW_INGREDIENTS", "PRODUCE", "kg", 35, L("Collard Greens", "ጎመን", "Raafuu"), ["gomen"]);
-inv("beef", "RAW_INGREDIENTS", "PROTEINS", "kg", 650, L("Beef", "የበሬ ሥጋ", "Foon Loonii"), ["siga", "kitfo"]);
-inv("lamb", "RAW_INGREDIENTS", "PROTEINS", "kg", 720, L("Lamb", "የበግ ሥጋ", "Foon Hoolaa"), ["beg"]);
+// Raw ingredients (generated from api/eirsha_api/catalogue.py by seed/build_catalogue.py; edit there)
+// Grains, flours & legumes
+inv("teff", "RAW_INGREDIENTS", "DRY_GOODS", "kg", 145, L("White teff", "ነጭ ጤፍ", "Xaafii adii"), ["tef", "nech teff"]);
+inv("mixed-teff", "RAW_INGREDIENTS", "DRY_GOODS", "kg", 125, L("Mixed teff", "ሰርገኛ ጤፍ", "Mixed teff"), ["sergegna", "teff"]);
+inv("injera", "RAW_INGREDIENTS", "DRY_GOODS", "pcs", 15, L("Pre-made fermented flatbread (injera)", "እንጀራ", "Buddeena"), ["enjera"]);
+inv("roasted-chickpea", "RAW_INGREDIENTS", "DRY_GOODS", "kg", 160, L("Roasted chickpea", "የተቆላ ሽምብራ", "Roasted chickpea"), ["shimbra", "kolo"]);
+inv("shiro", "RAW_INGREDIENTS", "DRY_GOODS", "kg", 180, L("Pea flour (shiro)", "ሽሮ", "Shiroo"), ["shiro"]);
+inv("lentils", "RAW_INGREDIENTS", "DRY_GOODS", "kg", 130, L("Split red lentils", "ቀይ ምስር", "Missira diimaa"), ["misir"]);
+inv("yellow-split-peas", "RAW_INGREDIENTS", "DRY_GOODS", "kg", 120, L("Yellow split peas", "ክክ", "Yellow split peas"), ["kik"]);
+inv("brown-lentils", "RAW_INGREDIENTS", "DRY_GOODS", "kg", 125, L("Whole brown lentils", "ሙሉ ምስር", "Whole brown lentils"), ["misir"]);
+inv("green-lentils", "RAW_INGREDIENTS", "DRY_GOODS", "kg", 135, L("Green lentils", "አረንጓዴ ምስር", "Green lentils"), ["misir"]);
+inv("fava-beans", "RAW_INGREDIENTS", "DRY_GOODS", "kg", 110, L("Fava beans", "ባቄላ", "Baaqelaa"), ["bakela", "ful"]);
+inv("wheat-flour", "RAW_INGREDIENTS", "DRY_GOODS", "kg", 95, L("Wheat flour", "የስንዴ ዱቄት", "Daakuu qamadii"), ["duket"]);
+inv("spaghetti", "RAW_INGREDIENTS", "DRY_GOODS", "kg", 120, L("Spaghetti", "ስፓጌቲ", "Ispaageettii"), ["pasta"]);
+inv("macaroni", "RAW_INGREDIENTS", "DRY_GOODS", "kg", 120, L("Macaroni", "መኮረኒ", "Makaroonii"), ["pasta", "makoroni"]);
+inv("rice", "RAW_INGREDIENTS", "DRY_GOODS", "kg", 110, L("Rice", "ሩዝ", "Ruuzii"), ["ruz"]);
+inv("roasted-barley", "RAW_INGREDIENTS", "DRY_GOODS", "kg", 140, L("Roasted barley", "የተቆላ ገብስ", "Roasted barley"), ["gebs", "kolo", "besso"]);
+// Meats, poultry & fish
+inv("beef", "RAW_INGREDIENTS", "PROTEINS", "kg", 650, L("Beef", "የበሬ ሥጋ", "Foon loonii"), ["siga", "kitfo"]);
+inv("lamb", "RAW_INGREDIENTS", "PROTEINS", "kg", 720, L("Lamb", "የበግ ሥጋ", "Foon hoolaa"), ["beg"]);
+inv("goat", "RAW_INGREDIENTS", "PROTEINS", "kg", 700, L("Goat", "የፍየል ሥጋ", "Foon re'ee"), ["fiyel"]);
 inv("chicken", "RAW_INGREDIENTS", "PROTEINS", "pcs", 550, L("Chicken", "ዶሮ", "Lukkuu"), ["doro"]);
-inv("fish", "RAW_INGREDIENTS", "PROTEINS", "kg", 480, L("Fish (tilapia)", "አሳ", "Qurxummii"), ["asa"]);
 inv("eggs", "RAW_INGREDIENTS", "DAIRY", "pcs", 12, L("Eggs", "እንቁላል", "Hanqaaquu"), ["enkulal"]);
-inv("kibbeh", "RAW_INGREDIENTS", "DAIRY", "kg", 900, L("Niter Kibbeh (spiced butter)", "ንጥር ቅቤ", "Dhadhaa Qulqulluu"), ["kibe", "butter"]);
-inv("ayib", "RAW_INGREDIENTS", "DAIRY", "kg", 220, L("Ayib (cottage cheese)", "አይብ", "Baaduu"), ["cheese"]);
-inv("milk", "RAW_INGREDIENTS", "DAIRY", "liters", 60, L("Milk", "ወተት", "Aannan"), ["wetet"]);
-inv("teff", "RAW_INGREDIENTS", "DRY_GOODS", "kg", 145, L("Teff Flour", "የጤፍ ዱቄት", "Daakuu Xaafii"), ["tef"]);
-inv("injera", "RAW_INGREDIENTS", "DRY_GOODS", "pcs", 15, L("Injera", "እንጀራ", "Buddeena"), ["enjera"]);
-inv("wheat-flour", "RAW_INGREDIENTS", "DRY_GOODS", "kg", 95, L("Wheat Flour", "የስንዴ ዱቄት", "Daakuu Qamadii"), ["duket"]);
-inv("lentils", "RAW_INGREDIENTS", "DRY_GOODS", "kg", 130, L("Red Lentils", "ምስር", "Missira"), ["misir"]);
-inv("shiro", "RAW_INGREDIENTS", "DRY_GOODS", "kg", 180, L("Shiro Powder", "ሽሮ", "Shiroo"));
-inv("rice", "RAW_INGREDIENTS", "DRY_GOODS", "kg", 110, L("Rice", "ሩዝ", "Ruuzii"));
-inv("oil", "RAW_INGREDIENTS", "OILS", "liters", 210, L("Cooking Oil", "የምግብ ዘይት", "Zayita Nyaataa"), ["zeyt"]);
-inv("olive-oil", "RAW_INGREDIENTS", "OILS", "liters", 650, L("Olive Oil", "የወይራ ዘይት", "Zayita Ejersaa"));
-inv("berbere", "RAW_INGREDIENTS", "SPICES", "kg", 480, L("Berbere", "በርበሬ", "Barbaree"));
-inv("mitmita", "RAW_INGREDIENTS", "SPICES", "kg", 600, L("Mitmita", "ሚጥሚጣ", "Mixmixaa"));
+inv("fish", "RAW_INGREDIENTS", "PROTEINS", "kg", 480, L("Fish", "አሳ", "Qurxummii"), ["asa", "tilapia"]);
+// Fresh vegetables & aromatics
+inv("onion", "RAW_INGREDIENTS", "PRODUCE", "kg", 45, L("Onions", "ሽንኩርት", "Shunkurtii"), ["shinkurt"]);
+inv("garlic", "RAW_INGREDIENTS", "PRODUCE", "kg", 160, L("Garlic", "ነጭ ሽንኩርት", "Qullubbii adii"), ["nech shinkurt"]);
+inv("ginger", "RAW_INGREDIENTS", "PRODUCE", "kg", 140, L("Ginger", "ዝንጅብል", "Jinjibila"), ["zinjibil"]);
+inv("tomato", "RAW_INGREDIENTS", "PRODUCE", "kg", 38, L("Tomatoes", "ቲማቲም", "Timaatimii"), ["timatim"]);
+inv("potato", "RAW_INGREDIENTS", "PRODUCE", "kg", 30, L("Potatoes", "ድንች", "Dinnicha"), ["dinch"]);
+inv("collard", "RAW_INGREDIENTS", "PRODUCE", "kg", 35, L("Collard greens", "ጎመን", "Raafuu"), ["gomen"]);
+inv("cabbage", "RAW_INGREDIENTS", "PRODUCE", "pcs", 25, L("Cabbage", "ጥቅል ጎመን", "Raafuu marame"), ["tikil gomen"]);
+inv("green-pepper", "RAW_INGREDIENTS", "PRODUCE", "kg", 70, L("Green chili peppers", "ቃሪያ", "Barbaree magariisaa"), ["karia", "chili"]);
+inv("carrot", "RAW_INGREDIENTS", "PRODUCE", "kg", 40, L("Carrots", "ካሮት", "Kaarotii"), ["karot"]);
+inv("beetroot", "RAW_INGREDIENTS", "PRODUCE", "kg", 40, L("Beetroot", "ቀይ ሥር", "Beetroot"), ["key sir", "beet"]);
+inv("lettuce", "RAW_INGREDIENTS", "PRODUCE", "kg", 60, L("Lettuce", "ሰላጣ", "Lettuce"), ["selata", "salad"]);
+inv("cucumber", "RAW_INGREDIENTS", "PRODUCE", "kg", 50, L("Cucumbers", "ኪያር", "Cucumbers"), ["kiyar"]);
+// Fruits
+inv("avocado", "RAW_INGREDIENTS", "FRUITS", "kg", 60, L("Avocados", "አቮካዶ", "Avokaadoo"), ["abukado"]);
+inv("mango", "RAW_INGREDIENTS", "FRUITS", "kg", 70, L("Mangoes", "ማንጎ", "Maangoo"));
+inv("papaya", "RAW_INGREDIENTS", "FRUITS", "kg", 50, L("Papayas", "ፓፓያ", "Paappaayaa"));
+inv("banana", "RAW_INGREDIENTS", "FRUITS", "kg", 40, L("Bananas", "ሙዝ", "Muuzii"), ["muz"]);
+inv("orange", "RAW_INGREDIENTS", "FRUITS", "kg", 60, L("Oranges", "ብርቱካን", "Burtukaana"), ["birtukan"]);
+inv("lemon", "RAW_INGREDIENTS", "FRUITS", "kg", 80, L("Lemons", "ሎሚ", "Loomii"), ["lomi"]);
+inv("strawberry", "RAW_INGREDIENTS", "FRUITS", "kg", 250, L("Strawberries", "እንጆሪ", "Strawberries"), ["enjori"]);
+// Spices, herbs & condiments
+inv("berbere", "RAW_INGREDIENTS", "SPICES", "kg", 480, L("Chili (berbere)", "በርበሬ", "Barbaree"), ["berbere", "chili"]);
+inv("mitmita", "RAW_INGREDIENTS", "SPICES", "kg", 600, L("Chili powder (mitmita)", "ሚጥሚጣ", "Mixmixaa"), ["mitmita"]);
+inv("korerima", "RAW_INGREDIENTS", "SPECIALTY", "kg", 900, L("Ethiopian cardamom", "ኮረሪማ", "Korarimaa"), ["korerima"]);
+inv("turmeric", "RAW_INGREDIENTS", "SPICES", "kg", 300, L("Turmeric", "እርድ", "Ird"), ["ird"]);
+inv("black-pepper", "RAW_INGREDIENTS", "SPICES", "kg", 700, L("Black pepper", "ጥቁር በርበሬ", "Black pepper"), ["kundo berbere"]);
+inv("cumin", "RAW_INGREDIENTS", "SPICES", "kg", 500, L("Cumin", "ከሙን", "Cumin"), ["kemun"]);
+inv("fenugreek", "RAW_INGREDIENTS", "SPICES", "kg", 250, L("Fenugreek", "አብሽ", "Abishii"), ["abish"]);
+inv("sacred-basil", "RAW_INGREDIENTS", "SPICES", "kg", 400, L("Dried sacred basil", "በሶ ብላ", "Dried sacred basil"), ["besobila"]);
+inv("rue", "RAW_INGREDIENTS", "SPICES", "kg", 350, L("Rue", "ጤና አዳም", "Calaatama"), ["tena adam"]);
+inv("lippia", "RAW_INGREDIENTS", "SPICES", "kg", 350, L("Lippia leaves", "ኮሰረት", "Lippia leaves"), ["koseret"]);
 inv("salt", "RAW_INGREDIENTS", "SPICES", "kg", 25, L("Salt", "ጨው", "Soogidda"), ["chew"]);
-inv("korerima", "RAW_INGREDIENTS", "SPECIALTY", "kg", 900, L("Korerima (Ethiopian cardamom)", "ኮረሪማ", "Korarimaa"));
-// Beverage & bar
-inv("beer", "BEVERAGE_BAR", "ALCOHOL", "crates", 1150, L("Beer", "ቢራ", "Biiraa"), ["bira"]);
-inv("tej", "BEVERAGE_BAR", "ALCOHOL", "liters", 180, L("Tej (honey wine)", "ጠጅ", "Daadhii"));
+inv("sugar", "RAW_INGREDIENTS", "SPICES", "kg", 90, L("Sugar", "ስኳር", "Shukkaara"), ["sukar"]);
+inv("awaze", "RAW_INGREDIENTS", "CONDIMENTS", "kg", 400, L("Spiced chili paste (awaze)", "አዋዜ", "Spiced chili paste (awaze)"), ["awaze"]);
+inv("datta", "RAW_INGREDIENTS", "CONDIMENTS", "kg", 300, L("Green herb-chili paste (datta)", "ዳጣ", "Green herb-chili paste (datta)"), ["data", "senafich"]);
+inv("ketchup", "RAW_INGREDIENTS", "CONDIMENTS", "kg", 200, L("Ketchup", "ኬቻፕ", "Kecaappii"));
+inv("mayonnaise", "RAW_INGREDIENTS", "CONDIMENTS", "kg", 260, L("Mayonnaise", "ማዮኔዝ", "Maayooneezii"), ["mayo"]);
+inv("mustard", "RAW_INGREDIENTS", "CONDIMENTS", "kg", 280, L("Mustard", "ሰናፍጭ", "Sanaaficha"), ["senafich"]);
+inv("vinegar", "RAW_INGREDIENTS", "CONDIMENTS", "liters", 90, L("Vinegar", "ኮምጣጤ", "Vinegar"), ["komtatie"]);
+// Dairy, oils & fats
+inv("kibbeh", "RAW_INGREDIENTS", "DAIRY", "kg", 900, L("Butter (kibbeh)", "ቅቤ", "Dhadhaa"), ["kibe", "butter"]);
+inv("mozzarella", "RAW_INGREDIENTS", "DAIRY", "kg", 700, L("Mozzarella", "ሞዛሬላ", "Mozaareelaa"), ["cheese"]);
+inv("ayib", "RAW_INGREDIENTS", "DAIRY", "kg", 220, L("Cheese (ayib)", "አይብ", "Baaduu"), ["cheese", "ayib"]);
+inv("milk", "RAW_INGREDIENTS", "DAIRY", "liters", 60, L("Fresh milk", "ትኩስ ወተት", "Aannan"), ["wetet"]);
+inv("yogurt", "RAW_INGREDIENTS", "DAIRY", "liters", 90, L("Yogurt", "እርጎ", "Itittuu"), ["ergo"]);
+inv("oil", "RAW_INGREDIENTS", "OILS", "liters", 210, L("Vegetable / sunflower cooking oil", "የምግብ ዘይት", "Zayita nyaataa"), ["zeyt", "sunflower"]);
+inv("olive-oil", "RAW_INGREDIENTS", "OILS", "liters", 650, L("Olive oil", "የወይራ ዘይት", "Zayita ejersaa"));
+// Beverages & coffee supplies
+inv("coffee", "BEVERAGE_BAR", "COFFEE_TEA", "kg", 520, L("Raw green coffee beans", "ጥሬ ቡና", "Buna dheedhii"), ["buna"]);
+inv("espresso-beans", "BEVERAGE_BAR", "COFFEE_TEA", "kg", 900, L("Roasted espresso beans", "የተቆላ የኤስፕሬሶ ቡና", "Roasted espresso beans"), ["espresso", "buna"]);
+inv("tea", "BEVERAGE_BAR", "COFFEE_TEA", "kg", 380, L("Black tea leaves", "የሻይ ቅጠል", "Baala shaayii"), ["shai"]);
+inv("cloves", "BEVERAGE_BAR", "COFFEE_TEA", "kg", 900, L("Cloves", "ቅርንፉድ", "Cloves"), ["kirinfud"]);
+inv("cinnamon", "BEVERAGE_BAR", "COFFEE_TEA", "kg", 700, L("Cinnamon", "ቀረፋ", "Cinnamon"), ["kerefa"]);
+inv("water", "BEVERAGE_BAR", "SOFT", "boxes", 240, L("Bottled still water", "የታሸገ ውሃ", "Bishaan qabame"), ["wuha"]);
+inv("mineral-water", "BEVERAGE_BAR", "SOFT", "crates", 480, L("Mineral water", "የማዕድን ውሃ", "Mineral water"), ["sparkling"]);
 inv("wine", "BEVERAGE_BAR", "ALCOHOL", "bottles", 420, L("Wine", "ወይን ጠጅ", "Wayinii"));
-inv("soft-drinks", "BEVERAGE_BAR", "SOFT", "crates", 700, L("Soft Drinks", "ለስላሳ መጠጦች", "Dhugaatii Laafaa"), ["cola", "sprite", "fanta", "ambo"]);
-inv("water", "BEVERAGE_BAR", "SOFT", "boxes", 240, L("Bottled Water", "የታሸገ ውሃ", "Bishaan Qabame"), ["wuha"]);
-inv("coffee", "BEVERAGE_BAR", "COFFEE_TEA", "kg", 520, L("Coffee Beans", "የቡና ፍሬ", "Firii Bunaa"), ["buna"]);
-inv("tea", "BEVERAGE_BAR", "COFFEE_TEA", "kg", 380, L("Tea Leaves", "የሻይ ቅጠል", "Baala Shaayii"), ["shai"]);
-inv("syrup", "BEVERAGE_BAR", "MIXERS", "liters", 300, L("Syrups & Mixers", "ሽሮፕ እና ማደባለቂያ", "Siiroppii fi Makkaa"));
-inv("ice", "BEVERAGE_BAR", "MIXERS", "bags", 80, L("Ice", "በረዶ", "Cabbii"));
+inv("frankincense", "BEVERAGE_BAR", "CEREMONY", "kg", 300, L("Frankincense", "ዕጣን", "Ixaana"), ["etan"]);
+inv("charcoal", "BEVERAGE_BAR", "CEREMONY", "bags", 350, L("Charcoal", "ከሰል", "Cilee"), ["kesel"]);
+// Soft drinks (one item each)
+inv("sd-coca-cola", "BEVERAGE_BAR", "SOFT", "crates", 700, L("Coca-Cola", "Coca-Cola", "Coca-Cola"), ["soda", "lislasa"]);
+inv("sd-sprite", "BEVERAGE_BAR", "SOFT", "crates", 700, L("Sprite", "Sprite", "Sprite"), ["soda", "lislasa"]);
+inv("sd-fanta-orange", "BEVERAGE_BAR", "SOFT", "crates", 700, L("Fanta Orange", "Fanta Orange", "Fanta Orange"), ["soda", "lislasa"]);
+inv("sd-fanta-pineapple", "BEVERAGE_BAR", "SOFT", "crates", 700, L("Fanta Pineapple", "Fanta Pineapple", "Fanta Pineapple"), ["soda", "lislasa"]);
+inv("sd-pepsi", "BEVERAGE_BAR", "SOFT", "crates", 700, L("Pepsi", "Pepsi", "Pepsi"), ["soda", "lislasa"]);
+inv("sd-7up", "BEVERAGE_BAR", "SOFT", "crates", 700, L("7UP", "7UP", "7UP"), ["soda", "lislasa"]);
+inv("sd-mirinda", "BEVERAGE_BAR", "SOFT", "crates", 700, L("Mirinda", "Mirinda", "Mirinda"), ["soda", "lislasa"]);
+inv("sd-ambo", "BEVERAGE_BAR", "SOFT", "crates", 700, L("Ambo", "Ambo", "Ambo"), ["soda", "lislasa"]);
+inv("sd-sofi-malt", "BEVERAGE_BAR", "SOFT", "crates", 700, L("Sofi Malt", "Sofi Malt", "Sofi Malt"), ["soda", "lislasa"]);
+inv("sd-negus", "BEVERAGE_BAR", "SOFT", "crates", 700, L("Negus", "Negus", "Negus"), ["soda", "lislasa"]);
+inv("sd-malta-guinness", "BEVERAGE_BAR", "SOFT", "crates", 700, L("Malta Guinness", "Malta Guinness", "Malta Guinness"), ["soda", "lislasa"]);
+// Beers (one item each)
+inv("beer-st-george", "BEVERAGE_BAR", "ALCOHOL", "crates", 1150, L("St. George", "St. George", "St. George"), ["beer", "bira"]);
+inv("beer-heineken", "BEVERAGE_BAR", "ALCOHOL", "crates", 1150, L("Heineken", "Heineken", "Heineken"), ["beer", "bira"]);
+inv("beer-walia", "BEVERAGE_BAR", "ALCOHOL", "crates", 1150, L("Walia", "Walia", "Walia"), ["beer", "bira"]);
+inv("beer-bedele-regular", "BEVERAGE_BAR", "ALCOHOL", "crates", 1150, L("Bedele Regular", "Bedele Regular", "Bedele Regular"), ["beer", "bira"]);
+inv("beer-bedele-special", "BEVERAGE_BAR", "ALCOHOL", "crates", 1150, L("Bedele Special", "Bedele Special", "Bedele Special"), ["beer", "bira"]);
+inv("beer-harar", "BEVERAGE_BAR", "ALCOHOL", "crates", 1150, L("Harar", "Harar", "Harar"), ["beer", "bira"]);
+inv("beer-desperados", "BEVERAGE_BAR", "ALCOHOL", "crates", 1150, L("Desperados", "Desperados", "Desperados"), ["beer", "bira"]);
+inv("beer-dashen", "BEVERAGE_BAR", "ALCOHOL", "crates", 1150, L("Dashen", "Dashen", "Dashen"), ["beer", "bira"]);
+inv("beer-habesha", "BEVERAGE_BAR", "ALCOHOL", "crates", 1150, L("Habesha", "Habesha", "Habesha"), ["beer", "bira"]);
+inv("beer-arada-lime", "BEVERAGE_BAR", "ALCOHOL", "crates", 1150, L("Arada Lime", "Arada Lime", "Arada Lime"), ["beer", "bira"]);
+inv("beer-arada-pineapple", "BEVERAGE_BAR", "ALCOHOL", "crates", 1150, L("Arada Pineapple", "Arada Pineapple", "Arada Pineapple"), ["beer", "bira"]);
+inv("beer-arada-apple", "BEVERAGE_BAR", "ALCOHOL", "crates", 1150, L("Arada Apple", "Arada Apple", "Arada Apple"), ["beer", "bira"]);
 // Packaging & takeout
 inv("takeout-box", "PACKAGING_DISPOSABLES", "TAKEOUT", "packs", 350, L("Takeout Boxes", "የምግብ መውሰጃ ሳጥኖች", "Saanduqa Nyaata Fudhatamu"));
 inv("foil-sheets", "PACKAGING_DISPOSABLES", "WRAPS", "packs", 220, L("Foil Sheets", "የፎይል ወረቀቶች", "Waraqaa Fooyilii"));

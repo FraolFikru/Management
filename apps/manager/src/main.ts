@@ -7,9 +7,10 @@
 import { renderHelp } from "./views/help";
 import "./style.css";
 import type { ViewId } from "./types";
-import { isLanguage, setLanguage, t } from "./i18n";
+import { isLanguage, setLanguage, t, tk } from "./i18n";
 import { isPeriod } from "./catalog";
-import { loadFromBackend, onSyncError, refreshRestock, savePrefs, signOut, signedIn, state, switchUser, user } from "./store";
+import { loadFromBackend, lowStock, onSyncError, savePrefs, signOut, signedIn, state, switchUser, syncing, user } from "./store";
+import { startAutoRefresh } from "./refresh";
 import { restockActions, submitRestock } from "./views/restock";
 import { submitMinimums } from "./views/minimums";
 import { isLive, sessionUser, signIn as apiSignIn, signOut as apiSignOut } from "./api";
@@ -63,15 +64,29 @@ async function startLive(): Promise<void> {
   rebuild();
 }
 
-/* Restock statuses change in the Purchases app: check every 30 s (only while this tab is visible). */
-setInterval(() => {
-  if (document.hidden || !signedIn()) return;
-  refreshRestock().then((changed) => {
-    if (!changed || state.modal) return;
-    const typing = document.activeElement?.matches("input, textarea, select");
-    if (!typing) render();
-  }, () => { /* offline: try again next time */ });
-}, 30_000);
+/* Everything changes in other apps (purchases, dispatch requests, the kitchen using stock): reload the
+   branch every 30 s while the tab is visible, and on the Refresh button. A newly low item is announced with
+   the dish that used it ("Chicken stock low — 500 g used in Doro Wat #021"). */
+const lowNow = (): Map<string, string> => new Map(lowStock().map((i) => [i.id, i.lastUse?.at ?? ""] as const));
+const auto = startAutoRefresh({
+  enabled: () => isLive && signedIn(),
+  lang: () => state.lang,
+  busy: () => syncing() || !!state.modal,
+  everyMs: 30_000,
+  reload: async () => {
+    const before = lowNow();
+    await loadFromBackend();
+    const fresh = lowStock().filter((i) => !before.has(i.id) || (i.lastUse && before.get(i.id) !== i.lastUse.at));
+    const hit = fresh.find((i) => i.lastUse) ?? fresh[0];
+    if (hit) {
+      toast(hit.lastUse
+        ? t("{item} stock low — {qty} used in {dish} #{no}", { item: tk(hit.nameKey), qty: hit.lastUse.text, dish: hit.lastUse.dish, no: hit.lastUse.orderNumber })
+        : t("{item} is at or below its restock minimum", { item: tk(hit.nameKey) }));
+    }
+    return true;
+  },
+  redraw: () => render(),
+});
 
 onSyncError((message) => {
   toast(t("Not saved: {reason}", { reason: message }));
@@ -122,6 +137,7 @@ function rebuild(focusSelector?: string): void {
   if (app) app.innerHTML = "";
   render(focusSelector);
   if (state.modal) renderModal();
+  auto.sync();
 }
 
 const applyTheme = (): void => { document.documentElement.dataset.theme = state.theme; };

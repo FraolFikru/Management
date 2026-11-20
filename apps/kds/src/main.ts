@@ -5,19 +5,22 @@
    ========================================================= */
 
 import "./style.css";
-import type { KDSOrderStatus, KitchenTicket, OrderTypeFilter, StationFilter } from "./types";
-import { createFeed, liveConfigured } from "./feed";
-import { currentUser, signInScreen } from "./auth";
+import type { KDSOrderStatus, KitchenTicket, OrderTypeFilter, StationFilter, StockWarning, TicketIngredients } from "./types";
+import { branchId, createFeed, liveConfigured } from "./feed";
+import { parseEvent } from "./feed/validate";
+import { startAutoRefresh } from "./refresh";
+import { accessToken, apiBase, currentUser, signInScreen } from "./auth";
 import { initHelp } from "./help";
-import { isLanguage, t } from "./i18n";
+import { getLanguage, isLanguage, t } from "./i18n";
 import { clock } from "./format";
 import { audioReady, chime, unlockAudio } from "./sound";
 import {
-  attachFeed, bump, column, itemsFor, onNewTickets, onSendFailure, recall, setLang, setSound, setStation,
+  applySnapshot, attachFeed, bump, column, itemsFor, markReady, onNewTickets, onSendFailure, recall, setLang, setSound, setStation,
   notifyReady, setStatus, setType, state, subscribe, tick, toggleItem, toggleTheme,
 } from "./store";
 import { board } from "./ui/board";
 import { $ } from "./ui/dom";
+import { amount, confirmIngredients, loadIngredients } from "./ui/ingredients";
 import { timerView, waitingText } from "./ui/ticket";
 import { toast } from "./ui/toast";
 
@@ -94,12 +97,44 @@ onSendFailure(() => toast(t("Could not save. The change was undone; please try a
 
 const STATUS_NAME: Record<KDSOrderStatus, string> = { PENDING: "Pending", PREPARING: "Preparing", READY: "Ready" };
 
+/** Kitchen heads-up after the "Ingredients used" step: stock at or near its restock level. */
+function stockToasts(warnings: StockWarning[]): void {
+  for (const w of warnings.slice(0, 3)) {
+    const item = w.names[getLanguage()] || w.names.en;
+    const left = amount(w.onHand, w.unit);
+    toast(w.low ? t("⚠️ {item} is at its restock level — {qty} left", { item, qty: left }) : t("⚠️ {item} running low — {qty} left", { item, qty: left }),
+      { kind: "warn", ms: 5000 });
+  }
+}
+
+/** Live mode, marking a whole ticket ready: confirm what each dish really used first (when a recipe lists anything). */
+async function readyWithIngredients(id: string): Promise<boolean | "cancelled"> {
+  let data: TicketIngredients;
+  try {
+    data = await loadIngredients(id);
+  } catch {
+    toast(t("Could not load the recipe. Check the connection and try again."), { kind: "bad", ms: 6000 });
+    return "cancelled";
+  }
+  if (!data.needed) return setStatus(id, "READY");       // nothing on the recipe to confirm (e.g. bottled drinks)
+  let warnings: StockWarning[] = [];
+  const done = await confirmIngredients(data, async (usage) => {
+    const r = await markReady(id, usage);
+    warnings = r.warnings;
+    return r.ok;
+  });
+  if (!done) return "cancelled";
+  window.setTimeout(() => stockToasts(warnings), 400);
+  return true;
+}
+
 async function changeStatus(id: string, to: KDSOrderStatus): Promise<void> {
   const tk = state.tickets.get(id);
   if (!tk) return;
   const from = tk.status;
   const no = tk.orderNumber;
-  if (!(await setStatus(id, to))) return;
+  const ok = to === "READY" && liveConfigured() ? await readyWithIngredients(id) : await setStatus(id, to);
+  if (ok !== true) return;
   const forward = (from === "PENDING" && to === "PREPARING") || (from === "PREPARING" && to === "READY");
   const msg = !forward
     ? t("{no} moved back to {status}", { no, status: t(STATUS_NAME[to]) })
@@ -178,12 +213,31 @@ async function keepAwake(): Promise<void> {
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") void keepAwake(); });
 void keepAwake();
 
+/* ---------- refresh: the live feed pushes every change; this is the button and a 30 s safety net ---------- */
+
+const auto = startAutoRefresh({
+  enabled: () => liveConfigured() && !!currentUser(),
+  lang: getLanguage,
+  busy: () => state.busy.size > 0,
+  everyMs: 30_000,
+  reload: async () => {
+    const token = await accessToken();
+    const res = await fetch(`${apiBase()}/kds/tickets`, { headers: { "X-Branch-Id": branchId(), ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
+    if (!res.ok) throw new Error(`tickets ${res.status}`);
+    const e = parseEvent(await res.text());
+    if (!e || e.type !== "snapshot") throw new Error("bad snapshot");
+    return applySnapshot(e.tickets);
+  },
+  redraw: render,
+});
+
 /* ---------- start ---------- */
 
 render();
 void (async () => {
   if (liveConfigured() && !currentUser()) await signInScreen();
   attachFeed(createFeed());
+  auto.sync();
 })();
 
 initHelp();

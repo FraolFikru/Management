@@ -1,3 +1,4 @@
+import { startAutoRefresh } from "./refresh";
 import "./style.css";
 import { initHelp } from "./help";
 import { initInstall, install } from "./install";
@@ -60,7 +61,25 @@ function stop(): void {
   state.floor = null; state.orderId = null; state.sheet = null; state.branches = [];
   api.cache.write("seer.waiter.floor", null);
 }
-api.onSessionLost(() => { stop(); render(); });
+api.onSessionLost(() => { stop(); render(); auto.sync(); });
+
+/* The Refresh button (and a reload when the phone comes back): floor, open order and menu. The live feed and the
+   15 s poll above keep it current otherwise; a failed refresh says so on the button. */
+const auto = startAutoRefresh({
+  enabled: () => !!api.sessionUser(),
+  lang: () => state.lang,
+  busy: () => !!state.sheet,
+  everyMs: 60_000,
+  bottom: 140,
+  reload: async () => {
+    await S.loadFloor();
+    if (state.offline || state.floorError) throw new Error(state.floorError || "offline");
+    await S.loadMenu();
+    if (state.orderId) await S.loadOrder(state.orderId);
+    return true;
+  },
+  redraw: () => render(),
+});
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && api.sessionUser()) { S.refreshSoon(); void api.drain(); } });
 
 function signInMessage(err: unknown, pin: boolean): string {

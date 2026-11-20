@@ -24,12 +24,16 @@ database (db_init) and a live one end up identical.
       branch's Purchases clerks
   M8  Lower restock minimums (reorder points) on items still at the old
       demo values; values someone changed are left alone
+  M10 Kitchen "Ingredients used" log
+      dish_ingredient_usage   expected vs actual per ticket dish and stock item
+  M11 New stock item list for the Purchases team (catalogue.py)
+  M12 Starter recipes for the demo menu (dishes with no recipe yet)
 """
 from __future__ import annotations
 
 import logging
 
-from .db import Db
+from .db import Db, now_iso
 
 log = logging.getLogger("seer.migrate")
 
@@ -284,6 +288,103 @@ def dispatch_assignee(db: Db) -> None:
     _add_column(db, "dispatch_request", "assigned_to", "text REFERENCES app_user(id)", "text REFERENCES app_user(id)")
 
 
+def kitchen_usage(db: Db) -> None:
+    """M10 What the kitchen actually used for each dish (the "Ingredients used" step on the Kitchen screen).
+    One row per ticket dish and stock item: expected (recipe × quantity) next to actual (what the cook entered)."""
+    pg = db.dialect == "postgres"
+    ts = "timestamptz NOT NULL DEFAULT now()" if pg else "TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))"
+    db.execute(f"""CREATE TABLE IF NOT EXISTS dish_ingredient_usage (
+        id                 text PRIMARY KEY,
+        org_id             text NOT NULL,
+        branch_id          text NOT NULL,
+        ticket_id          text NOT NULL REFERENCES kds_ticket(id),
+        ticket_item_id     text NOT NULL REFERENCES kds_ticket_item(id),
+        order_id           text NOT NULL,
+        order_number       text NOT NULL,
+        menu_item_id       text,
+        dish_name          text NOT NULL,
+        inventory_item_id  text NOT NULL REFERENCES inventory_item(id),
+        unit_code          text NOT NULL REFERENCES unit(code),
+        expected_qty       numeric(14,3) NOT NULL DEFAULT 0,
+        actual_qty         numeric(14,3) NOT NULL CHECK (actual_qty >= 0),
+        stock_qty          numeric(14,3) NOT NULL DEFAULT 0,
+        staff_id           text REFERENCES app_user(id),
+        recorded_at        {ts},
+        FOREIGN KEY (org_id, branch_id) REFERENCES branch (org_id, id)
+    )""")
+    db.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_dish_usage_line ON dish_ingredient_usage (ticket_item_id, inventory_item_id)")
+    db.execute("CREATE INDEX IF NOT EXISTS ix_dish_usage_item ON dish_ingredient_usage (branch_id, inventory_item_id, recorded_at)")
+    db.execute("CREATE INDEX IF NOT EXISTS ix_dish_usage_order ON dish_ingredient_usage (order_id)")
+
+
+def _text(db: Db, key: str, lang: str, text: str) -> None:
+    """Platform text (org_id NULL): insert, or update when it changed. Per-organisation overrides are left alone."""
+    cur = db.one("SELECT id, text FROM i18n_text WHERE key = ? AND lang = ? AND org_id IS NULL", (key, lang))
+    if not cur:
+        db.execute("INSERT INTO i18n_text (id, key, lang, text) VALUES (?, ?, ?, ?)", (f"i18n-{key}-{lang}", key, lang, text))
+    elif cur["text"] != text:
+        db.execute("UPDATE i18n_text SET text = ? WHERE id = ?", (text, cur["id"]))
+
+
+def ingredient_catalogue(db: Db) -> None:
+    """M11 The Purchases team's new stock item list (catalogue.py). Items that keep their id keep their stock and
+    history and only get the new name; new items are added with a small restock minimum at every branch; old food and
+    drink items that are not on the list are hidden (deleted_at) but their records stay. Safe to repeat."""
+    from . import catalogue as cat
+
+    for g, (en, am, om) in cat.NEW_GROUPS.items():
+        for lang, text in (("en", en), ("am", am), ("om", om)):
+            _text(db, f"group.{g}", lang, text)
+    for org in db.all("SELECT id FROM organization"):
+        oid = org["id"]
+        branches = [b["id"] for b in db.all("SELECT id FROM branch WHERE org_id = ? AND deleted_at IS NULL", (oid,))]
+        for r in cat.rows():
+            main = cat.GROUP_MAIN[r["group"]]
+            key = f"inv.{r['id']}"
+            cur = db.one("SELECT org_id, deleted_at FROM inventory_item WHERE id = ?", (r["id"],))
+            if cur and cur["org_id"] != oid:
+                continue                                   # the id belongs to another organisation
+            if not cur:
+                db.insert("inventory_item", {"id": r["id"], "org_id": oid, "name_key": key, "main_category_code": main,
+                                             "group_key": f"group.{r['group']}", "unit_code": r["unit"],
+                                             "standard_unit_cost": r["cost"], "is_custom": False})
+                for b in branches:
+                    if not db.scalar("SELECT 1 FROM branch_stock WHERE branch_id = ? AND item_id = ?", (b, r["id"])):
+                        db.insert("branch_stock", {"org_id": oid, "branch_id": b, "item_id": r["id"], "on_hand": 0,
+                                                   "reorder_point": r["minimum"]})
+            elif cur["deleted_at"]:
+                db.update("inventory_item", {"id": r["id"]}, {"deleted_at": None, "is_active": True})
+            # group/main move with the list (e.g. avocado → Fruits); the unit of an item already in use stays
+            db.execute("UPDATE inventory_item SET group_key = ?, main_category_code = ? WHERE id = ?",
+                       (f"group.{r['group']}", main, r["id"]))
+            for lang in ("en", "am", "om"):
+                _text(db, key, lang, r[lang] or r["en"])
+            for a in r["aliases"]:
+                if not db.scalar("SELECT 1 FROM inventory_item_alias WHERE item_id = ? AND alias = ?", (r["id"], a)):
+                    db.insert("inventory_item_alias", {"item_id": r["id"], "alias": a})
+        for old in cat.RETIRED:
+            db.execute("UPDATE inventory_item SET deleted_at = ?, is_active = ? WHERE id = ? AND org_id = ? AND deleted_at IS NULL",
+                       (now_iso(), False, old, oid))
+            # recipes that pointed at a retired item: nothing on the new list replaces it, so the line is kept
+            # (the kitchen can still record it) and reported once in the log for the owner to fix
+            n = db.scalar("SELECT count(*) FROM recipe_component WHERE inventory_item_id = ?", (old,))
+            if n:
+                log.warning("seer: %s recipe line(s) still use the retired stock item %r; change them in the recipe", n, old)
+
+
+def starter_recipes(db: Db) -> None:
+    """M12 Starter recipes for the demo menu, only for dishes that have no recipe yet (catalogue.STARTER_RECIPES)."""
+    from . import catalogue as cat
+
+    for menu_id, comps in cat.STARTER_RECIPES.items():
+        m = db.one("SELECT org_id FROM menu_item WHERE id = ?", (menu_id,))
+        if not m or db.scalar("SELECT 1 FROM recipe_component WHERE menu_item_id = ?", (menu_id,)):
+            continue
+        for item_id, qty, unit in comps:
+            if db.scalar("SELECT 1 FROM inventory_item WHERE id = ? AND org_id = ? AND deleted_at IS NULL", (item_id, m["org_id"])):
+                db.insert("recipe_component", {"menu_item_id": menu_id, "inventory_item_id": item_id, "quantity": qty, "unit_code": unit})
+
+
 def migrate() -> None:
     db = Db.from_env()
     try:
@@ -298,6 +399,9 @@ def migrate() -> None:
             lower_minimums(db)
             owner_changes(db)
             dispatch_assignee(db)
+            kitchen_usage(db)
+            ingredient_catalogue(db)
+            starter_recipes(db)
     except Exception:
         log.exception("seer: migration failed")
         raise

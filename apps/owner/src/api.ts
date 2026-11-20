@@ -97,7 +97,7 @@ export interface Bootstrap {
     id: PaymentMethod; name: string; balance: number; change: number; account: string; spent: number; limit: number; moneyIn: number;
     activity: { label: string; date: string; amount: number }[];
   }>;
-  transactions: { id: string; description: string; category: TxCategory; date: string; amount: number; status: Status }[];
+  transactions: { id: string; description: string; category: TxCategory; date: string; amount: number; status: Status; ref?: { kind: string; id: string } }[];
   topDishes: { name: string; sold: number; revenue: number; pct: number }[];
   peakHours: { hour: string; orders: number }[];
   budgets: { category: Category; allocated: number; spent: number; lastMonth: number; fixed?: { committed: number; paidOn: string | null } }[];
@@ -171,3 +171,19 @@ export const decideOwnerChange = (id: string, action: "approve" | "reject" | "ca
 /** Your own password (needs the current one). */
 export const changeMyPassword = (currentPassword: string, newPassword: string) =>
   api<{ ok: boolean }>("/auth/password", { method: "POST", body: JSON.stringify({ currentPassword, newPassword }) });
+
+/* ---------- one transaction in full (the … button on the Transactions table) ---------- */
+
+interface Person { name: string; role: string }
+export interface TxDetail {
+  kind: string; id: string; number: string; type: string; at: string; branch: string;
+  where?: string; vendor?: string; receiptNo?: string; dueDate?: string; note?: string;
+  lines: { item: string; quantity: number; unit: string; unitPrice: number; total: number; note?: string }[];
+  vat: number; total: number;
+  payments: { method: string; amount: number; reference?: string; at?: string; by?: Person | null }[];
+  status: { code: string; label: string; decidedBy?: Person | null; decidedAt?: string | null; reason?: string };
+  createdBy?: Person | null; waiter?: Person | null;
+  ingredients?: { dish: string; itemId: string; item: string; unit: string; expected: number; actual: number; recordedAt: string }[];
+}
+export const getTransaction = (kind: string, id: string) =>
+  api<TxDetail>(`/owner/transactions/${encodeURIComponent(kind)}/${encodeURIComponent(id)}`);

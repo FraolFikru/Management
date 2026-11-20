@@ -670,4 +670,11 @@ export const UI_STRINGS: Record<string, Entry> = {
   "You can still decide these, for example when they are away.": { am: "እነዚህንም መወሰን ይችላሉ፤ ለምሳሌ እነርሱ በሌሉበት ጊዜ።", om: "Kanneenis murteessuu dandeessa, fakkeenyaaf yeroo isaan hin jirre." },
   "New requests from the Purchases team appear here.": { am: "ከግዢ ቡድኑ የሚመጡ አዳዲስ ጥያቄዎች እዚህ ይታያሉ።", om: "Gaaffiiwwan haaraan garee bittaa irraa as mul'atu." },
   "Nothing was sent to you.": { am: "ወደ እርስዎ የተላከ ነገር የለም።", om: "Wanti siif ergame hin jiru." },
+  /* kitchen context on low stock, dispatch settles purchases */
+  "{item} stock low — {qty} used in {dish} #{no}": { am: "{item} ክምችት ዝቅተኛ ነው — {qty} በ{dish} #{no} ጥቅም ላይ ውሏል", om: "Kuusaan {item} gadi bu'eera — {qty} {dish} #{no} keessatti itti fayyadame" },
+  "{item} is at or below its restock minimum": { am: "{item} የመሙያ ዝቅተኛ ደረጃው ላይ ወይም ከዚያ በታች ነው", om: "{item} sadarkaa guutamuu isaa irra ykn gadi jira" },
+  "{qty} used in {dish} #{no}": { am: "{qty} በ{dish} #{no} ጥቅም ላይ ውሏል", om: "{qty} {dish} #{no} keessatti itti fayyadame" },
+  "Approving also approves {n} purchase(s) waiting in Purchases (COGS): +{q}": { am: "ማጽደቅ በግዢዎች (COGS) የሚጠብቁ {n} ግዢ(ዎች)ንም ያጸድቃል፦ +{q}", om: "Raggaasisuun bittaa {n} Bittaa (COGS) keessatti eeggatan illee ni raggaasisa: +{q}" },
+  "{n} purchase(s) approved": { am: "{n} ግዢ(ዎች) ጸድቀዋል", om: "Bittaan {n} raggaasifameera" },
+  "Stock requests sent by the Purchases team. Approving moves the stock out (and approves that item's purchases still waiting); rejecting needs a reason.": { am: "በግዢ ቡድኑ የተላኩ የክምችት ጥያቄዎች። ማጽደቅ ክምችቱን ያስወጣል (የዚያን ዕቃ የሚጠብቁ ግዢዎችንም ያጸድቃል)፤ ውድቅ ማድረግ ምክንያት ይፈልጋል።", om: "Gaaffiiwwan kuusaa garee bittaatiin ergaman. Raggaasisuun kuusaa baasa (bittaa meeshaa sanaa eeggatan illee ni raggaasisa); diduun sababa barbaada." },
 };

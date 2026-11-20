@@ -7,8 +7,8 @@
    ========================================================= */
 
 import type {
-  ConnectionState, FeedCommand, FeedEvent, KDSOrderStatus, KitchenItem, KitchenStation, KitchenTicket,
-  OrderFeed, OrderTypeFilter, StationFilter, SupportedLanguage, Urgency,
+  ConnectionState, FeedCommand, FeedEvent, IngredientUse, KDSOrderStatus, KitchenItem, KitchenStation, KitchenTicket,
+  OrderFeed, OrderTypeFilter, StationFilter, StockWarning, SupportedLanguage, Urgency,
 } from "./types";
 import { KDS_OPERATOR, NEW_BADGE_MS, RECALL_LIMIT, STATIONS, URGENCY_MINUTES } from "./catalog";
 import { isLanguage, setLanguage } from "./i18n";
@@ -139,6 +139,14 @@ export function attachFeed(f: OrderFeed): void {
 
 export const feedKind = (): OrderFeed["kind"] | null => feed?.kind ?? null;
 
+/** The Refresh button / safety net under the live feed: apply a fresh board from the server.
+    Skipped while a change of ours is on its way (it would flicker back). Returns false when skipped. */
+export function applySnapshot(tickets: KitchenTicket[]): boolean {
+  if (state.busy.size) return false;
+  handleEvent({ type: "snapshot", tickets });
+  return true;
+}
+
 function handleEvent(e: FeedEvent): void {
   const arrived: KitchenTicket[] = [];
   if (e.type === "snapshot") {
@@ -172,20 +180,26 @@ const nowIso = (): string => new Date().toISOString();
 
 /** Apply a local change, send commands, roll back if the backend refuses. */
 async function commit(id: string, mutate: (tk: KitchenTicket) => void, cmds: FeedCommand[]): Promise<boolean> {
+  return (await commitWith(id, mutate, cmds)).ok;
+}
+
+/** Like commit, and also hands back the server's answer to the last command. */
+async function commitWith(id: string, mutate: (tk: KitchenTicket) => void, cmds: FeedCommand[]): Promise<{ ok: boolean; answer?: unknown }> {
   const tk = state.tickets.get(id);
-  if (!tk || !feed || state.busy.has(id)) return false;
+  if (!tk || !feed || state.busy.has(id)) return { ok: false };
   const before = structuredClone(tk);
   mutate(tk);
   state.busy.add(id);
   changed();
   try {
-    for (const c of cmds) await feed.send(c);
-    return true;
+    let answer: unknown;
+    for (const c of cmds) answer = await feed.send(c);
+    return { ok: true, answer };
   } catch (err) {
     console.error("[kds] command failed", cmds, err);
     if (state.tickets.has(id)) state.tickets.set(id, before);
     onFailure();
-    return false;
+    return { ok: false };
   } finally {
     state.busy.delete(id);
     changed();
@@ -205,6 +219,17 @@ export async function setStatus(id: string, status: KDSOrderStatus): Promise<boo
   const tk = state.tickets.get(id);
   if (ok && status === "READY" && tk) recordPrep(tk);
   return ok;
+}
+
+/** Mark ready with the kitchen's "Ingredients used" entries. The server deducts them and marks the ticket ready in one
+    step: if anything fails nothing changes (the ticket is put back). Returns the kitchen's low-stock heads-up. */
+export async function markReady(id: string, usage: IngredientUse[]): Promise<{ ok: boolean; warnings: StockWarning[] }> {
+  const at = nowIso();
+  const r = await commitWith(id, (x) => applyStatus(x, "READY", at), [{ type: "status", ticketId: id, status: "READY", at, by: KDS_OPERATOR, usage }]);
+  const tk = state.tickets.get(id);
+  if (r.ok && tk) recordPrep(tk);
+  const warnings = (r.answer as { stockWarnings?: StockWarning[] } | null | undefined)?.stockWarnings ?? [];
+  return { ok: r.ok, warnings };
 }
 
 /** Some dishes are ticked, not all: send only those to the waiter. The other dishes stay as they are. */

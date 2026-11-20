@@ -153,8 +153,12 @@ def cash_move(db: Db, actor: Actor, account_id: str, amount: Decimal, kind: str,
 
 
 def apply_stock(db: Db, actor: Actor, branch_id: str, item_id: str, qty: Decimal, kind: str,
-                unit_cost: Decimal | None = None, allow_negative: bool = True, **refs: str) -> Decimal:
-    """Write a stock_movement and update the branch_stock projection; returns the new on-hand."""
+                unit_cost: Decimal | None = None, allow_negative: bool = True, alert: dict | None = None, **refs: str) -> Decimal:
+    """Write a stock_movement and update the branch_stock projection; returns the new on-hand.
+
+    The Manager's LOW STOCK alert fires when stock crosses the reorder point. With `alert` (the kitchen's
+    "Ingredients used" step) it fires on every deduction that leaves the item at or below it, and carries
+    the dish and portion that used it: {"dish", "orderNumber", "used", "unit"}."""
     s = db.one("SELECT * FROM branch_stock WHERE branch_id = ? AND item_id = ?", (branch_id, item_id))
     if not s:
         db.insert("branch_stock", {"org_id": actor.org_id, "branch_id": branch_id, "item_id": item_id, "on_hand": 0})
@@ -173,9 +177,35 @@ def apply_stock(db: Db, actor: Actor, branch_id: str, item_id: str, qty: Decimal
     db.insert("stock_movement", {"id": new_id("sm"), "org_id": actor.org_id, "branch_id": branch_id, "item_id": item_id,
                                  "qty_delta": qty, "unit_cost": unit_cost, "kind": kind, "created_by": actor.user_id, **refs})
     reorder = D(db.scalar("SELECT reorder_point FROM branch_stock WHERE branch_id = ? AND item_id = ?", (branch_id, item_id)))
-    if qty < 0 and new <= reorder < on_hand:       # just crossed the reorder point → Manager's LOW STOCK alert
-        outbox(db, actor.org_id, branch_id, "stock.low", "low", "branch_stock", item_id, {"itemId": item_id, "onHand": str(new)})
+    crossed = qty < 0 and new <= reorder < on_hand
+    if crossed or (alert and qty < 0 and reorder > 0 and new <= reorder):   # → Manager's LOW STOCK alert
+        payload: dict[str, Any] = {"itemId": item_id, "onHand": str(new), "reorderPoint": str(reorder)}
+        if alert:
+            it = db.one("SELECT name_key, custom_name, unit_code FROM inventory_item WHERE id = ?", (item_id,))
+            name = (it or {}).get("custom_name") or text_en(db, (it or {}).get("name_key")) or item_id
+            unit = (it or {}).get("unit_code") or ""
+            payload |= {**alert, "itemName": name, "unit": unit,
+                        "message": f"{name} stock low — {fmt_qty(D(alert['used']), alert['unit'])} used in {alert['dish']} "
+                                   f"#{alert['orderNumber']}. Current: {fmt_qty(new, unit)}, Reorder point: {fmt_qty(reorder, unit)}"}
+        outbox(db, actor.org_id, branch_id, "stock.low", "low", "branch_stock", item_id, payload)
     return new
+
+
+def text_en(db: Db, key: str | None) -> str | None:
+    if not key:
+        return None
+    return db.scalar("SELECT text FROM i18n_text WHERE key = ? AND lang = 'en' ORDER BY org_id IS NULL LIMIT 1", (key,))
+
+
+def fmt_qty(q: Decimal, unit: str) -> str:
+    """500 g rather than 0.5 kg for small amounts; trailing zeros dropped."""
+    if unit == "kg" and abs(q) < 1:
+        q, unit = q * 1000, "g"
+    if unit == "liters" and abs(q) < 1:
+        q, unit = q * 1000, "ml"
+    n = f"{q.quantize(Decimal('0.001')):f}".rstrip("0").rstrip(".")
+    short = {"liters": "L", "pcs": "pcs"}.get(unit, unit)
+    return f"{n}{short}" if short in ("kg", "g", "L", "ml") else f"{n} {short}"
 
 
 # ================================================================== POS → KDS
@@ -338,6 +368,253 @@ def kds_snapshot(db: Db, branch_id: str) -> dict:
     return {"type": "snapshot", "tickets": [kds_payload(db, r["id"]) for r in ids]}
 
 
+# ---- "Ingredients used": the kitchen confirms what each dish really took when it marks a ticket ready ----
+
+LOW_SOON = Decimal("1.2")          # kitchen heads-up when stock is at or within 20 % above the reorder point
+
+
+def _names(db: Db, key: str | None, custom: str | None = None) -> dict:
+    """{"en","am","om"} for a text key (platform text, then the organisation's own)."""
+    out = {"en": custom or "", "am": "", "om": ""}
+    if key:
+        for r in db.all("SELECT lang, text FROM i18n_text WHERE key = ? ORDER BY org_id IS NOT NULL", (key,)):
+            out[r["lang"]] = r["text"]
+    out["en"] = custom or out["en"] or (key or "").split(".", 1)[-1]
+    return {k: v or out["en"] for k, v in out.items()}
+
+
+def ticket_ingredients(db: Db, actor: Actor, ticket_id: str) -> dict:
+    """What the confirmation step shows: every dish on the ticket not yet recorded, with its recipe × quantity
+    pre-filled, plus the branch's stock items (to add something the recipe doesn't list)."""
+    t = _get(db, "kds_ticket", ticket_id, actor.org_id)
+    if actor.branch_id and t["branch_id"] != actor.branch_id and actor.role != "ADMIN":
+        raise NotFound("kds_ticket not found", id=ticket_id)
+    items = db.all("""SELECT i.* FROM kds_ticket_item i JOIN order_line l ON l.id = i.order_line_id
+                      WHERE i.ticket_id = ? AND NOT i.is_voided ORDER BY l.line_no""", (ticket_id,))
+    done = {r["ticket_item_id"] for r in db.all("SELECT DISTINCT ticket_item_id FROM dish_ingredient_usage WHERE ticket_id = ?", (ticket_id,))}
+    stock = {r["item_id"]: r for r in db.all("SELECT item_id, on_hand, reorder_point FROM branch_stock WHERE branch_id = ?", (t["branch_id"],))}
+    dishes = []
+    for i in items:
+        if i["id"] in done:
+            continue
+        q = D(i["quantity"])
+        comps = db.all("""SELECT r.inventory_item_id, r.quantity, r.unit_code, inv.name_key, inv.custom_name FROM recipe_component r
+                          JOIN inventory_item inv ON inv.id = r.inventory_item_id
+                          WHERE r.menu_item_id = ? AND inv.deleted_at IS NULL ORDER BY r.inventory_item_id""", (i["menu_item_id"],))
+        dishes.append({"ticketItemId": i["id"], "menuItemId": i["menu_item_id"], "dishName": i["item_name"],
+                       "dishNames": _names(db, db.scalar("SELECT name_key FROM menu_item WHERE id = ?", (i["menu_item_id"],)), None),
+                       "quantity": float(q),
+                       "ingredients": [{"itemId": c["inventory_item_id"], "names": _names(db, c["name_key"], c["custom_name"]),
+                                        "unit": c["unit_code"], "expected": float((D(c["quantity"]) * q).quantize(Decimal("0.001"))),
+                                        "onHand": float(D((stock.get(c["inventory_item_id"]) or {}).get("on_hand") or 0))}
+                                       for c in comps]})
+    catalog = [{"itemId": r["id"], "names": _names(db, r["name_key"], r["custom_name"]), "unit": r["unit_code"]}
+               for r in db.all("""SELECT i.id, i.name_key, i.custom_name, i.unit_code FROM inventory_item i
+                                  JOIN inventory_main_category m ON m.code = i.main_category_code
+                                  WHERE i.org_id = ? AND i.deleted_at IS NULL AND m.cost_category_code IN ('RAW_INGREDIENTS','BEVERAGE_BAR')
+                                  ORDER BY i.id""", (actor.org_id,))]
+    units = {r["code"]: _names(db, r["name_key"]) for r in db.all("SELECT code, name_key FROM unit")}
+    return {"ticketId": ticket_id, "orderNumber": t["order_number"], "dishes": dishes, "items": catalog, "units": units,
+            "needed": any(d["ingredients"] for d in dishes)}
+
+
+def record_ingredient_use(db: Db, actor: Actor, ticket: dict, usage: list[dict]) -> list[dict]:
+    """Deduct what the kitchen says each dish used (not the recipe) and log expected vs actual.
+    Runs in the same transaction as the READY status change, so either both happen or neither does.
+    Returns the kitchen's heads-up list: items now at or within 20 % above their reorder point."""
+    items = {r["id"]: r for r in db.all("SELECT * FROM kds_ticket_item WHERE ticket_id = ? AND NOT is_voided", (ticket["id"],))}
+    done = {(r["ticket_item_id"], r["inventory_item_id"]) for r in
+            db.all("SELECT ticket_item_id, inventory_item_id FROM dish_ingredient_usage WHERE ticket_id = ?", (ticket["id"],))}
+    touched: dict[str, None] = {}
+    for u in usage:
+        ti = items.get(u.get("ticketItemId") or "")
+        if not ti:
+            raise Invalid("that dish is not on this ticket", ticketItemId=u.get("ticketItemId"))
+        item_id = u.get("itemId") or ""
+        inv = db.one("SELECT * FROM inventory_item WHERE id = ? AND org_id = ? AND deleted_at IS NULL", (item_id, actor.org_id))
+        if not inv:
+            raise Invalid("unknown stock item", itemId=item_id)
+        try:
+            actual = D(u.get("actual"))
+        except Exception:  # noqa: BLE001
+            raise Invalid("enter an amount for every ingredient", itemId=item_id) from None
+        if actual < 0:
+            raise Invalid("an amount can't be below 0", itemId=item_id)
+        if (ti["id"], item_id) in done:
+            continue                                   # already recorded (e.g. the ticket went back and forth)
+        done.add((ti["id"], item_id))
+        rc = db.one("SELECT quantity, unit_code FROM recipe_component WHERE menu_item_id = ? AND inventory_item_id = ?",
+                    (ti["menu_item_id"], item_id))
+        unit = u.get("unit") or (rc or {}).get("unit_code") or inv["unit_code"]
+        if not db.scalar("SELECT 1 FROM unit WHERE code = ?", (unit,)):
+            raise Invalid("unknown unit", unit=unit)
+        expected = (D(rc["quantity"]) * D(ti["quantity"])).quantize(Decimal("0.001")) if rc else Decimal(0)
+        stock_qty, _ = in_item_units(db, item_id, actual, unit, Decimal(0))
+        if stock_qty > 0:
+            apply_stock(db, actor, ticket["branch_id"], item_id, -stock_qty, "SALE_DEPLETION", order_line_id=ti["order_line_id"],
+                        alert={"dish": ti["item_name"], "orderNumber": ticket["order_number"], "used": str(actual), "unit": unit,
+                               "ticketId": ticket["id"]})
+        db.insert("dish_ingredient_usage", {
+            "id": new_id("diu"), "org_id": actor.org_id, "branch_id": ticket["branch_id"], "ticket_id": ticket["id"],
+            "ticket_item_id": ti["id"], "order_id": ticket["order_id"], "order_number": ticket["order_number"],
+            "menu_item_id": ti["menu_item_id"], "dish_name": ti["item_name"], "inventory_item_id": item_id, "unit_code": unit,
+            "expected_qty": expected, "actual_qty": actual, "stock_qty": stock_qty, "staff_id": actor.user_id, "recorded_at": now_iso()})
+        touched[item_id] = None
+    warnings = []
+    for item_id in touched:
+        s = db.one("""SELECT b.on_hand, b.reorder_point, i.name_key, i.custom_name, i.unit_code FROM branch_stock b
+                      JOIN inventory_item i ON i.id = b.item_id WHERE b.branch_id = ? AND b.item_id = ?""", (ticket["branch_id"], item_id))
+        if not s:
+            continue
+        on_hand, reorder = D(s["on_hand"]), D(s["reorder_point"])
+        if reorder > 0 and on_hand <= reorder * LOW_SOON:
+            warnings.append({"itemId": item_id, "names": _names(db, s["name_key"], s["custom_name"]), "unit": s["unit_code"],
+                             "onHand": float(on_hand), "reorderPoint": float(reorder), "low": on_hand <= reorder})
+    if usage:
+        audit(db, actor, "KDS", "kds_ticket.ingredients", "kds_ticket", ticket["id"], "Ticket {orderNumber}: ingredients used",
+              {"orderNumber": ticket["order_number"], "lines": len(usage)}, branch_id=ticket["branch_id"])
+    return warnings
+
+
+def last_kitchen_use(db: Db, branch_id: str, days: int = 3) -> list[dict]:
+    """The latest "Ingredients used" entry per stock item (the Manager's low-stock card shows it as context)."""
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    out: dict[str, dict] = {}
+    for r in db.all("""SELECT inventory_item_id, dish_name, order_number, actual_qty, unit_code, recorded_at FROM dish_ingredient_usage
+                       WHERE branch_id = ? AND recorded_at >= ? ORDER BY recorded_at DESC""", (branch_id, since)):
+        if r["inventory_item_id"] in out:
+            continue
+        out[r["inventory_item_id"]] = {"itemId": r["inventory_item_id"], "dish": r["dish_name"], "orderNumber": r["order_number"],
+                                       "used": float(r["actual_qty"]), "unit": r["unit_code"],
+                                       "text": fmt_qty(D(r["actual_qty"]), r["unit_code"]), "at": _iso(r["recorded_at"])}
+    return list(out.values())
+
+
+def usage_for_order(db: Db, order_id: str) -> list[dict]:
+    return [{"dish": r["dish_name"], "itemId": r["inventory_item_id"], "item": text_en(db, f"inv.{r['inventory_item_id']}") or r["inventory_item_id"],
+             "unit": r["unit_code"], "expected": float(r["expected_qty"]), "actual": float(r["actual_qty"]), "recordedAt": _iso(r["recorded_at"])}
+            for r in db.all("SELECT * FROM dish_ingredient_usage WHERE order_id = ? ORDER BY recorded_at, dish_name", (order_id,))]
+
+
+_METHOD = {"CASH": "Cash", "TELEBIRR": "Telebirr", "CBE_BIRR": "CBE Birr", "MPESA": "M-Pesa", "CARD": "Card", "BANK_TRANSFER": "Bank transfer"}
+
+
+def transaction_detail(db: Db, org_id: str, kind: str, tid: str) -> dict:
+    """One Owner-app transaction in full: items, VAT, payment, status and who decided, who created it."""
+    def person(uid: str | None) -> dict | None:
+        if not uid:
+            return None
+        u = db.one("SELECT full_name, role_code FROM app_user WHERE id = ?", (uid,))
+        return {"name": u["full_name"], "role": text_en(db, f"role.{u['role_code']}") or u["role_code"]} if u else {"name": uid, "role": ""}
+
+    def branch(bid: str | None) -> str:
+        return (db.scalar("SELECT name FROM branch WHERE id = ?", (bid,)) or "Head office") if bid else "Head office"
+
+    def item_name(item_id: str) -> str:
+        r = db.one("SELECT name_key, custom_name FROM inventory_item WHERE id = ?", (item_id,))
+        return (r and (r["custom_name"] or text_en(db, r["name_key"]))) or item_id
+
+    if kind == "order":
+        o = _get(db, "customer_order", tid, org_id)
+        lines = [{"item": ln["item_name"], "quantity": float(ln["quantity"]), "unit": "pcs", "unitPrice": float(money(D(ln["unit_price"]) + D(ln["modifiers_total"] or 0))),
+                  "total": float(money(ln["line_total"])), **({"note": "Voided: " + (ln["void_reason"] or "")} if ln["status"] == "VOIDED" else {})}
+                 for ln in db.all("SELECT * FROM order_line WHERE order_id = ? ORDER BY line_no", (tid,))]
+        pays = [{"method": _METHOD.get(r["payment_method_code"], r["payment_method_code"]), "amount": float(r["amount"]),
+                 **({"reference": r["reference"]} if r["reference"] else {}), "at": _iso(r["received_at"]), "by": person(r["received_by"])}
+                for r in db.all("SELECT * FROM order_payment WHERE order_id = ? AND status = 'CAPTURED' ORDER BY received_at", (tid,))]
+        table = db.scalar("SELECT name FROM dining_table WHERE id = ?", (o.get("table_id"),)) if o.get("table_id") else o["table_number"]
+        return {"kind": kind, "id": tid, "number": o["receipt_no"] or f"ORD-{o['order_number']}", "type": "Sale",
+                "at": _iso(o["paid_at"] or o["created_at"]), "branch": branch(o["branch_id"]),
+                "where": (f"Table {table}" if table else ("Takeaway" if o["order_type"] in ("TAKEOUT", "TAKEAWAY") else "Counter")),
+                "lines": lines, "vat": float(money(o["vat_amount"])), "total": float(money(o["total_gross"])), "payments": pays,
+                "status": {"code": o["status"], "label": "Paid" if o["status"] == "PAID" else o["status"].title()},
+                "createdBy": person(o["opened_by"]), **({"waiter": person(o["waiter_id"])} if o.get("waiter_id") else {}),
+                "ingredients": usage_for_order(db, tid)}
+    if kind == "purchase":
+        r = _get(db, "purchase", tid, org_id)
+        st = r["review_status"]
+        return {"kind": kind, "id": tid, "number": f"PUR-{tid[-6:].upper()}", "type": "Purchase", "at": _iso(r["purchased_at"]),
+                "branch": branch(r["branch_id"]), "vendor": r["vendor_name"],
+                "lines": [{"item": item_name(r["item_id"]), "quantity": float(r["quantity"]), "unit": r["unit_code"],
+                           "unitPrice": float(r["unit_cost"]), "total": float(r["total_cost"])}],
+                "vat": float(r["vat_amount"]), "total": float(r["total_cost"]),
+                "payments": [{"method": _METHOD.get(r["payment_method_code"], r["payment_method_code"]) if r["payment_method_code"] else "On credit",
+                              "amount": float(r["total_cost"])}],
+                "status": {"code": st, "label": {"PENDING": "Waiting for the manager", "APPROVED": "Approved", "FLAGGED": "Flagged",
+                                                 "REJECTED": "Rejected"}.get(st, st),
+                           **({"decidedBy": person(r["reviewed_by"]), "decidedAt": _iso(r["reviewed_at"])} if r["reviewed_by"] else {}),
+                           **({"reason": r["flag_reason"]} if r["flag_reason"] else {})},
+                "createdBy": person(r["logged_by"]), **({"note": r["note"]} if r["note"] else {}),
+                **({"receiptNo": r["receipt_no"]} if r["receipt_no"] else {})}
+    if kind == "expense":
+        e = _get(db, "expense", tid, org_id)
+        st = e["review_status"]
+        return {"kind": kind, "id": tid, "number": f"EXP-{tid[-6:].upper()}", "type": "Expense", "at": _iso(e["spent_at"]),
+                "branch": branch(e["branch_id"]),
+                "lines": [{"item": e["reason"], "quantity": 1, "unit": "", "unitPrice": float(e["amount"]), "total": float(e["amount"])}],
+                "vat": float(e["vat_amount"]), "total": float(e["amount"]),
+                "payments": [{"method": _METHOD.get(e["payment_method_code"], e["payment_method_code"]), "amount": float(e["amount"])}],
+                "status": {"code": st, "label": {"PENDING": "Recorded", "APPROVED": "Approved", "FLAGGED": "Flagged", "REJECTED": "Rejected"}.get(st, st),
+                           **({"decidedBy": person(e["reviewed_by"]), "decidedAt": _iso(e["reviewed_at"])} if e["reviewed_by"] else {})},
+                "createdBy": person(e["logged_by"]), **({"note": e["note"]} if e["note"] else {})}
+    if kind == "bill":
+        b = _get(db, "bill", tid, org_id)
+        v = db.one("SELECT name FROM vendor WHERE id = ?", (b["vendor_id"],))
+        pays = [{"method": _METHOD.get(r["payment_method_code"], r["payment_method_code"]), "amount": float(r["amount"]),
+                 **({"reference": r["reference"]} if r["reference"] else {}), "at": str(r["paid_on"])[:10], "by": person(r["paid_by"])}
+                for r in db.all("SELECT * FROM bill_payment WHERE bill_id = ? ORDER BY paid_on", (tid,))]
+        return {"kind": kind, "id": tid, "number": b["bill_no"], "type": "Bill", "at": str(b["issue_date"])[:10], "branch": branch(b["branch_id"]),
+                "vendor": v["name"] if v else "", "dueDate": str(b["due_date"])[:10],
+                "lines": [{"item": ln["description"], "quantity": float(ln["quantity"] or 1), "unit": ln["unit_code"] or "",
+                           "unitPrice": float(money(D(ln["amount"]) / (D(ln["quantity"]) or 1))) if ln["quantity"] else float(ln["amount"]),
+                           "total": float(money(D(ln["amount"]) + D(ln["vat"] or 0)))}
+                          for ln in db.all("SELECT * FROM bill_line WHERE bill_id = ?", (tid,))]
+                         or [{"item": b["description"] or "Bill", "quantity": 1, "unit": "", "unitPrice": float(b["subtotal"]), "total": float(b["total"])}],
+                "vat": float(b["vat"]), "total": float(b["total"]), "payments": pays,
+                "status": {"code": b["status"], "label": b["status"].title()}, "createdBy": person(b["entered_by"])}
+    if kind == "payroll":
+        r = _get(db, "payroll_run", tid, org_id)
+        return {"kind": kind, "id": tid, "number": f"PAY-{str(r['period_month'])[:7]}", "type": "Payroll",
+                "at": str(r["paid_on"] or r["approved_at"] or r["period_month"])[:10], "branch": branch(r["branch_id"]),
+                "lines": [{"item": "Gross pay", "quantity": 1, "unit": "", "unitPrice": float(r["total_gross"]), "total": float(r["total_gross"])},
+                          {"item": "Employer pension (11%)", "quantity": 1, "unit": "", "unitPrice": float(r["total_pension_employer"]),
+                           "total": float(r["total_pension_employer"])}],
+                "vat": 0, "total": float(D(r["total_gross"]) + D(r["total_pension_employer"])), "payments": [],
+                "status": {"code": r["status"], "label": r["status"].title(),
+                           **({"decidedBy": person(r["approved_by"]), "decidedAt": _iso(r["approved_at"])} if r["approved_by"] else {})},
+                "createdBy": person(r["approved_by"])}
+    raise NotFound("unknown transaction", kind=kind, id=tid)
+
+
+def set_recipe(db: Db, actor: Actor, menu_item_id: str, components: list[dict]) -> list[dict]:
+    """Replace a dish's recipe (per portion). The kitchen's confirmation step pre-fills from it."""
+    m = _get(db, "menu_item", menu_item_id, actor.org_id)
+    rows = []
+    for c in components:
+        q = D(c.get("quantity"))
+        if q <= 0:
+            raise Invalid("each ingredient needs an amount above 0", itemId=c.get("itemId"))
+        inv = db.one("SELECT unit_code FROM inventory_item WHERE id = ? AND org_id = ? AND deleted_at IS NULL", (c.get("itemId"), actor.org_id))
+        if not inv:
+            raise NotFound("inventory item not found", item_id=c.get("itemId"))
+        unit = c.get("unit") or inv["unit_code"]
+        if not db.scalar("SELECT 1 FROM unit WHERE code = ?", (unit,)):
+            raise Invalid("unknown unit", unit=unit)
+        rows.append({"menu_item_id": m["id"], "inventory_item_id": c["itemId"], "quantity": q, "unit_code": unit})
+    before = db.all("SELECT inventory_item_id, quantity, unit_code FROM recipe_component WHERE menu_item_id = ?", (m["id"],))
+    db.execute("DELETE FROM recipe_component WHERE menu_item_id = ?", (m["id"],))
+    for r in rows:
+        db.insert("recipe_component", r)
+    audit(db, actor, "ADMIN", "recipe.set", "menu_item", m["id"], "Recipe changed: {dish}", {"dish": m["name_key"], "lines": len(rows)},
+          before={"lines": [dict(b) for b in before]}, after={"lines": len(rows)})
+    return recipe_of(db, m["id"])
+
+
+def recipe_of(db: Db, menu_item_id: str) -> list[dict]:
+    return [{"itemId": r["inventory_item_id"], "quantity": float(r["quantity"]), "unit": r["unit_code"]}
+            for r in db.all("SELECT * FROM recipe_component WHERE menu_item_id = ? ORDER BY inventory_item_id", (menu_item_id,))]
+
+
 def kds_command(db: Db, actor: Actor, ticket_id: str, cmd: str, body: dict) -> dict:
     """status | item | notify | bump | recall — same semantics as kitchen-display's demo feed.
     notify: some dishes are ticked done but not all; tell the floor those are ready and leave the rest alone."""
@@ -347,6 +624,7 @@ def kds_command(db: Db, actor: Actor, ticket_id: str, cmd: str, body: dict) -> d
     if body.get("expectedVersion") is not None and int(body["expectedVersion"]) != int(t["version"]):
         raise Conflict("ticket changed on another screen", version=t["version"])
     at = body.get("at") or now_iso()
+    warnings: list[dict] | None = None
     active = t["status"] in ("PENDING", "PREPARING", "READY")
     ch: dict[str, Any] = {}
     event = "upsert"
@@ -365,6 +643,11 @@ def kds_command(db: Db, actor: Actor, ticket_id: str, cmd: str, body: dict) -> d
             ch.update(ready_at=at, started_at=t["started_at"] or at)
             db.execute("""UPDATE kds_ticket_item SET is_completed = ?, completed_at = coalesce(completed_at, ?),
                           completed_by = coalesce(completed_by, ?) WHERE ticket_id = ?""", (True, at, actor.user_id, ticket_id))
+            usage = body.get("usage")
+            if usage is not None:            # the "Ingredients used" step: stock follows what the kitchen entered
+                if not isinstance(usage, list):
+                    raise Invalid("usage must be a list")
+                warnings = record_ingredient_use(db, actor, t, usage)
     elif cmd == "item":
         if not active or t["status"] == "READY":
             raise Conflict("ticket is not being prepared", status=t["status"])
@@ -402,6 +685,8 @@ def kds_command(db: Db, actor: Actor, ticket_id: str, cmd: str, body: dict) -> d
     audit(db, actor, "KDS", f"kds_ticket.{cmd}", "kds_ticket", ticket_id, "Ticket {orderNumber}: {cmd}",
           {"orderNumber": t["order_number"], "cmd": cmd, **{k: v for k, v in body.items() if k in ("status", "itemId", "isCompleted")}},
           branch_id=t["branch_id"])
+    if warnings is not None:      # only for the screen that confirmed (not broadcast to other screens)
+        return {**payload, "stockWarnings": warnings}
     return payload
 
 
@@ -1010,14 +1295,23 @@ def decide_dispatch(db: Db, actor: Actor, dispatch_id: str, approve: bool, reaso
     if not approve and not reason:
         raise Invalid("a rejection needs a reason")
     st = "APPROVED" if approve else "REJECTED"
+    settled: list[str] = []
     if approve:
+        # Dispatching is the manager's decision on the stock: purchases of this item still waiting for review are
+        # approved with it (the stock arrives, then leaves), so nothing stays pending in Purchases (COGS) or the Owner app.
+        for pr in db.all("""SELECT id FROM purchase WHERE branch_id = ? AND item_id = ? AND review_status = 'PENDING'
+                            AND deleted_at IS NULL ORDER BY purchased_at""", (d["branch_id"], d["item_id"])):
+            review_purchase(db, actor, pr["id"], "APPROVE")
+            settled.append(pr["id"])
         apply_stock(db, actor, d["branch_id"], d["item_id"], -D(d["quantity"]),
                     "TRANSFER_OUT" if d["to_branch_id"] else "DISPATCH", allow_negative=False, dispatch_id=dispatch_id)
     db.update("dispatch_request", {"id": dispatch_id}, {"status": st, "decided_by": actor.user_id, "decided_at": now_iso(),
                                                         "rejection_reason": None if approve else reason})
     audit(db, actor, "MGR", f"dispatch_request.{'approve' if approve else 'reject'}", "dispatch_request", dispatch_id,
-          "Dispatch {status}", {"status": st, "reason": reason}, branch_id=d["branch_id"])
-    return db.one("SELECT * FROM dispatch_request WHERE id = ?", (dispatch_id,))
+          "Dispatch {status}", {"status": st, "reason": reason, "purchasesApproved": len(settled)}, branch_id=d["branch_id"])
+    outbox(db, actor.org_id, d["branch_id"], "mgr.review", "decided", "dispatch_request", dispatch_id,
+           {"entity": "dispatch_request", "id": dispatch_id, "status": st})
+    return {**db.one("SELECT * FROM dispatch_request WHERE id = ?", (dispatch_id,)), "approvedPurchases": settled}
 
 
 def receive_transfer(db: Db, actor: Actor, dispatch_id: str) -> dict:

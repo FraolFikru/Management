@@ -9,7 +9,8 @@ import { renderHelp } from "./views/help";
 import "./style.css";
 import type { ViewId } from "./types";
 import { isLanguage, setLanguage, t } from "./i18n";
-import { canView, currentUser, loadFromBackend, onSyncError, refreshRestock, savePrefs, signIn, signOut, state } from "./store";
+import { canView, currentUser, loadFromBackend, onSyncError, refreshRestock, savePrefs, signIn, signOut, state, syncing } from "./store";
+import { startAutoRefresh } from "./refresh";
 import { isLive, sessionUser, signIn as apiSignIn, signOut as apiSignOut } from "./api";
 import { $ } from "./ui/dom";
 import { wireApp, type ActionMap } from "./ui/app";
@@ -77,6 +78,17 @@ setInterval(() => {
   }, () => { /* offline: try again next time */ });
 }, 30_000);
 
+/* Everything else (the manager's approvals and rejections, purchases logged on another tablet): reload every
+   45 s, and on the Refresh button. Waits while someone types or a save is on its way. */
+const auto = startAutoRefresh({
+  enabled: () => isLive && !!currentUser(),
+  lang: () => state.lang,
+  busy: syncing,
+  everyMs: 45_000,
+  reload: async () => { await loadFromBackend(); return true; },
+  redraw: () => render(),
+});
+
 onSyncError((message) => {
   toast(t("Not saved: {reason}", { reason: message }));
   render();
@@ -124,6 +136,7 @@ function rebuild(focusSelector?: string): void {
   const app = $("#app");
   if (app) app.innerHTML = "";
   render(focusSelector);
+  auto.sync();
 }
 
 const applyTheme = (): void => { document.documentElement.dataset.theme = state.theme; };

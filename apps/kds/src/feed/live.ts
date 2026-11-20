@@ -53,7 +53,7 @@ export class LiveOrderFeed implements OrderFeed {
     this.drop();
   }
 
-  async send(cmd: FeedCommand): Promise<void> {
+  async send(cmd: FeedCommand): Promise<unknown> {
     const { type, ticketId, ...body } = cmd;
     const url = `${this.apiUrl.replace(/\/$/, "")}/kds/tickets/${encodeURIComponent(ticketId)}/${type}`;
     const key = newKey();
@@ -69,7 +69,7 @@ export class LiveOrderFeed implements OrderFeed {
           },
           body: JSON.stringify(body),
         });
-        if (res.ok) return;
+        if (res.ok) return await res.json().catch(() => null);
         if (res.status === 401 && i === 0) continue;                     // token expired: refresh and retry once
         if (res.status === 401) { handleUnauthorized(); throw new Error("Rejected (401)"); }
         if (res.status >= 400 && res.status < 500) throw new Error(`Rejected (${res.status})`); // don't retry client errors

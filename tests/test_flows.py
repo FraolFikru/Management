@@ -54,6 +54,9 @@ def migrated(db: Db) -> Db:
         m.owner_chain(db)
         m.owner_changes(db)
         m.dispatch_assignee(db)
+        m.kitchen_usage(db)
+        m.ingredient_catalogue(db)
+        m.starter_recipes(db)
     return db
 
 
@@ -476,6 +479,101 @@ def test_owners_need_a_second_owner(db: Db) -> None:
     fails(lambda: own.request_change(db, yared, "ADD", full_name="X Y", username="hanna.t", branch_id=BOLE, password="12345678"), s.Conflict)
 
 
+def test_ingredients_used_flow(db: Db) -> None:
+    """Kitchen confirms what each dish really used: stock follows the cook, not the recipe; alerts carry the dish."""
+    meron, kitchen = who(db, "Meron Girma"), who(db, "Tigist Mengistu")
+    hanna = who(db, "Hanna Tesfaye")
+    for item, have, minimum in (("chicken", 3, 2), ("onion", 10, 2)):
+        if not db.update("branch_stock", {"branch_id": BOLE, "item_id": item}, {"on_hand": have, "reorder_point": minimum}):
+            db.insert("branch_stock", {"org_id": meron.org_id, "branch_id": BOLE, "item_id": item, "on_hand": have, "reorder_point": minimum})
+    o = s.create_order(db, meron, BOLE, "DINE_IN", [{"menu_item_id": "doro-wat", "quantity": 2}], table_number="4")
+    t = s.send_to_kitchen(db, meron, o["id"])
+    ing = s.ticket_ingredients(db, kitchen, t["id"])
+    assert ing["needed"] and len(ing["dishes"]) == 1
+    dish = ing["dishes"][0]
+    exp = {i["itemId"]: i["expected"] for i in dish["ingredients"]}
+    assert exp["chicken"] == 0.5 and exp["onion"] == 0.6, exp        # recipe × 2 portions
+    assert ing["items"] and ing["units"]["kg"]["en"]
+    s.kds_command(db, kitchen, t["id"], "status", {"status": "PREPARING"})
+    out = s.kds_command(db, kitchen, t["id"], "status", {"status": "READY", "usage": [
+        {"ticketItemId": dish["ticketItemId"], "itemId": "chicken", "actual": 1.5},          # the cook used more
+        {"ticketItemId": dish["ticketItemId"], "itemId": "onion", "actual": 0.5},
+    ]})
+    assert out["ticket"]["status"] == "READY"
+    assert D(db.scalar("SELECT on_hand FROM branch_stock WHERE branch_id = ? AND item_id = 'chicken'", (BOLE,))) == Decimal("1.5")
+    assert D(db.scalar("SELECT on_hand FROM branch_stock WHERE branch_id = ? AND item_id = 'onion'", (BOLE,))) == Decimal("9.5")
+    rows = db.all("SELECT * FROM dish_ingredient_usage WHERE ticket_id = ? ORDER BY inventory_item_id", (t["id"],))
+    assert [(r["inventory_item_id"], float(r["expected_qty"]), float(r["actual_qty"])) for r in rows] == [("chicken", 0.5, 1.5), ("onion", 0.6, 0.5)]
+    warn = {w["itemId"]: w for w in out["stockWarnings"]}
+    assert warn["chicken"]["low"] and "onion" not in warn
+    low = [e for e in events(db, "stock.low") if e["payload"].get("dish")]
+    assert low and "used in Doro Wat #" in low[-1]["payload"]["message"], low
+    assert low[-1]["payload"]["message"].startswith("Chicken stock low"), low[-1]["payload"]["message"]
+    # the broadcast to other screens doesn't carry the kitchen-only warnings
+    assert "stockWarnings" not in events(db, "kds.ticket")[-1]["payload"]
+    # back and forth: nothing is deducted twice, and the step has nothing left to ask
+    s.kds_command(db, kitchen, t["id"], "status", {"status": "PREPARING"})
+    s.kds_command(db, kitchen, t["id"], "status", {"status": "READY", "usage": [
+        {"ticketItemId": dish["ticketItemId"], "itemId": "chicken", "actual": 1}]})
+    assert D(db.scalar("SELECT on_hand FROM branch_stock WHERE branch_id = ? AND item_id = 'chicken'", (BOLE,))) == Decimal("1.5")
+    assert not s.ticket_ingredients(db, kitchen, t["id"])["dishes"]
+    # a bad entry rolls everything back (the caller's transaction): the dish is not marked ready
+    o2 = s.create_order(db, meron, BOLE, "TAKEOUT", [{"menu_item_id": "shiro", "quantity": 1}])
+    t2 = s.send_to_kitchen(db, meron, o2["id"])
+    d2 = s.ticket_ingredients(db, kitchen, t2["id"])["dishes"][0]
+    fails(lambda: s.kds_command(db, kitchen, t2["id"], "status", {"status": "READY", "usage": [
+        {"ticketItemId": d2["ticketItemId"], "itemId": "shiro", "actual": -1}]}), s.Invalid)
+    # the manager sees which dish took it, and the owner sees it on the sale
+    mgr = s.last_kitchen_use(db, BOLE)
+    assert any(r["itemId"] == "chicken" and r["dish"] == "Doro Wat" and r["text"] == "1.5 pcs" for r in mgr), mgr
+    assert len(s.usage_for_order(db, o["id"])) == 2
+    # recipes can be changed
+    s.set_recipe(db, hanna, "shiro", [{"itemId": "shiro", "quantity": 0.12}, {"itemId": "garlic", "quantity": 10, "unit": "g"}])
+    assert s.recipe_of(db, "shiro") == [{"itemId": "garlic", "quantity": 10.0, "unit": "g"}, {"itemId": "shiro", "quantity": 0.12, "unit": "kg"}]
+    assert s.fmt_qty(Decimal("0.5"), "kg") == "500g" and s.fmt_qty(Decimal("1.2"), "kg") == "1.2kg"
+
+
+def test_new_ingredient_list(db: Db) -> None:
+    from eirsha_api import catalogue as cat
+    ids = {r["id"] for r in cat.rows()}
+    assert len(ids) == len(cat.rows()), "duplicate ids"
+    live = {r["id"] for r in db.all("SELECT id FROM inventory_item WHERE deleted_at IS NULL")}
+    assert ids <= live, ids - live
+    for old in cat.RETIRED:
+        assert db.scalar("SELECT deleted_at FROM inventory_item WHERE id = ?", (old,)), old
+    assert "kibbeh" in live and "detergent" in live                     # kept: renamed ingredient, non-ingredient supplies
+    assert db.scalar("SELECT text FROM i18n_text WHERE key = 'inv.kibbeh' AND lang = 'en' AND org_id IS NULL") == "Butter (kibbeh)"
+    assert db.scalar("SELECT text FROM i18n_text WHERE key = 'inv.beer-st-george' AND lang = 'am'") == "St. George"
+    assert D(db.scalar("SELECT reorder_point FROM branch_stock WHERE branch_id = ? AND item_id = 'sd-coca-cola'", (BOLE,))) == 1
+    assert db.scalar("SELECT main_category_code FROM inventory_item WHERE id = 'avocado'") == "VEGETABLES"
+    m.ingredient_catalogue(db)                                          # safe to repeat
+    m.starter_recipes(db)
+    assert db.scalar("SELECT count(*) FROM recipe_component WHERE menu_item_id = 'doro-wat'") == 8
+
+
+def test_dispatch_settles_purchases(db: Db) -> None:
+    """Approving a dispatch approves the purchases of that item still waiting, so nothing stays pending."""
+    dawit, hanna = who(db, "Dawit Alemu"), who(db, "Hanna Tesfaye")
+    db.update("branch_stock", {"branch_id": BOLE, "item_id": "potato"}, {"on_hand": 0})
+    p = s.log_purchase(db, dawit, BOLE, "potato", 20, 30, vendor_name="Merkato Fresh Produce")
+    assert p["review_status"] == "PENDING"
+    d = s.request_dispatch(db, dawit, BOLE, "potato", 8, to_location="KITCHEN_LINE")
+    out = s.decide_dispatch(db, hanna, d["id"], True)
+    assert out["status"] == "APPROVED" and out["approvedPurchases"] == [p["id"]]
+    assert db.scalar("SELECT review_status FROM purchase WHERE id = ?", (p["id"],)) == "APPROVED"
+    assert D(db.scalar("SELECT on_hand FROM branch_stock WHERE branch_id = ? AND item_id = 'potato'", (BOLE,))) == 12
+    assert db.scalar("SELECT count(*) FROM bill_line WHERE purchase_id = ?", (p["id"],)) == 1    # Finance gets the bill as usual
+    # rejecting leaves purchases alone (the stock was still bought)
+    p2 = s.log_purchase(db, dawit, BOLE, "potato", 5, 30, vendor_name="Merkato Fresh Produce")
+    d2 = s.request_dispatch(db, dawit, BOLE, "potato", 50, to_location="KITCHEN_LINE")
+    s.decide_dispatch(db, hanna, d2["id"], False, "Too much")
+    assert db.scalar("SELECT review_status FROM purchase WHERE id = ?", (p2["id"],)) == "PENDING"
+    # owner details
+    det = s.transaction_detail(db, hanna.org_id, "purchase", p["id"])
+    assert det["status"]["code"] == "APPROVED" and det["status"]["decidedBy"]["name"] == "Hanna Tesfaye"
+    assert det["lines"][0]["item"] == "Potatoes" and det["createdBy"]["name"] == "Dawit Alemu"
+
+
 def fails(f, exc) -> None:
     """f must be refused with exc."""
     try:
@@ -487,7 +585,8 @@ def fails(f, exc) -> None:
 
 TESTS = [test_pos_to_kds_to_zreport, test_purchase_review_bill_withholding, test_waste_dispatch_expense,
          test_hr_attendance_payroll_finance, test_permissions_and_identity, test_restock_manager_to_purchases,
-         test_dispatch_from_purchases, test_restock_minimums, test_owners_need_a_second_owner]
+         test_dispatch_from_purchases, test_restock_minimums, test_owners_need_a_second_owner,
+         test_ingredients_used_flow, test_new_ingredient_list, test_dispatch_settles_purchases]
 
 if __name__ == "__main__":
     failed = 0

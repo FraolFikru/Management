@@ -9,7 +9,8 @@ import "./style.css";
 import type { ViewId } from "./types";
 import { isLanguage, setLanguage, t } from "./i18n";
 import { USERS } from "./catalog";
-import { loadFromBackend, onSyncError, savePrefs, signOut, signedIn, state, user } from "./store";
+import { loadFromBackend, onSyncError, savePrefs, signOut, signedIn, state, syncing, user } from "./store";
+import { startAutoRefresh } from "./refresh";
 import { isLive, sessionUser, signIn as apiSignIn, signOut as apiSignOut } from "./api";
 import { $ } from "./ui/dom";
 import { wireApp, type ActionMap } from "./ui/app";
@@ -55,6 +56,16 @@ async function startLive(): Promise<void> {
   rebuild();
 }
 
+/* Data changes in the other apps: reload every 30 s while visible, and on the Refresh button. */
+const auto = startAutoRefresh({
+  enabled: () => isLive && signedIn(),
+  lang: () => state.lang,
+  busy: () => syncing() || !!state.modal,
+  everyMs: 30_000,
+  reload: async () => { await loadFromBackend(); return true; },
+  redraw: () => render(),
+});
+
 onSyncError((message) => {
   toast(t("Not saved: {reason}", { reason: message }));
   render();
@@ -97,6 +108,7 @@ function rebuild(focusSelector?: string): void {
   if (app) app.innerHTML = "";
   render(focusSelector);
   if (state.modal) renderModal();
+  auto.sync();
 }
 
 const applyTheme = (): void => { document.documentElement.dataset.theme = state.theme; };

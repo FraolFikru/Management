@@ -71,6 +71,7 @@ export function lowStockWidget(limit = 8): string {
       return `<li class="low-item lvl-${lvl.toLowerCase()} row-hover">
         <div class="low-top"><strong>${esc(tk(i.nameKey))}</strong><span class="lvl-tag">${t(LEVEL_LABEL[lvl as keyof typeof LEVEL_LABEL])}</span></div>
         <div class="low-qty"><span class="num">${qtyUnit(i.currentQuantity, i.unit)}</span><small>/ ${t("reorder at {x}", { x: num(i.reorderPoint) })}</small></div>
+        ${i.lastUse ? `<small class="low-ctx">${icon("alert")} ${esc(t("{qty} used in {dish} #{no}", { qty: i.lastUse.text, dish: i.lastUse.dish, no: i.lastUse.orderNumber }))}</small>` : ""}
         <span class="low-track" aria-hidden="true"><i style="width:${fill}%"></i></span>
         ${(() => { const r = openRestockFor(i.id); return r
           ? `<small class="low-sugg asked">${icon("check")} ${t("Asked for {x} · {status}", { x: qtyUnit(r.quantity, r.unit), status: statusLabel(r) })}</small>`

@@ -84,9 +84,14 @@ setCurrencySymbol(db.profile.currencySymbol);
 let syncError: (message: string) => void = () => {};
 export function onSyncError(fn: (message: string) => void): void { syncError = fn; }
 
+let inFlight = 0;
+/** A save is still on its way to the server (auto-refresh waits for it). */
+export const syncing = (): boolean => inFlight > 0;
+const track = <T,>(p: Promise<T>): Promise<T> => { inFlight++; return p.finally(() => { inFlight--; }); };
+
 function push(task: () => Promise<unknown>, rollback: () => void): void {
   if (!isLive) return;
-  task().catch((err: unknown) => {
+  track(task()).catch((err: unknown) => {
     rollback();
     syncError(err instanceof Error ? err.message : String(err));
   });

@@ -5,6 +5,8 @@
   POST {api}/kds/tickets/{id}/item    {itemId, isCompleted, at, by}
   POST {api}/kds/tickets/{id}/bump    {at, by}
   POST {api}/kds/tickets/{id}/recall  {at, by}
+  GET  {api}/kds/tickets/{id}/ingredients   → dishes with recipe amounts (the "Ingredients used" step)
+  POST …/status {status: "READY", usage: [{ticketItemId, itemId, actual, unit}]}  deducts what was really used
   Headers: Idempotency-Key, X-Branch-Id.  4xx = rejected (UI rolls back), 5xx = retried.
 """
 from __future__ import annotations
@@ -26,6 +28,12 @@ router = APIRouter(tags=["kds"])
 @router.get("/kds/tickets")
 def snapshot(p: Principal = Depends(require("kds.view")), db: Db = Depends(get_db)):
     return s.kds_snapshot(db, branch_of(p))
+
+
+@router.get("/kds/tickets/{ticket_id}/ingredients")
+def ingredients(ticket_id: str, p: Principal = Depends(require("kds.update")), db: Db = Depends(get_db)):
+    """The "Ingredients used" step: each dish's recipe × quantity, to confirm or correct before READY."""
+    return s.ticket_ingredients(db, p.actor, ticket_id)
 
 
 @router.post("/kds/tickets/{ticket_id}/{cmd}")

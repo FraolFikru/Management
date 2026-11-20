@@ -123,8 +123,8 @@ export function generateSeed(): SeedData {
       buy(day, "mitmita", 1, "Habesha Grain Store", "CBE_BIRR");
     }
     if (back % 7 === 4) {
-      buy(day, "soft-drinks", 5, "Bole Beverage Distributors", "CBE_BIRR");
-      buy(day, "beer", 6, "Bole Beverage Distributors", "CBE_BIRR");
+      buy(day, "sd-coca-cola", 5, "Bole Beverage Distributors", "CBE_BIRR");
+      buy(day, "beer-st-george", 6, "Bole Beverage Distributors", "CBE_BIRR");
       buy(day, "water", 4, "Bole Beverage Distributors", "CASH");
       buy(day, "coffee", 5, "Yirga Coffee Roasters", "TELEBIRR");
       buy(day, "tea", 1, "Yirga Coffee Roasters", "TELEBIRR");
@@ -148,9 +148,9 @@ export function generateSeed(): SeedData {
     if (back % 3 === 1) waste(day, "onion", 1, "TRIM_LOSS", staff("u-dawit"), "", back <= 1 ? null : true);
     if (back % 4 === 2) waste(day, "injera", between(4, 9), "PREP_WASTE", staff("u-dawit"), "", back <= 2 ? null : true);
     if (back % 5 === 0) waste(day, "beef", 0.5, "OVER_PORTIONING", staff("u-hanna"), "Kitfo portions too large on busy shift", back <= 3 ? null : true);
-    if (back % 9 === 4) waste(day, "soft-drinks", 0.25, "DROPPED_ITEMS", staff("u-dawit"), "", true);
+    if (back % 9 === 4) waste(day, "sd-coca-cola", 0.25, "DROPPED_ITEMS", staff("u-dawit"), "", true);
     if (back % 11 === 6) waste(day, "milk", 3, "EXPIRED_STOCK", staff("u-dawit"), "", true);
-    if (back === 19) waste(day, "beer", 0.5, "INVENTORY_THEFT", staff("u-dawit"), "Half a crate missing at weekly count", true);
+    if (back === 19) waste(day, "beer-st-george", 0.5, "INVENTORY_THEFT", staff("u-dawit"), "Half a crate missing at weekly count", true);
     if (back === 8) waste(day, "kibbeh", 0.5, "OTHER", staff("u-hanna"), "Burned while clarifying", false);
 
     // custom expenses ("other reasons")

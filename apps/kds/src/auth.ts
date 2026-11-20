@@ -20,7 +20,7 @@ function save(s: Session | null): void {
   try { s ? localStorage.setItem(KEY, JSON.stringify(s)) : localStorage.removeItem(KEY); } catch { /* memory only */ }
 }
 
-const apiBase = (): string => {
+export const apiBase = (): string => {
   const env = import.meta.env ?? {};
   const ws = env.VITE_KDS_WS_URL?.trim() ?? "";
   return (env.VITE_KDS_API_URL?.trim() || (ws ? new URL(ws.replace(/^ws/, "http")).origin : "")).replace(/\/$/, "");

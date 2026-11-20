@@ -53,7 +53,7 @@ export function generateSeed(): SeedData {
 
   const inventory: InventoryItem[] = BASE_INVENTORY.map((i) => ({ ...i, aliases: [...i.aliases], currentQuantity: Math.round(i.reorderPoint * (0.8 + r() * 2.4)) }));
   // a few items deliberately below their reorder point
-  for (const id of ["berbere", "kibbeh", "takeout-box", "soft-drinks"]) {
+  for (const id of ["berbere", "kibbeh", "takeout-box", "sd-coca-cola"]) {
     const it = inventory.find((x) => x.id === id);
     if (it) it.currentQuantity = Math.max(1, Math.floor(it.reorderPoint * 0.5));
   }
@@ -101,7 +101,7 @@ export function generateSeed(): SeedData {
     RAW_INGREDIENTS: "Merkato Fresh Produce", BEVERAGE_BAR: "Ethio Beverage Distributors", PACKAGING_DISPOSABLES: "Addis Packaging PLC",
     KITCHEN_CONSUMABLES: "Bole Kitchen Supply", CLEANING_SANITATION: "Sheger Cleaning Supplies",
   };
-  const ROUTINE = ["onion", "tomato", "injera", "beef", "eggs", "coffee", "soft-drinks", "oil", "teff", "chicken", "beer", "berbere", "takeout-box", "napkins", "dish-soap", "plastic-wrap", "lentils", "kibbeh", "water", "trash-liners"];
+  const ROUTINE = ["onion", "tomato", "injera", "beef", "eggs", "coffee", "sd-coca-cola", "oil", "teff", "chicken", "beer-st-george", "berbere", "takeout-box", "napkins", "dish-soap", "plastic-wrap", "lentils", "kibbeh", "water", "trash-liners"];
   const buy = (day: string, hour: number, id: string, status: CogsPurchase["status"], decided?: string): void => {
     const it = item(id);
     const qty = Math.max(1, Math.round(it.reorderPoint * (0.6 + r() * 1.2)));
@@ -126,7 +126,7 @@ export function generateSeed(): SeedData {
   }
   // today: some already reviewed, a few still waiting
   buy(now, 7, "injera", "APPROVED", minsAgo(Math.min(400, Math.max(5, (nowMs - new Date(stamp(now, 8)).getTime()) / 60_000))));
-  for (const id of ["onion", "beef", "soft-drinks", "napkins"]) {
+  for (const id of ["onion", "beef", "sd-coca-cola", "napkins"]) {
     const it = item(id);
     const qty = Math.max(1, Math.round(it.reorderPoint * 1.1));
     const unitCost = round2(it.unitCost * 1.03);
@@ -138,9 +138,9 @@ export function generateSeed(): SeedData {
 
   /* ---------- dispatch requests from the Purchases team ---------- */
   const DISPATCH: [string, Destination, number, number][] = [
-    ["soft-drinks", "BAR", 2, 4], ["beer", "BAR", 2, 5], ["water", "BAR", 2, 6], ["injera", "CATERING", 40, 120],
+    ["sd-coca-cola", "BAR", 2, 4], ["beer-st-george", "BAR", 2, 5], ["water", "BAR", 2, 6], ["injera", "CATERING", 40, 120],
     ["takeout-box", "TAKEAWAY_COUNTER", 2, 6], ["cups-lids", "TAKEAWAY_COUNTER", 2, 4], ["coffee", "KITCHEN_LINE", 1, 3],
-    ["beef", "BRANCH_PIASSA", 5, 15], ["tej", "EVENT_HALL", 10, 30], ["napkins", "EVENT_HALL", 3, 8], ["ice", "BAR", 3, 8],
+    ["beef", "BRANCH_PIASSA", 5, 15], ["wine", "EVENT_HALL", 10, 30], ["napkins", "EVENT_HALL", 3, 8], ["water", "BAR", 3, 8],
   ];
   const request = (ts: string, decided: boolean): void => {
     const [id, dest, lo, hi] = pick(DISPATCH);
@@ -166,8 +166,8 @@ export function generateSeed(): SeedData {
   for (let k = 0; k < 3; k++) { const ts = minsAgo(between(200, 420)); request(ts, true); }
   // waiting right now
   const pending: [string, Destination, number, string, number][] = [
-    ["soft-drinks", "BAR", 3, "IC-301", 4], ["injera", "CATERING", 80, "IC-201", 11], ["takeout-box", "TAKEAWAY_COUNTER", 6, "IC-201", 19],
-    ["beer", "EVENT_HALL", 4, "IC-301", 27], ["coffee", "KITCHEN_LINE", 2, "IC-201", 42],
+    ["sd-coca-cola", "BAR", 3, "IC-301", 4], ["injera", "CATERING", 80, "IC-201", 11], ["takeout-box", "TAKEAWAY_COUNTER", 6, "IC-201", 19],
+    ["beer-st-george", "EVENT_HALL", 4, "IC-301", 27], ["coffee", "KITCHEN_LINE", 2, "IC-201", 42],
   ];
   for (const [id, dest, qty, by, mins] of pending) {
     const it = item(id);
@@ -177,7 +177,7 @@ export function generateSeed(): SeedData {
   /* ---------- waste & shrinkage ---------- */
   const WASTE_POOL: [string, WasteReason, number, number][] = [
     ["tomato", "SPOILAGE", 1, 4], ["onion", "TRIM_LOSS", 1, 3], ["beef", "TRIM_LOSS", 0.5, 2], ["milk", "EXPIRED_STOCK", 1, 4],
-    ["injera", "PREP_WASTE", 4, 15], ["soft-drinks", "DROPPED_ITEMS", 1, 1], ["kibbeh", "OVER_PORTIONING", 0.3, 1], ["eggs", "DROPPED_ITEMS", 3, 10],
+    ["injera", "PREP_WASTE", 4, 15], ["sd-coca-cola", "DROPPED_ITEMS", 1, 1], ["kibbeh", "OVER_PORTIONING", 0.3, 1], ["eggs", "DROPPED_ITEMS", 3, 10],
     ["collard", "SPOILAGE", 1, 3], ["fish", "EXPIRED_STOCK", 1, 2], ["chicken", "PREP_WASTE", 1, 2],
   ];
   const wasteLog = (ts: string, reason?: WasteReason, idOverride?: string, qtyOverride?: number, note?: string, reporter?: string): void => {
@@ -197,7 +197,7 @@ export function generateSeed(): SeedData {
     const day = addDays(now, -back);
     for (let k = between(0, 2); k > 0; k--) wasteLog(stamp(day, between(9, 21), between(0, 59)));
   }
-  wasteLog(addDays(now, -6) + "T19:30:00", "INVENTORY_THEFT", "beer", 1, "Crate missing after night shift; reported to security", CLERK);
+  wasteLog(addDays(now, -6) + "T19:30:00", "INVENTORY_THEFT", "beer-st-george", 1, "Crate missing after night shift; reported to security", CLERK);
   const todayWaste = minsAgo(between(60, 240));
   if (localToday(todayWaste, now)) wasteLog(todayWaste, "SPOILAGE", "tomato", 3, undefined, "SS-104");
 
