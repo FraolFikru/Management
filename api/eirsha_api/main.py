@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 from . import realtime
 from .db import Db
 from .db_init import ensure_database
-from .erase import erase_if_requested
+from .erase import erase_if_requested, reset_once
 from .migrate import migrate
 from .routes import admin, auth_routes, finance, floor, hr, kds, manager, owner, pos, reference, sales
 from .services import ServiceError
@@ -29,6 +29,7 @@ async def lifespan(app: FastAPI):
     ensure_database()                      # first start on an empty database: create schema + seed
     migrate()                              # schema additions since the first release (safe to repeat)
     erase_if_requested()                   # EIRSHA_ERASE_DEMO_KEEP=<username>: one-time start from scratch
+    reset_once()                           # erase.RESETS: one-time resets shipped with the code
     stop = asyncio.Event()
     task = asyncio.create_task(realtime.relay(Db.from_env(), stop))
     yield

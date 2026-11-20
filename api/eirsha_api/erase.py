@@ -19,14 +19,26 @@ from .db import Db, now_iso
 
 log = logging.getLogger("eirsha.erase")
 
-# Children before parents, so foreign keys are never left dangling.
+# Children before parents, so foreign keys are never left dangling. Tables added by later migrations are
+# skipped when a database doesn't have them yet. (dining_table, recipes, menu, stock items are setup: kept.)
 HISTORY = [
-    "kds_ticket_item", "kds_ticket", "order_line_modifier",   # (dining_table is setup, not history: kept) "order_payment", "stock_movement", "order_line", "customer_order",
+    "dish_ingredient_usage", "kds_ticket_item", "kds_ticket", "order_line_modifier", "order_payment", "stock_movement",
+    "order_line", "customer_order",
     "till_session", "daily_sales_payment", "daily_sales_summary", "cash_reconciliation", "cash_movement",
-    "bill_payment", "bill_line", "bill", "purchase", "waste_report", "dispatch_request", "expense",
+    "bill_payment", "bill_line", "bill", "purchase", "restock_request", "waste_report", "dispatch_request", "expense",
     "payslip", "payroll_run", "tax_filing", "budget_line", "attendance_break", "attendance_record", "schedule_entry",
-    "performance_log", "outbox_event", "idempotency_key",
+    "performance_log", "owner_change", "owner_goal_target", "owner_investment", "outbox_event", "idempotency_key",
 ]
+
+# One-time resets that run by themselves at the next start (each RUN id only once, recorded in audit_log).
+# 2026-11-20: the owner asked to start again from nothing but the setup, keeping only his own login.
+RESETS = [("reset-2026-11-20", "fraol.f")]
+
+
+def _has_table(db: Db, table: str) -> bool:
+    if db.dialect == "postgres":
+        return bool(db.scalar("SELECT 1 FROM information_schema.tables WHERE table_schema = 'eirsha' AND table_name = ?", (table,)))
+    return bool(db.scalar("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (table,)))
 
 
 def _user_fks(db: Db) -> list[tuple[str, str]]:
@@ -46,7 +58,7 @@ def _user_fks(db: Db) -> list[tuple[str, str]]:
     return out
 
 
-def erase_demo(db: Db, keep_username: str) -> dict:
+def erase_demo(db: Db, keep_username: str, marker: tuple[str, str] = ("system.erase_demo", "")) -> dict:
     keep = db.one("SELECT id, org_id FROM app_user WHERE lower(username) = lower(?)", (keep_username,))
     if not keep:
         raise ValueError(f"no account with username {keep_username!r}: nothing erased")
@@ -54,7 +66,8 @@ def erase_demo(db: Db, keep_username: str) -> dict:
     counts = {}
     with db.tx():
         for t in HISTORY:
-            counts[t] = db.execute(f"DELETE FROM {t}").rowcount
+            if _has_table(db, t):
+                counts[t] = db.execute(f"DELETE FROM {t}").rowcount
         # the audit trail is append-only: TRUNCATE (postgres) skips the row trigger; sqlite drops and re-adds it
         if db.dialect == "postgres":
             db.execute("TRUNCATE audit_log")
@@ -77,9 +90,10 @@ def erase_demo(db: Db, keep_username: str) -> dict:
         counts["user_branch_role"] = db.execute("DELETE FROM user_branch_role WHERE user_id <> ?", (kid,)).rowcount
         counts["employee"] = db.execute("DELETE FROM employee WHERE user_id <> ?", (kid,)).rowcount
         counts["app_user"] = db.execute("DELETE FROM app_user WHERE id <> ?", (kid,)).rowcount
-        db.insert("audit_log", {"org_id": keep["org_id"], "module": "SYSTEM", "action": "system.erase_demo",
-                                "entity_type": "organization", "entity_id": keep["org_id"], "actor_user_id": kid,
-                                "summary_template": "Demo data erased; started from scratch", "vars": "{}"})
+        action, run = marker
+        db.insert("audit_log", {"org_id": keep["org_id"], "module": "SYSTEM", "action": action,
+                                "entity_type": "organization", "entity_id": run or keep["org_id"], "actor_user_id": kid,
+                                "summary_template": "All data erased; started from scratch (setup kept)", "vars": "{}"})
     return counts
 
 
@@ -96,5 +110,21 @@ def erase_if_requested() -> None:
         log.warning("eirsha: demo data erased, kept account %s: %s", keep, {k: v for k, v in counts.items() if v})
     except Exception:
         log.exception("eirsha: erasing the demo data failed; nothing was changed")
+    finally:
+        db.conn.close()
+
+
+def reset_once() -> None:
+    """Run each one-time reset in RESETS that hasn't run on this database yet. If the account to keep doesn't
+    exist, nothing is erased (and it tries again at the next start)."""
+    db = Db.from_env()
+    try:
+        for run, keep in RESETS:
+            if db.scalar("SELECT 1 FROM audit_log WHERE action = 'system.reset' AND entity_id = ?", (run,)):
+                continue
+            counts = erase_demo(db, keep, ("system.reset", run))
+            log.warning("seer: %s done, kept account %s: %s", run, keep, {k: v for k, v in counts.items() if v})
+    except Exception:
+        log.exception("seer: the one-time reset failed; nothing was changed")
     finally:
         db.conn.close()

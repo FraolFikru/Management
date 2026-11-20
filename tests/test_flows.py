@@ -574,6 +574,30 @@ def test_dispatch_settles_purchases(db: Db) -> None:
     assert det["lines"][0]["item"] == "Potatoes" and det["createdBy"]["name"] == "Dawit Alemu"
 
 
+def test_reset_keeps_setup_and_one_login(db: Db) -> None:
+    """The one-time reset: all history and every other account go; the setup and the kept login stay."""
+    from eirsha_api import erase
+    test_ingredients_used_flow(db)                     # orders, kitchen usage, stock movements, alerts …
+    test_dispatch_settles_purchases(db)                # purchases, bills, dispatches
+    keep = "selam.g"
+    menu, items = db.scalar("SELECT count(*) FROM menu_item"), db.scalar("SELECT count(*) FROM inventory_item")
+    recipes, vendors = db.scalar("SELECT count(*) FROM recipe_component"), db.scalar("SELECT count(*) FROM vendor")
+    db.conn.commit()                                   # the reset opens its own transaction
+    erase.erase_demo(db, keep, ("system.reset", "reset-test"))
+    for t in erase.HISTORY:
+        if erase._has_table(db, t):
+            assert db.scalar(f"SELECT count(*) FROM {t}") == 0, t
+    assert [r["username"] for r in db.all("SELECT username FROM app_user")] == [keep]
+    assert db.scalar("SELECT count(*) FROM menu_item") == menu and db.scalar("SELECT count(*) FROM inventory_item") == items
+    assert db.scalar("SELECT count(*) FROM recipe_component") == recipes and db.scalar("SELECT count(*) FROM vendor") == vendors
+    assert db.scalar("SELECT count(*) FROM branch_stock WHERE on_hand <> 0") == 0
+    assert db.scalar("SELECT 1 FROM audit_log WHERE action = 'system.reset' AND entity_id = 'reset-test'")
+    assert erase.RESETS == [("reset-2026-11-20", "fraol.f")]
+
+
+test_reset_keeps_setup_and_one_login.own_tx = True    # type: ignore[attr-defined]
+
+
 def fails(f, exc) -> None:
     """f must be refused with exc."""
     try:
@@ -586,15 +610,19 @@ def fails(f, exc) -> None:
 TESTS = [test_pos_to_kds_to_zreport, test_purchase_review_bill_withholding, test_waste_dispatch_expense,
          test_hr_attendance_payroll_finance, test_permissions_and_identity, test_restock_manager_to_purchases,
          test_dispatch_from_purchases, test_restock_minimums, test_owners_need_a_second_owner,
-         test_ingredients_used_flow, test_new_ingredient_list, test_dispatch_settles_purchases]
+         test_ingredients_used_flow, test_new_ingredient_list, test_dispatch_settles_purchases,
+         test_reset_keeps_setup_and_one_login]
 
 if __name__ == "__main__":
     failed = 0
     for t in TESTS:
         db = fresh_db()
         try:
-            with db.tx():
+            if getattr(t, "own_tx", False):
                 t(db)
+            else:
+                with db.tx():
+                    t(db)
             print(f"PASS {t.__name__}")
         except Exception:  # noqa: BLE001
             failed += 1
